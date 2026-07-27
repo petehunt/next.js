@@ -1,0 +1,20 @@
+[workspace]
+resolver = "2"
+members = ["next-rs", "next-macros", "next-napi", "examples/demo-server"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[workspace.dependencies]
+next-macros = { version = "0.1.0", path = "next-macros" }
+
+base64 = "0.22"
+http = "1"
+inventory = "0.3"
+proc-macro2 = "1"
+quote = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+syn = { version = "2", features = ["full", "extra-traits", "visit-mut"] }

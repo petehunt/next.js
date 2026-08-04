@@ -1,5 +1,3 @@
-
-
 const crypto = require('node:crypto')
 const fs = require('node:fs')
 const path = require('node:path')
@@ -49,10 +47,15 @@ function compileRustComponent(options) {
   const wasmPath = path.join(cacheDir, 'component.wasm')
   const lockPath = path.join(cacheDir, '.compile.lock')
   fs.mkdirSync(cacheDir, { recursive: true })
+  discardInvalidWasm(wasmPath)
 
   if (!fs.existsSync(wasmPath)) {
     const lock = waitForCompileLock(lockPath, wasmPath)
     if (lock !== null && !fs.existsSync(wasmPath)) {
+      const temporaryWasmPath = path.join(
+        cacheDir,
+        `.component.${process.pid}.${crypto.randomUUID()}.wasm.tmp`
+      )
       fs.writeFileSync(userSourcePath, source)
       fs.writeFileSync(harnessPath, createHarnessSource(componentKind))
       try {
@@ -82,10 +85,12 @@ function compileRustComponent(options) {
             '--extern',
             `next_rsc=${sdkLibraryPath}`,
             '-o',
-            wasmPath,
+            temporaryWasmPath,
           ],
           compileOptions(cacheDir, environment)
         )
+        validateWasm(temporaryWasmPath)
+        fs.renameSync(temporaryWasmPath, wasmPath)
       } catch (error) {
         const stderr = (
           error && error.stderr ? String(error.stderr) : String(error)
@@ -94,12 +99,11 @@ function compileRustComponent(options) {
           .replaceAll(harnessPath, '<generated Rust RSC harness>')
         throw new Error(`Rust component compilation failed:\n${stderr}`)
       } finally {
-        fs.closeSync(lock)
-        if (fs.existsSync(lockPath)) fs.unlinkSync(lockPath)
+        if (fs.existsSync(temporaryWasmPath)) fs.unlinkSync(temporaryWasmPath)
+        releaseCompileLock(lockPath, lock)
       }
     } else if (lock !== null) {
-      fs.closeSync(lock)
-      if (fs.existsSync(lockPath)) fs.unlinkSync(lockPath)
+      releaseCompileLock(lockPath, lock)
     }
   }
 
@@ -129,13 +133,22 @@ function waitForCompileLock(lockPath, wasmPath) {
   const deadline = Date.now() + 120_000
   for (;;) {
     try {
-      return fs.openSync(lockPath, 'wx')
+      const token = crypto.randomUUID()
+      const descriptor = fs.openSync(lockPath, 'wx')
+      fs.writeFileSync(
+        descriptor,
+        JSON.stringify({ token, pid: process.pid, startedAt: Date.now() })
+      )
+      return { descriptor, token }
     } catch (error) {
       if (error?.code !== 'EEXIST') throw error
       if (fs.existsSync(wasmPath)) return null
       const stat = fs.statSync(lockPath)
       if (Date.now() - stat.mtimeMs > 120_000) {
-        fs.unlinkSync(lockPath)
+        const stale = readLock(lockPath)
+        if (stale && readLock(lockPath)?.token === stale.token) {
+          fs.unlinkSync(lockPath)
+        }
         continue
       }
       if (Date.now() >= deadline) {
@@ -145,6 +158,45 @@ function waitForCompileLock(lockPath, wasmPath) {
       }
       Atomics.wait(waiter, 0, 0, 50)
     }
+  }
+}
+
+function readLock(lockPath) {
+  try {
+    return JSON.parse(fs.readFileSync(lockPath, 'utf8'))
+  } catch {
+    return null
+  }
+}
+
+function releaseCompileLock(lockPath, lock) {
+  fs.closeSync(lock.descriptor)
+  if (readLock(lockPath)?.token === lock.token) fs.unlinkSync(lockPath)
+}
+
+function validateWasm(wasmPath) {
+  const descriptor = fs.openSync(wasmPath, 'r')
+  try {
+    const magic = Buffer.alloc(8)
+    if (fs.readSync(descriptor, magic, 0, magic.length, 0) !== magic.length) {
+      throw new Error(
+        'Rust component compiler produced a truncated Wasm module'
+      )
+    }
+    if (!magic.equals(Buffer.from([0, 97, 115, 109, 1, 0, 0, 0]))) {
+      throw new Error('Rust component compiler produced an invalid Wasm module')
+    }
+  } finally {
+    fs.closeSync(descriptor)
+  }
+}
+
+function discardInvalidWasm(wasmPath) {
+  if (!fs.existsSync(wasmPath)) return
+  try {
+    validateWasm(wasmPath)
+  } catch {
+    fs.unlinkSync(wasmPath)
   }
 }
 

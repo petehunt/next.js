@@ -1,5 +1,3 @@
-
-
 const assert = require('node:assert/strict')
 const crypto = require('node:crypto')
 const fs = require('node:fs')
@@ -123,8 +121,39 @@ async function verify() {
       'no compile lock may survive successful compilation'
     )
 
+    const cacheRoot = path.join(root, '.next', 'cache', 'rust-rsc')
+    const latestCache = cacheEntries(root).sort(
+      (left, right) =>
+        fs.statSync(path.join(cacheRoot, right, 'component.wasm')).mtimeMs -
+        fs.statSync(path.join(cacheRoot, left, 'component.wasm')).mtimeMs
+    )[0]
+    const cacheDirectory = path.join(
+      root,
+      '.next',
+      'cache',
+      'rust-rsc',
+      latestCache
+    )
+    fs.writeFileSync(path.join(cacheDirectory, 'component.wasm'), 'partial')
+    const staleLock = path.join(cacheDirectory, '.compile.lock')
+    fs.writeFileSync(
+      staleLock,
+      JSON.stringify({ token: 'abandoned', pid: -1, startedAt: 0 })
+    )
+    const staleTime = new Date(Date.now() - 121_000)
+    fs.utimesSync(staleLock, staleTime, staleTime)
+    await runWorker(root, wrapper, copiedSdkPath)
+    assert.deepEqual(
+      fs
+        .readFileSync(path.join(cacheDirectory, 'component.wasm'))
+        .subarray(0, 8),
+      Buffer.from([0, 97, 115, 109, 1, 0, 0, 0]),
+      'an abandoned partial artifact must be rebuilt'
+    )
+    assert.deepEqual(findLocks(root), [], 'stale lock must be recovered')
+
     process.stdout.write(
-      `Rust loader cache coalescing, source/SDK invalidation, and toolchain invalidation verified ` +
+      `Rust loader cache coalescing, crash recovery, source/SDK invalidation, and toolchain invalidation verified ` +
         `(first ${firstCompileMs.toFixed(0)}ms, cached ${cachedLoadMs.toFixed(0)}ms, ` +
         `incremental ${incrementalCompileMs.toFixed(0)}ms)\n`
     )

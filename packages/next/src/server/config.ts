@@ -425,7 +425,6 @@ function assignDefaultsAndValidate(
     const rustLoader = require.resolve(
       '../build/webpack/loaders/next-rsc-loader'
     )
-    require(rustLoader).prepareRustErrorSidecars(dir)
     result.turbopack = {
       ...result.turbopack,
       rules: {

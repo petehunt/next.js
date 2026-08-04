@@ -78,25 +78,7 @@ module.exports = function rustRscPrototypeLoader(source) {
     this.resourcePath === path.join(this.rootContext, 'app', 'layout.rs') &&
     fs.existsSync(path.join(this.rootContext, 'app', 'catalog.css'))
   if (componentKind === 'error') {
-    const adapter = createErrorAdapterSource(wasm.toString('base64'))
-    // Turbopack's client-boundary graph resolves the loader-renamed identity
-    // as a sibling file. Materialize that generated identity for the prototype;
-    // Webpack continues to consume the loader result directly.
-    const clientSidecarPath = `${this.resourcePath}.js`
-    if (
-      !fs.existsSync(clientSidecarPath) ||
-      fs.readFileSync(clientSidecarPath, 'utf8') !== adapter
-    ) {
-      fs.writeFileSync(clientSidecarPath, adapter)
-    }
-    return adapter
-  }
-  const wasmSidecarPath = this.resourcePath.replace(/\.rs$/, '.rust-rsc.wasm')
-  if (
-    !fs.existsSync(wasmSidecarPath) ||
-    !fs.readFileSync(wasmSidecarPath).equals(wasm)
-  ) {
-    fs.writeFileSync(wasmSidecarPath, wasm)
+    return createErrorAdapterSource(wasm.toString('base64'))
   }
   return createAdapterSource(
     wasm.toString('base64'),
@@ -111,7 +93,6 @@ module.exports = function rustRscPrototypeLoader(source) {
     readsFetch,
     readsCacheTag,
     digest,
-    `./${path.basename(wasmSidecarPath)}?module`,
     runtime,
     this.resourcePath
   )
@@ -226,7 +207,6 @@ function createAdapterSource(
   readsFetch,
   readsCacheTag,
   digest,
-  wasmModuleRequest,
   runtime,
   componentPath
 ) {
@@ -242,27 +222,12 @@ ${runtime ? `export const runtime = ${JSON.stringify(runtime)}` : ''}
 ${runtime ? `if (process.env.NEXT_RUNTIME !== ${JSON.stringify(runtime)}) { throw new Error('Rust RSC runtime selection mismatch: expected ${runtime}') }` : ''}
 
 let wasmInstance
-const edgeWasmPromise = process.env.NEXT_RUNTIME === 'edge'
-  ? require(${JSON.stringify(wasmModuleRequest)})
-  : null
 if (process.env.NEXT_RUNTIME === 'edge') {
-  const wasmBinding = await edgeWasmPromise
-  let wasmValue = wasmBinding
-  for (let unwrap = 0; unwrap < 4; unwrap++) {
-    if (Object.prototype.toString.call(wasmValue) === '[object WebAssembly.Module]') break
-    if (typeof wasmValue?.next_rsc_alloc === 'function') break
-    if (typeof wasmValue?.exports?.next_rsc_alloc === 'function') break
-    if (!wasmValue?.default || wasmValue.default === wasmValue) break
-    wasmValue = await wasmValue.default
-  }
-  wasmInstance = Object.prototype.toString.call(wasmValue) === '[object WebAssembly.Module]'
-    ? new WebAssembly.Instance(wasmValue, {})
-    : typeof wasmValue?.exports?.next_rsc_alloc === 'function'
-      ? wasmValue
-      : { exports: wasmValue }
-  if (typeof wasmInstance.exports.next_rsc_alloc !== 'function') {
-    throw new Error('Rust RSC Wasm binding did not expose the component ABI')
-  }
+  const wasmBytes = Uint8Array.from(
+    atob(${JSON.stringify(wasmBase64)}),
+    (char) => char.charCodeAt(0)
+  )
+  wasmInstance = new WebAssembly.Instance(new WebAssembly.Module(wasmBytes), {})
 } else {
   wasmInstance = new WebAssembly.Instance(
     new WebAssembly.Module(Buffer.from(${JSON.stringify(wasmBase64)}, 'base64')),

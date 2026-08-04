@@ -34,9 +34,20 @@ const componentSources = [
     ? ['rust-rsc-rewrites.json']
     : []),
 ]
+const repositoryRoot = path.join(__dirname, '..')
+const executableInputs = [
+  ...listFiles(path.join(__dirname, 'native-runtime', 'src')),
+  ...listFiles(path.join(repositoryRoot, 'crates', 'next-rsc', 'src')),
+  ...listFiles(path.join(repositoryRoot, 'crates', 'next-rsc-flight', 'src')),
+  path.join(__dirname, 'native-runtime', 'Cargo.toml'),
+  path.join(__dirname, 'native-runtime', 'Cargo.lock'),
+  path.join(repositoryRoot, 'crates', 'next-rsc', 'Cargo.toml'),
+  path.join(repositoryRoot, 'crates', 'next-rsc-flight', 'Cargo.toml'),
+  path.join(repositoryRoot, 'rust-toolchain.toml'),
+].filter(fs.existsSync)
 const buildId = crypto
   .createHash('sha256')
-  .update('rust-rsc-native-manifest-v2\0')
+  .update('rust-rsc-native-manifest-v3\0')
   .update(
     componentSources
       .sort()
@@ -46,8 +57,24 @@ const buildId = crypto
       )
       .join('\0')
   )
+  .update('\0executable-inputs\0')
+  .update(
+    executableInputs
+      .sort()
+      .map(
+        (filename) =>
+          `${path.relative(repositoryRoot, filename)}\0${fs.readFileSync(filename)}`
+      )
+      .join('\0')
+  )
+  .update('\0deployment-assets\0')
+  .update(JSON.stringify(bootstrapAssets))
+  .update('\0client-references\0')
+  .update(
+    JSON.stringify({ catalogClientReference, nextInternalClientReferences })
+  )
   .digest('hex')
-  .slice(0, 16)
+  .slice(0, 32)
 
 const manifest = {
   version: 2,

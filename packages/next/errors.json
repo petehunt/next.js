@@ -1468,5 +1468,9 @@
   "1467": "TypeScript %s does not provide the compiler API required by Next.js. Set %s back to true in your Next.js config to use the TypeScript CLI, or install TypeScript 6 instead.",
   "1468": "experimental.rustServerComponents requires %s while the compiler is prototyped",
   "1469": "Timed out waiting for Rust RSC compile lock: %s",
-  "1470": "Rust component compilation failed:\\n%s"
+  "1470": "Rust component compilation failed:\\n%s",
+  "1471": "Rust native routes are enabled by %s, but %s is missing",
+  "1472": "Rust component compiler produced a truncated Wasm module",
+  "1473": "Rust native route build did not emit %s",
+  "1474": "Rust component compiler produced an invalid Wasm module"
 }

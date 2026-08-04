@@ -146,7 +146,8 @@ Run these in separate terminals:
 ```bash
 pnpm catalog:service
 pnpm dev
-PORT=3039 cargo run --manifest-path native-runtime/Cargo.toml
+RUST_RSC_REVALIDATE_TOKEN=local-secret PORT=3039 \
+  cargo run --manifest-path native-runtime/Cargo.toml
 ```
 
 Compare `/catalog/js` and `/catalog/rust` on port 3027 with the Node-free Rust
@@ -154,16 +155,19 @@ catalog at `http://localhost:3039/catalog/rust`. Query parameters such as
 `category`, `q`, `material`, `sort`, `page`, `categoryDelay`, and
 `productDelay` exercise filtering and independent async regions.
 
-To populate and invalidate the native warm cache (using the default native
-port 3030):
+To populate and invalidate the native warm cache:
 
 ```bash
-curl 'http://127.0.0.1:3030/catalog/rust?cache=warm'
-curl -X POST http://127.0.0.1:3030/api/revalidate
+curl 'http://127.0.0.1:3039/catalog/rust?cache=warm'
+curl -X POST \
+  -H 'Authorization: Bearer local-secret' \
+  http://127.0.0.1:3039/api/revalidate
 ```
 
 The POST executes `app/api/revalidate/route.rs` and reports the number of
-mutation requests applied and warm entries cleared.
+mutation requests applied and warm entries cleared. Native revalidation is
+disabled unless `RUST_RSC_REVALIDATE_TOKEN` is configured, and its responses
+are always private and non-cacheable.
 
 ### Local benchmark
 

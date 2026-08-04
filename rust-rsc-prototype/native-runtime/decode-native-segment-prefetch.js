@@ -13,6 +13,12 @@ const { createFromReadableStream } = require(
 const manifest = require('./rust-rsc-route-manifest.json')
 
 async function main() {
+  const staticDocument = await fetch('http://127.0.0.1:3030/rust-page')
+  assert.equal(
+    staticDocument.headers.get('cache-control'),
+    'public, max-age=0, must-revalidate'
+  )
+
   const treeResponse = await fetch(
     'http://127.0.0.1:3030/rust-page?q=segment',
     {
@@ -42,6 +48,20 @@ async function main() {
   for await (const staleTime of root.data[0].staleTime)
     staleTimes.push(staleTime)
   assert.deepEqual(staleTimes, [300])
+
+  const requestResponse = await fetchPpr('/request', '/request/__PAGE__', '', {
+    'x-demo-mode': 'first',
+    cookie: 'session=one',
+  })
+  assert.equal(
+    requestResponse.headers.get('cache-control'),
+    'private, no-store'
+  )
+  const requestPage = await decode(requestResponse)
+  const requestStaleTimes = []
+  for await (const staleTime of requestPage.data[0].staleTime)
+    requestStaleTimes.push(staleTime)
+  assert.deepEqual(requestStaleTimes, [0])
 
   const page = await fetchSegment('/rust-page/__PAGE__')
   assert.equal(page.data[0].rsc.type, 'article')
@@ -149,12 +169,13 @@ async function fetchSegment(
   return decode(response)
 }
 
-function fetchPpr(pathname, segmentPath, query = 'q=segment') {
+function fetchPpr(pathname, segmentPath, query = 'q=segment', headers = {}) {
   return fetch(`http://127.0.0.1:3030${pathname}?${query}`, {
     headers: {
       RSC: '1',
       'Next-Router-Prefetch': '1',
       'Next-Router-Segment-Prefetch': segmentPath,
+      ...headers,
     },
   })
 }

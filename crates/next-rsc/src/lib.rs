@@ -498,13 +498,25 @@ pub struct PageProps {
     pub request: RequestData,
 }
 
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Default)]
 pub struct RequestData {
     pub headers: BTreeMap<String, String>,
     pub cookies: BTreeMap<String, String>,
     pub fetch_responses: BTreeMap<String, HostFetchResponse>,
     pub cache_tags: BTreeSet<String>,
+    runtime_data_accessed: Arc<AtomicBool>,
 }
+
+impl PartialEq for RequestData {
+    fn eq(&self, other: &Self) -> bool {
+        self.headers == other.headers
+            && self.cookies == other.cookies
+            && self.fetch_responses == other.fetch_responses
+            && self.cache_tags == other.cache_tags
+    }
+}
+
+impl Eq for RequestData {}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct HostFetchResponse {
@@ -514,13 +526,20 @@ pub struct HostFetchResponse {
 
 impl RequestData {
     pub fn header(&self, name: &str) -> Option<&str> {
+        self.runtime_data_accessed.store(true, Ordering::Release);
         self.headers
             .get(&name.to_ascii_lowercase())
             .map(String::as_str)
     }
 
     pub fn cookie(&self, name: &str) -> Option<&str> {
+        self.runtime_data_accessed.store(true, Ordering::Release);
         self.cookies.get(name).map(String::as_str)
+    }
+
+    /// Reports whether a component sharing this request accessed headers or cookies.
+    pub fn accessed_runtime_data(&self) -> bool {
+        self.runtime_data_accessed.load(Ordering::Acquire)
     }
 
     pub fn fetch_text(&self, url: &str) -> Result<&str, RenderError> {
@@ -1016,7 +1035,11 @@ mod tests {
         let mut request = RequestData::default();
         request.headers.insert("x-example".into(), "rust".into());
         request.cookies.insert("session".into(), "trusted".into());
+        let clone = request.clone();
+        assert!(!request.accessed_runtime_data());
         assert_eq!(request.header("X-Example"), Some("rust"));
+        assert!(request.accessed_runtime_data());
+        assert!(clone.accessed_runtime_data());
         assert_eq!(request.cookie("session"), Some("trusted"));
         assert_eq!(request.header("x-matched-path"), None);
     }

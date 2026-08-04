@@ -23,11 +23,23 @@ include!("generated_routes.rs");
 
 const MAX_HEADER_BYTES: usize = 32 * 1024;
 const MAX_BODY_BYTES: usize = 1024 * 1024;
+const MAX_ACTIVE_REQUESTS: usize = 128;
 const IO_TIMEOUT: Duration = Duration::from_secs(10);
 static ACTIVE_REQUESTS: AtomicUsize = AtomicUsize::new(0);
 static NEXT_REQUEST_ID: AtomicUsize = AtomicUsize::new(1);
 
 struct ActiveRequest;
+
+impl ActiveRequest {
+    fn try_acquire() -> Option<Self> {
+        ACTIVE_REQUESTS
+            .try_update(Ordering::AcqRel, Ordering::Acquire, |active| {
+                (active < MAX_ACTIVE_REQUESTS).then_some(active + 1)
+            })
+            .ok()
+            .map(|_| Self)
+    }
+}
 
 impl Drop for ActiveRequest {
     fn drop(&mut self) {
@@ -47,13 +59,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     while !shutdown.load(Ordering::Acquire) {
         match listener.accept() {
             Ok((mut stream, _peer)) => {
-                ACTIVE_REQUESTS.fetch_add(1, Ordering::AcqRel);
-                thread::spawn(move || {
-                    let _active = ActiveRequest;
-                    if let Err(error) = handle_request(&mut stream) {
-                        eprintln!("request failed: {error}");
-                    }
-                });
+                let Some(active) = ActiveRequest::try_acquire() else {
+                    let _ = write_response(
+                        &mut stream,
+                        "503 Service Unavailable",
+                        "text/plain",
+                        b"Native runtime is at capacity",
+                    );
+                    continue;
+                };
+                let _ = thread::Builder::new()
+                    .name("rust-rsc-request".to_owned())
+                    .spawn(move || {
+                        let _active = active;
+                        if let Err(error) = handle_request(&mut stream) {
+                            eprintln!("request failed: {error}");
+                        }
+                    });
             }
             Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
                 thread::sleep(Duration::from_millis(10));
@@ -101,7 +123,12 @@ fn handle_request_inner(
     let mut request_parts = first_line.split_whitespace();
     let method = request_parts.next().unwrap_or_default();
     let request_target = request_parts.next().unwrap_or("/");
-    if request_parts.next() != Some("HTTP/1.1") {
+    if method.is_empty()
+        || !request_target.starts_with('/')
+        || request_target.contains('#')
+        || request_parts.next() != Some("HTTP/1.1")
+        || request_parts.next().is_some()
+    {
         return write_response(
             stream,
             "400 Bad Request",
@@ -191,7 +218,7 @@ fn handle_request_inner(
     search_params.remove("_rsc");
     let rendered_search = ordered_search(raw_query).ok_or("Invalid query string")?;
     if pathname == "/api/revalidate" && method == "POST" {
-        return execute_native_revalidation(stream);
+        return execute_native_revalidation(stream, &headers);
     }
     if method != "GET" && method != "HEAD" {
         return write_method_not_allowed(stream);
@@ -233,8 +260,16 @@ fn handle_request_inner(
             );
         };
         return match segment {
-            Ok(node) => write_native_ppr_segment(stream, node, method),
-            Err(error) => write_render_error(stream, error, true, method),
+            Ok(node) => {
+                write_native_ppr_segment(stream, node, method, request_data.accessed_runtime_data())
+            }
+            Err(error) => write_render_error(
+                stream,
+                error,
+                true,
+                method,
+                request_data.accessed_runtime_data(),
+            ),
         };
     }
     if request_kind == RequestKind::InterceptionNavigation {
@@ -262,6 +297,7 @@ fn handle_request_inner(
                 stream,
                 &catalog_refetch_payload(&rendered_search, tree),
                 method,
+                true,
             );
         }
         return write_streaming_catalog_flight(stream, &search_params, &rendered_search);
@@ -294,7 +330,15 @@ fn handle_request_inner(
     let wants_flight = request_kind != RequestKind::Document;
     let tree = match tree {
         Ok(tree) => tree,
-        Err(error) => return write_render_error(stream, error, wants_flight, method),
+        Err(error) => {
+            return write_render_error(
+                stream,
+                error,
+                wants_flight,
+                method,
+                request_data.accessed_runtime_data(),
+            );
+        }
     };
 
     if wants_flight {
@@ -302,6 +346,7 @@ fn handle_request_inner(
             stream,
             &navigation_payload(pathname, &rendered_search, tree),
             method,
+            request_data.accessed_runtime_data(),
         )
     } else {
         let mut html = String::from("<!DOCTYPE html>");
@@ -312,40 +357,119 @@ fn handle_request_inner(
             tree,
         ))?;
         inject_app_router_bootstrap(&mut html, &flight)?;
-        write_response_for_method(
+        write_response_for_method_with_cache(
             stream,
             "200 OK",
             "text/html; charset=utf-8",
             html.as_bytes(),
             method,
+            request_data.accessed_runtime_data(),
         )
     }
 }
 
-fn execute_native_revalidation(stream: &mut TcpStream) -> Result<(), Box<dyn std::error::Error>> {
-    use next_rsc::RevalidationRequest;
+fn execute_native_revalidation(
+    stream: &mut TcpStream,
+    headers: &[(&str, &str)],
+) -> Result<(), Box<dyn std::error::Error>> {
+    use next_rsc::{RevalidationPathKind, RevalidationRequest};
+    let Ok(expected_token) = env::var("RUST_RSC_REVALIDATE_TOKEN") else {
+        return write_response_for_method_with_cache(
+            stream,
+            "503 Service Unavailable",
+            "application/json",
+            br#"{"error":"native revalidation is disabled"}"#,
+            "POST",
+            true,
+        );
+    };
+    let provided_token = headers.iter().find_map(|(name, value)| {
+        if name.eq_ignore_ascii_case("authorization") {
+            value.trim().strip_prefix("Bearer ")
+        } else if name.eq_ignore_ascii_case("x-rust-rsc-revalidate-token") {
+            Some(value.trim())
+        } else {
+            None
+        }
+    });
+    if expected_token.is_empty()
+        || !provided_token.is_some_and(|provided| constant_time_equal(provided, &expected_token))
+    {
+        return write_response_for_method_with_cache(
+            stream,
+            "401 Unauthorized",
+            "application/json",
+            br#"{"error":"unauthorized"}"#,
+            "POST",
+            true,
+        );
+    }
+
     let mut context = next_rsc::MutationContext::default();
     revalidate_route::handle(&mut context)?;
     let requests = context.into_requests();
+    if requests.iter().any(|request| {
+        !matches!(
+            request,
+            RevalidationRequest::Tag { tag, profile }
+                if tag == "catalog" && profile == "max"
+        ) && !matches!(request, RevalidationRequest::UpdateTag { tag } if tag == "catalog")
+            && !matches!(
+                request,
+                RevalidationRequest::Path {
+                    path,
+                    kind: Some(RevalidationPathKind::Page),
+                } if path == "/catalog/rust"
+            )
+    }) {
+        return write_response_for_method_with_cache(
+            stream,
+            "501 Not Implemented",
+            "application/json",
+            br#"{"error":"unsupported native revalidation request"}"#,
+            "POST",
+            true,
+        );
+    }
+
     let mut cleared = 0;
+    let mut applied = 0;
     for request in &requests {
         match request {
             RevalidationRequest::Tag { tag, .. } | RevalidationRequest::UpdateTag { tag }
                 if tag == "catalog" =>
             {
                 cleared += catalog::invalidate_warm_cache();
+                applied += 1;
             }
             RevalidationRequest::Path { path, .. } if path == "/catalog/rust" => {
                 cleared += catalog::invalidate_warm_cache();
+                applied += 1;
             }
-            _ => {}
+            _ => unreachable!("unsupported revalidation was rejected before mutation"),
         }
     }
-    let body = format!(
-        "{{\"applied\":{},\"warmEntriesCleared\":{cleared}}}",
-        requests.len()
-    );
-    write_response(stream, "200 OK", "application/json", body.as_bytes())
+    let body = format!("{{\"applied\":{applied},\"warmEntriesCleared\":{cleared}}}");
+    write_response_for_method_with_cache(
+        stream,
+        "200 OK",
+        "application/json",
+        body.as_bytes(),
+        "POST",
+        true,
+    )
+}
+
+fn constant_time_equal(provided: &str, expected: &str) -> bool {
+    let provided = provided.as_bytes();
+    let expected = expected.as_bytes();
+    let mut difference = provided.len() ^ expected.len();
+    for index in 0..provided.len().max(expected.len()) {
+        difference |= usize::from(
+            provided.get(index).copied().unwrap_or(0) ^ expected.get(index).copied().unwrap_or(0),
+        );
+    }
+    difference == 0
 }
 
 fn fallback_segment_prefetch(
@@ -446,18 +570,20 @@ fn write_native_ppr_tree(
         ("tree", tree),
         ("staleTime", Number(300.0)),
     ]);
-    write_ppr_flight_response(stream, &payload, method)
+    write_ppr_flight_response(stream, &payload, method, false)
 }
 
 fn write_native_ppr_segment(
     stream: &mut TcpStream,
     node: Node,
     method: &str,
+    runtime_data_accessed: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     use next_rsc_flight::FlightValue::{
         Array, AsyncIterable, Bool, Deferred, Node as FlightNode, Null, Number,
         String as FlightString,
     };
+    let stale_time = if runtime_data_accessed { 0.0 } else { 300.0 };
     let segment = next_rsc_flight::FlightValue::object([
         ("rsc", FlightNode(node)),
         ("isPartial", Deferred(Box::new(Null))),
@@ -465,7 +591,7 @@ fn write_native_ppr_segment(
             "staleTime",
             AsyncIterable {
                 iterator: false,
-                values: vec![Number(300.0)],
+                values: vec![Number(stale_time)],
                 completion: None,
             },
         ),
@@ -479,21 +605,23 @@ fn write_native_ppr_segment(
         ("rootVaryParams", Null),
         ("needsRuntimeRequest", Deferred(Box::new(Bool(false)))),
     ]);
-    write_ppr_flight_response(stream, &payload, method)
+    write_ppr_flight_response(stream, &payload, method, runtime_data_accessed)
 }
 
 fn write_ppr_flight_response(
     stream: &mut TcpStream,
     payload: &next_rsc_flight::FlightValue,
     method: &str,
+    runtime_data_accessed: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let body = next_rsc_flight::encode_root_value(payload)?;
     let headers = format!(
         "HTTP/1.1 200 OK\r\nContent-Type: text/x-component\r\nx-nextjs-postponed: \
-         2\r\nContent-Length: {}\r\nVary: RSC, Next-Router-State-Tree, Next-Router-Prefetch, \
-         Next-Router-Segment-Prefetch\r\nX-Content-Type-Options: nosniff\r\nConnection: \
-         close\r\n\r\n",
-        body.len()
+         2\r\nContent-Length: {}\r\nCache-Control: {}\r\nVary: RSC, Next-Router-State-Tree, \
+         Next-Router-Prefetch, Next-Router-Segment-Prefetch\r\nX-Content-Type-Options: \
+         nosniff\r\nConnection: close\r\n\r\n",
+        body.len(),
+        route_cache_control(runtime_data_accessed),
     );
     stream.write_all(headers.as_bytes())?;
     if method != "HEAD" {
@@ -668,7 +796,7 @@ fn write_streaming_catalog_document(
     search_params: &BTreeMap<String, next_rsc::ParamValue>,
     rendered_search: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    stream.write_all(b"HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nTransfer-Encoding: chunked\r\nVary: RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch\r\nX-Content-Type-Options: nosniff\r\nConnection: close\r\n\r\n")?;
+    stream.write_all(b"HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nTransfer-Encoding: chunked\r\nCache-Control: private, no-store\r\nVary: RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch\r\nX-Content-Type-Options: nosniff\r\nConnection: close\r\n\r\n")?;
     let mut initial = format!(
         "<!DOCTYPE html><html><head><script>self.__next_r=\"{RUST_RSC_BUILD_ID}\"</script><link \
          rel=\"preload\" as=\"script\" fetchpriority=\"low\" href=\"{RUST_RSC_WEBPACK_ASSET}\">"
@@ -747,7 +875,7 @@ fn write_streaming_catalog_flight(
     search_params: &BTreeMap<String, next_rsc::ParamValue>,
     rendered_search: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    stream.write_all(b"HTTP/1.1 200 OK\r\nContent-Type: text/x-component\r\nTransfer-Encoding: chunked\r\nVary: RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch\r\nX-Content-Type-Options: nosniff\r\nConnection: close\r\n\r\n")?;
+    stream.write_all(b"HTTP/1.1 200 OK\r\nContent-Type: text/x-component\r\nTransfer-Encoding: chunked\r\nCache-Control: private, no-store\r\nVary: RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch\r\nX-Content-Type-Options: nosniff\r\nConnection: close\r\n\r\n")?;
     let mut graph = next_rsc_flight::FlightTaskGraph::new(Default::default());
     let (task_id, pending_seed) = graph.reserve_task()?;
     let pending = catalog_navigation_payload_with_seed(rendered_search, pending_seed);
@@ -1213,6 +1341,7 @@ fn write_flight_response(
     stream: &mut TcpStream,
     value: &next_rsc_flight::FlightValue,
     method: &str,
+    runtime_data_accessed: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let chunks = next_rsc_flight::encode_root_chunks_with_limits(
         value,
@@ -1223,15 +1352,23 @@ fn write_flight_response(
         write!(
             stream,
             "HTTP/1.1 200 OK\r\nContent-Type: text/x-component\r\nContent-Length: \
-             {content_length}\r\nVary: RSC, Next-Router-State-Tree, Next-Router-Prefetch, \
-             Next-Router-Segment-Prefetch\r\nX-Content-Type-Options: nosniff\r\nConnection: \
-             close\r\n\r\n"
+             {content_length}\r\nCache-Control: {}\r\nVary: RSC, Next-Router-State-Tree, \
+             Next-Router-Prefetch, Next-Router-Segment-Prefetch\r\nX-Content-Type-Options: \
+             nosniff\r\nConnection: close\r\n\r\n",
+            route_cache_control(runtime_data_accessed),
         )?;
         return Ok(());
     }
 
     stream.write_all(
-        b"HTTP/1.1 200 OK\r\nContent-Type: text/x-component\r\nTransfer-Encoding: chunked\r\nVary: RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch\r\nX-Content-Type-Options: nosniff\r\nConnection: close\r\n\r\n",
+        format!(
+            "HTTP/1.1 200 OK\r\nContent-Type: text/x-component\r\nTransfer-Encoding: \
+             chunked\r\nCache-Control: {}\r\nVary: RSC, Next-Router-State-Tree, \
+             Next-Router-Prefetch, Next-Router-Segment-Prefetch\r\nX-Content-Type-Options: \
+             nosniff\r\nConnection: close\r\n\r\n",
+            route_cache_control(runtime_data_accessed)
+        )
+        .as_bytes(),
     )?;
     for chunk in chunks {
         write!(stream, "{:x}\r\n", chunk.len())?;
@@ -1435,14 +1572,46 @@ fn read_request(stream: &mut TcpStream) -> Result<Vec<u8>, (&'static str, String
             "Request headers must be UTF-8".to_owned(),
         )
     })?;
-    let content_length = headers
+    let mut content_length = None;
+    for line in headers
         .split("\r\n")
-        .filter_map(|line| line.split_once(':'))
-        .find(|(name, _)| name.eq_ignore_ascii_case("content-length"))
-        .map(|(_, value)| value.trim().parse::<usize>())
-        .transpose()
-        .map_err(|_| ("400 Bad Request", "Invalid Content-Length".to_owned()))?
-        .unwrap_or(0);
+        .skip(1)
+        .filter(|line| !line.is_empty())
+    {
+        if line.starts_with(' ') || line.starts_with('\t') {
+            return Err(("400 Bad Request", "Obsolete folded header".to_owned()));
+        }
+        let Some((name, value)) = line.split_once(':') else {
+            return Err(("400 Bad Request", "Malformed request header".to_owned()));
+        };
+        if !valid_http_token(name) {
+            return Err(("400 Bad Request", "Invalid request header name".to_owned()));
+        }
+        if name.eq_ignore_ascii_case("transfer-encoding") {
+            return Err((
+                "400 Bad Request",
+                "Transfer-Encoding is unsupported".to_owned(),
+            ));
+        }
+        if name.eq_ignore_ascii_case("expect") {
+            return Err(("417 Expectation Failed", "Expect is unsupported".to_owned()));
+        }
+        if name.eq_ignore_ascii_case("content-length") {
+            if content_length.is_some() {
+                return Err(("400 Bad Request", "Duplicate Content-Length".to_owned()));
+            }
+            let value = value.trim();
+            if value.is_empty() || !value.bytes().all(|byte| byte.is_ascii_digit()) {
+                return Err(("400 Bad Request", "Invalid Content-Length".to_owned()));
+            }
+            content_length = Some(
+                value
+                    .parse::<usize>()
+                    .map_err(|_| ("400 Bad Request", "Invalid Content-Length".to_owned()))?,
+            );
+        }
+    }
+    let content_length = content_length.unwrap_or(0);
     if content_length > MAX_BODY_BYTES {
         return Err(("413 Payload Too Large", "Request body too large".to_owned()));
     }
@@ -1462,6 +1631,30 @@ fn read_request(stream: &mut TcpStream) -> Result<Vec<u8>, (&'static str, String
     Ok(request)
 }
 
+fn valid_http_token(value: &str) -> bool {
+    !value.is_empty()
+        && value.bytes().all(|byte| {
+            byte.is_ascii_alphanumeric()
+                || matches!(
+                    byte,
+                    b'!' | b'#'
+                        | b'$'
+                        | b'%'
+                        | b'&'
+                        | b'\''
+                        | b'*'
+                        | b'+'
+                        | b'-'
+                        | b'.'
+                        | b'^'
+                        | b'_'
+                        | b'`'
+                        | b'|'
+                        | b'~'
+                )
+        })
+}
+
 fn find_bytes(haystack: &[u8], needle: &[u8]) -> Option<usize> {
     haystack
         .windows(needle.len())
@@ -1473,21 +1666,28 @@ fn write_render_error(
     error: RenderError,
     wants_flight: bool,
     method: &str,
+    runtime_data_accessed: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if wants_flight {
-        return write_response_for_method(
+        return write_response_for_method_with_cache(
             stream,
             "200 OK",
             "text/x-component",
             &next_rsc_flight::encode_error(&error.flight_digest()),
             method,
+            runtime_data_accessed,
         );
     }
 
     match error {
-        RenderError::NotFound => {
-            write_response_for_method(stream, "404 Not Found", "text/plain", b"Not found", method)
-        }
+        RenderError::NotFound => write_response_for_method_with_cache(
+            stream,
+            "404 Not Found",
+            "text/plain",
+            b"Not found",
+            method,
+            runtime_data_accessed,
+        ),
         RenderError::Redirect { location, status } => {
             if location.contains(['\r', '\n']) {
                 return write_response(
@@ -1500,34 +1700,43 @@ fn write_render_error(
             write!(
                 stream,
                 "HTTP/1.1 {status} Temporary Redirect\r\nLocation: {location}\r\nContent-Length: \
-                 0\r\nConnection: close\r\n\r\n"
+                 0\r\nCache-Control: {}\r\nConnection: close\r\n\r\n",
+                route_cache_control(runtime_data_accessed),
             )?;
             Ok(())
         }
-        RenderError::Forbidden => {
-            write_response_for_method(stream, "403 Forbidden", "text/plain", b"Forbidden", method)
-        }
-        RenderError::Unauthorized => write_response_for_method(
+        RenderError::Forbidden => write_response_for_method_with_cache(
+            stream,
+            "403 Forbidden",
+            "text/plain",
+            b"Forbidden",
+            method,
+            runtime_data_accessed,
+        ),
+        RenderError::Unauthorized => write_response_for_method_with_cache(
             stream,
             "401 Unauthorized",
             "text/plain",
             b"Unauthorized",
             method,
+            runtime_data_accessed,
         ),
-        RenderError::Message(message) => write_response_for_method(
+        RenderError::Message(message) => write_response_for_method_with_cache(
             stream,
             "500 Internal Server Error",
             "text/plain",
             message.as_bytes(),
             method,
+            runtime_data_accessed,
         ),
         RenderError::HostFetch { .. } | RenderError::HostCacheTag { .. } => {
-            write_response_for_method(
+            write_response_for_method_with_cache(
                 stream,
                 "501 Not Implemented",
                 "text/plain",
                 b"Synchronous native components cannot request bridge host effects",
                 method,
+                runtime_data_accessed,
             )
         }
     }
@@ -1745,6 +1954,37 @@ fn write_response(
     write_response_for_method(stream, status, content_type, body, "GET")
 }
 
+fn route_cache_control(runtime_data_accessed: bool) -> &'static str {
+    if runtime_data_accessed {
+        "private, no-store"
+    } else {
+        "public, max-age=0, must-revalidate"
+    }
+}
+
+fn write_response_for_method_with_cache(
+    stream: &mut TcpStream,
+    status: &str,
+    content_type: &str,
+    body: &[u8],
+    method: &str,
+    runtime_data_accessed: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    write!(
+        stream,
+        "HTTP/1.1 {status}\r\nContent-Type: {content_type}\r\nContent-Length: \
+         {}\r\nCache-Control: {}\r\nVary: RSC, Next-Router-State-Tree, Next-Router-Prefetch, \
+         Next-Router-Segment-Prefetch\r\nX-Content-Type-Options: nosniff\r\nConnection: \
+         close\r\n\r\n",
+        body.len(),
+        route_cache_control(runtime_data_accessed),
+    )?;
+    if method != "HEAD" {
+        stream.write_all(body)?;
+    }
+    Ok(())
+}
+
 fn write_response_for_method(
     stream: &mut TcpStream,
     status: &str,
@@ -1777,9 +2017,60 @@ mod tests {
     };
 
     use crate::{
-        NativeRewrite, RequestKind, apply_native_rewrite, classify_request, normalize_request_path,
-        proxy_to_fallback, trailing_slash_redirect,
+        ActiveRequest, MAX_ACTIVE_REQUESTS, NativeRewrite, RequestKind, apply_native_rewrite,
+        classify_request, constant_time_equal, normalize_request_path, proxy_to_fallback,
+        read_request, trailing_slash_redirect,
     };
+
+    fn parse_raw_request(raw: &'static [u8]) -> Result<Vec<u8>, (&'static str, String)> {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let writer = thread::spawn(move || {
+            let mut stream = TcpStream::connect(address).unwrap();
+            stream.write_all(raw).unwrap();
+            stream.shutdown(Shutdown::Write).unwrap();
+        });
+        let (mut stream, _) = listener.accept().unwrap();
+        stream
+            .set_read_timeout(Some(Duration::from_secs(1)))
+            .unwrap();
+        let result = read_request(&mut stream);
+        writer.join().unwrap();
+        result
+    }
+
+    #[test]
+    fn request_parser_rejects_ambiguous_framing_and_malformed_headers() {
+        for raw in [
+            b"POST / HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\n".as_slice(),
+            b"POST / HTTP/1.1\r\nContent-Length: 0\r\nContent-Length: 0\r\n\r\n".as_slice(),
+            b"GET / HTTP/1.1\r\n folded: value\r\n\r\n".as_slice(),
+            b"GET / HTTP/1.1\r\nmalformed\r\n\r\n".as_slice(),
+        ] {
+            assert_eq!(parse_raw_request(raw).unwrap_err().0, "400 Bad Request");
+        }
+        assert_eq!(
+            parse_raw_request(b"POST / HTTP/1.1\r\nContent-Length: 4\r\n\r\nrust").unwrap(),
+            b"POST / HTTP/1.1\r\nContent-Length: 4\r\n\r\nrust"
+        );
+    }
+
+    #[test]
+    fn active_request_admission_is_bounded() {
+        let active: Vec<_> = (0..MAX_ACTIVE_REQUESTS)
+            .map(|_| ActiveRequest::try_acquire().unwrap())
+            .collect();
+        assert!(ActiveRequest::try_acquire().is_none());
+        drop(active);
+        assert!(ActiveRequest::try_acquire().is_some());
+    }
+
+    #[test]
+    fn revalidation_token_comparison_checks_full_value() {
+        assert!(constant_time_equal("local-secret", "local-secret"));
+        assert!(!constant_time_equal("local-secreu", "local-secret"));
+        assert!(!constant_time_equal("local-secret-extra", "local-secret"));
+    }
 
     #[test]
     fn interception_state_falls_back_before_native_route_selection() {

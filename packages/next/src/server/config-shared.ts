@@ -464,6 +464,8 @@ export function resolveCssChunkingMode(
 }
 
 export interface ExperimentalConfig {
+  /** Enable experimental Rust Server Component file conventions. */
+  rustServerComponents?: boolean
   /**
    * @deprecated Use the top-level `outputHashSalt` option instead.
    */
@@ -2156,6 +2158,7 @@ export const defaultConfig = Object.freeze({
   },
   adapterPath: process.env.NEXT_ADAPTER_PATH || undefined,
   experimental: {
+    rustServerComponents: false,
     appNewScrollHandler: true,
     coldCacheBadge: false,
     devValidationWorker: true,

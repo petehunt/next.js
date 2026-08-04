@@ -401,6 +401,9 @@ export async function createEntrypoints(
   } = params
 
   const deferredEntries = config.experimental.deferredEntries
+  const appPageExtensions = config.experimental.rustServerComponents
+    ? [...pageExtensions, 'rs']
+    : pageExtensions
   const edgeServer: webpack.EntryObject = {}
   const server: webpack.EntryObject = {}
   const client: webpack.EntryObject = {}
@@ -416,7 +419,10 @@ export async function createEntrypoints(
       }
       appPathsPerRoute[normalizedPath].push(
         // TODO-APP: refactor to pass the page path from createPagesMapping instead.
-        getPageFromPath(actualPath, pageExtensions).replace(APP_DIR_ALIAS, '')
+        getPageFromPath(actualPath, appPageExtensions).replace(
+          APP_DIR_ALIAS,
+          ''
+        )
       )
     }
 
@@ -520,7 +526,7 @@ export async function createEntrypoints(
               appDir,
               appPaths: matchedAppPaths,
               allNormalizedAppPaths: Object.keys(appPathsPerRoute),
-              pageExtensions,
+              pageExtensions: appPageExtensions,
               basePath: config.basePath,
               assetPrefix: config.assetPrefix,
               nextConfigOutput: config.output,
@@ -529,6 +535,8 @@ export async function createEntrypoints(
               isGlobalNotFoundEnabled: config.experimental.globalNotFound
                 ? true
                 : undefined,
+              rustServerComponents:
+                config.experimental.rustServerComponents === true,
             })
           } else if (isInstrumentation) {
             server[serverBundlePath.replace('src/', '')] =
@@ -599,7 +607,7 @@ export async function createEntrypoints(
                 appDir: appDir!,
                 appPaths: matchedAppPaths,
                 allNormalizedAppPaths: Object.keys(appPathsPerRoute),
-                pageExtensions,
+                pageExtensions: appPageExtensions,
                 basePath: config.basePath,
                 assetPrefix: config.assetPrefix,
                 nextConfigOutput: config.output,
@@ -612,6 +620,8 @@ export async function createEntrypoints(
                 isGlobalNotFoundEnabled: config.experimental.globalNotFound
                   ? true
                   : undefined,
+                rustServerComponents:
+                  config.experimental.rustServerComponents === true,
               }).import
             }
             edgeServer[serverBundlePath] = getEdgeServerEntry({

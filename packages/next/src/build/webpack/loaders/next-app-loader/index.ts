@@ -64,6 +64,7 @@ export type AppLoaderOptions = {
   nextConfigOutput?: NextConfig['output']
   middlewareConfig: string
   isGlobalNotFoundEnabled: true | undefined
+  rustServerComponents?: boolean
 }
 type AppLoader = webpack.LoaderDefinitionFunction<AppLoaderOptions>
 
@@ -723,6 +724,9 @@ const nextAppLoader: AppLoader = async function nextAppLoader() {
     typeof pageExtensions === 'string'
       ? [pageExtensions]
       : pageExtensions.map((extension) => `.${extension}`)
+  if (loaderOptions.rustServerComponents && !extensions.includes('.rs')) {
+    extensions.push('.rs')
+  }
 
   const normalizedAppPaths =
     typeof appPaths === 'string' ? [appPaths] : appPaths || []
@@ -1050,7 +1054,16 @@ const nextAppLoader: AppLoader = async function nextAppLoader() {
         dir: rootDir!,
         tsconfigPath: tsconfigPath,
         pagePath,
-        pageExtensions,
+        pageExtensions: loaderOptions.rustServerComponents
+          ? [
+              ...(typeof pageExtensions === 'string'
+                ? [pageExtensions]
+                : pageExtensions),
+              'rs',
+            ]
+          : typeof pageExtensions === 'string'
+            ? [pageExtensions]
+            : pageExtensions,
       })
       if (!createdRootLayout) {
         let message = `${bold(

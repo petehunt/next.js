@@ -634,6 +634,28 @@ export async function getAppPageStaticInfo({
   page,
 }: GetPageStaticInfoParams): Promise<AppPageStaticInfo> {
   const content = tryToReadFile(pageFilePath, !isDev)
+  if (
+    content &&
+    pageFilePath.endsWith('.rs') &&
+    nextConfig.experimental?.rustServerComponents
+  ) {
+    const runtimeMatch = content.match(
+      /\bpub\s+const\s+RUNTIME\s*:\s*&(?:'static\s+)?str\s*=\s*"([^"]+)"\s*;/
+    )
+    const exportedConfig: Record<string, unknown> = {}
+    if (runtimeMatch) exportedConfig.runtime = runtimeMatch[1]
+    const config = parseAppSegmentConfig(exportedConfig, normalizeAppPath(page))
+    if (isEdgeRuntime(config.runtime)) warnAboutEdgeRuntime()
+    return {
+      type: PAGE_TYPES.APP,
+      rsc: RSC_MODULE_TYPES.server,
+      config,
+      runtime: config.runtime,
+      preferredRegion: config.preferredRegion,
+      maxDuration: config.maxDuration,
+      hadUnsupportedValue: false,
+    }
+  }
   if (!content || !PARSE_PATTERN.test(content)) {
     return {
       type: PAGE_TYPES.APP,

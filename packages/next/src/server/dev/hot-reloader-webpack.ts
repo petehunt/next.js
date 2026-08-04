@@ -965,7 +965,10 @@ export default class HotReloaderWebpack implements NextJsHotReloaderInterface {
             const staticInfo = isEntry
               ? await getStaticInfoIncludingLayouts({
                   isInsideAppDir: isAppPath,
-                  pageExtensions: this.config.pageExtensions,
+                  pageExtensions:
+                    isAppPath && this.config.experimental.rustServerComponents
+                      ? [...this.config.pageExtensions, 'rs']
+                      : this.config.pageExtensions,
                   pageFilePath: entryData.absolutePagePath,
                   appDir: this.appDir,
                   config: this.config,
@@ -1035,7 +1038,10 @@ export default class HotReloaderWebpack implements NextJsHotReloaderInterface {
                         ).replace(/\\/g, '/')
                       ),
                       appDir: this.appDir!,
-                      pageExtensions: this.config.pageExtensions,
+                      pageExtensions: this.config.experimental
+                        .rustServerComponents
+                        ? [...this.config.pageExtensions, 'rs']
+                        : this.config.pageExtensions,
                       rootDir: this.dir,
                       isDev: true,
                       tsconfigPath: this.config.typescript.tsconfigPath,
@@ -1050,6 +1056,8 @@ export default class HotReloaderWebpack implements NextJsHotReloaderInterface {
                         .globalNotFound
                         ? true
                         : undefined,
+                      rustServerComponents:
+                        this.config.experimental.rustServerComponents === true,
                     }).import
                   : undefined
 
@@ -1159,7 +1167,10 @@ export default class HotReloaderWebpack implements NextJsHotReloaderInterface {
                     allNormalizedAppPaths: null, // Not available in dev mode
                     pagePath,
                     appDir: this.appDir!,
-                    pageExtensions: this.config.pageExtensions,
+                    pageExtensions: this.config.experimental
+                      .rustServerComponents
+                      ? [...this.config.pageExtensions, 'rs']
+                      : this.config.pageExtensions,
                     rootDir: this.dir,
                     isDev: true,
                     tsconfigPath: this.config.typescript.tsconfigPath,
@@ -1174,6 +1185,8 @@ export default class HotReloaderWebpack implements NextJsHotReloaderInterface {
                       .globalNotFound
                       ? true
                       : undefined,
+                    rustServerComponents:
+                      this.config.experimental.rustServerComponents === true,
                   })
                 } else if (isAPIRoute(page)) {
                   value = getRouteLoaderEntry({

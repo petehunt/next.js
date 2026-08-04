@@ -84,7 +84,8 @@ export function getPageFromPath(
  */
 export async function collectAppFiles(
   appDir: string,
-  validFileMatcher: ReturnType<typeof createValidFileMatcher>
+  validFileMatcher: ReturnType<typeof createValidFileMatcher>,
+  rustServerComponents = false
 ): Promise<{
   appPaths: string[]
   layoutPaths: string[]
@@ -95,17 +96,24 @@ export async function collectAppFiles(
       validFileMatcher.isAppRouterPage(absolutePath) ||
       validFileMatcher.isRootNotFound(absolutePath) ||
       validFileMatcher.isAppLayoutPage(absolutePath) ||
-      validFileMatcher.isAppDefaultPage(absolutePath),
+      validFileMatcher.isAppDefaultPage(absolutePath) ||
+      (rustServerComponents &&
+        /(?:^|[/\\])(?:page|layout|loading|not-found|error)\.rs$/.test(
+          absolutePath
+        )),
     ignorePartFilter: (part) => part.startsWith('_'),
   })
 
   const appPaths = allAppFiles.filter(
     (absolutePath) =>
       validFileMatcher.isAppRouterPage(absolutePath) ||
-      validFileMatcher.isRootNotFound(absolutePath)
+      validFileMatcher.isRootNotFound(absolutePath) ||
+      (rustServerComponents && /(?:^|[/\\])page\.rs$/.test(absolutePath))
   )
-  const layoutPaths = allAppFiles.filter((absolutePath) =>
-    validFileMatcher.isAppLayoutPage(absolutePath)
+  const layoutPaths = allAppFiles.filter(
+    (absolutePath) =>
+      validFileMatcher.isAppLayoutPage(absolutePath) ||
+      (rustServerComponents && /(?:^|[/\\])layout\.rs$/.test(absolutePath))
   )
   const defaultPaths = allAppFiles.filter((absolutePath) =>
     validFileMatcher.isAppDefaultPage(absolutePath)
@@ -381,6 +389,7 @@ export interface RouteDiscoveryOptions {
   appDirOnly?: boolean
   validFileMatcher?: ReturnType<typeof createValidFileMatcher>
   debugBuildPaths?: { app: string[]; pages: string[] }
+  rustServerComponents?: boolean
 }
 
 export interface RouteDiscoveryResult {
@@ -413,6 +422,7 @@ export async function discoverRoutes(
     baseDir,
     isSrcDir,
     debugBuildPaths,
+    rustServerComponents = false,
   } = options
 
   const validFileMatcher =
@@ -421,12 +431,16 @@ export async function discoverRoutes(
   let appDirOnly = options.appDirOnly ?? (!!appDir && !pagesDir)
 
   // Helper to reduce createPagesMapping boilerplate
-  const mapPaths = (pagePaths: string[], pagesType: PAGE_TYPES) =>
+  const mapPaths = (
+    pagePaths: string[],
+    pagesType: PAGE_TYPES,
+    extensions = pageExtensions
+  ) =>
     createPagesMapping({
       pagePaths,
       isDev,
       pagesType,
-      pageExtensions,
+      pageExtensions: extensions,
       pagesDir,
       appDir,
       appDirOnly,
@@ -494,7 +508,11 @@ export async function discoverRoutes(
       layoutPaths = []
       defaultPaths = []
     } else {
-      const result = await collectAppFiles(appDir, validFileMatcher)
+      const result = await collectAppFiles(
+        appDir,
+        validFileMatcher,
+        rustServerComponents
+      )
       appPaths = result.appPaths
       layoutPaths = result.layoutPaths
       defaultPaths = result.defaultPaths
@@ -508,8 +526,16 @@ export async function discoverRoutes(
     let mappedDefaultFiles: MappedPages
     ;[mappedAppPages, mappedAppLayouts, mappedDefaultFiles] = await Promise.all(
       [
-        mapPaths(appPaths, PAGE_TYPES.APP),
-        mapPaths(layoutPaths, PAGE_TYPES.APP),
+        mapPaths(
+          appPaths,
+          PAGE_TYPES.APP,
+          rustServerComponents ? [...pageExtensions, 'rs'] : pageExtensions
+        ),
+        mapPaths(
+          layoutPaths,
+          PAGE_TYPES.APP,
+          rustServerComponents ? [...pageExtensions, 'rs'] : pageExtensions
+        ),
         mapPaths(defaultPaths, PAGE_TYPES.APP),
       ]
     )

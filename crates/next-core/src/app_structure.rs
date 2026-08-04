@@ -369,6 +369,11 @@ async fn get_directory_tree_internal(
                 if let Some((stem, ext)) = basename.split_once('.')
                     && page_extensions_value.iter().any(|e| e == ext)
                 {
+                    if ext == "rs"
+                        && !matches!(stem, "page" | "layout" | "error" | "loading" | "not-found")
+                    {
+                        continue;
+                    }
                     match stem {
                         "page" => modules.page = Some(file.clone()),
                         "layout" => modules.layout = Some(file.clone()),

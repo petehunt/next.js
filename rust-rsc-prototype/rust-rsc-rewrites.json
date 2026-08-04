@@ -1,0 +1,19 @@
+[
+  {
+    "source": "/native-rust-page",
+    "destination": "/rust-page"
+  },
+  {
+    "source": "/native-blog/:slug",
+    "destination": "/blog/:slug"
+  },
+  {
+    "source": "/conditional-rust",
+    "destination": "/rust-page",
+    "has": [{ "type": "header", "key": "x-use-rust", "value": "yes" }]
+  },
+  {
+    "source": "/external-docs/:path*",
+    "destination": "https://example.com/:path*"
+  }
+]

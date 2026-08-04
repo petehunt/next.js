@@ -1,0 +1,221 @@
+{
+  "generatedAt": "2026-08-04T08:39:24.947Z",
+  "command": "BENCH_BOOT_BLOCKS=4 node rust-rsc-prototype/catalog/benchmark-cold.js",
+  "blocks": 4,
+  "order": [
+    "js",
+    "rust",
+    "rust",
+    "js",
+    "rust",
+    "js",
+    "js",
+    "rust",
+    "js",
+    "rust",
+    "rust",
+    "js",
+    "rust",
+    "js",
+    "js",
+    "rust"
+  ],
+  "runs": [
+    {
+      "arm": "js",
+      "readyMs": 250.73454100000004,
+      "processToFirstByteMs": 674.8501800000001,
+      "processToFinalByteMs": 689.7902080000001,
+      "status": 200,
+      "ttfbMs": 424.11563900000004,
+      "totalMs": 439.055667,
+      "bytes": 30169
+    },
+    {
+      "arm": "rust",
+      "readyMs": 2.107970000000023,
+      "processToFirstByteMs": 12.900031000000013,
+      "processToFinalByteMs": 24.245014999999967,
+      "status": 200,
+      "ttfbMs": 10.79206099999999,
+      "totalMs": 22.137044999999944,
+      "bytes": 25250
+    },
+    {
+      "arm": "rust",
+      "readyMs": 2.0456060000000207,
+      "processToFirstByteMs": 12.992974000000004,
+      "processToFinalByteMs": 18.204880000000003,
+      "status": 200,
+      "ttfbMs": 10.947367999999983,
+      "totalMs": 16.159273999999982,
+      "bytes": 25250
+    },
+    {
+      "arm": "js",
+      "readyMs": 216.98512500000004,
+      "processToFirstByteMs": 591.4848689999999,
+      "processToFinalByteMs": 603.2470470000001,
+      "status": 200,
+      "ttfbMs": 374.49974399999985,
+      "totalMs": 386.261922,
+      "bytes": 30169
+    },
+    {
+      "arm": "rust",
+      "readyMs": 1.8217749999998887,
+      "processToFirstByteMs": 12.466998999999987,
+      "processToFinalByteMs": 20.481356000000005,
+      "status": 200,
+      "ttfbMs": 10.645224000000098,
+      "totalMs": 18.659581000000117,
+      "bytes": 25250
+    },
+    {
+      "arm": "js",
+      "readyMs": 228.86290299999996,
+      "processToFirstByteMs": 575.900625,
+      "processToFinalByteMs": 587.318863,
+      "status": 200,
+      "ttfbMs": 347.03772200000003,
+      "totalMs": 358.45596,
+      "bytes": 30169
+    },
+    {
+      "arm": "js",
+      "readyMs": 242.75834999999984,
+      "processToFirstByteMs": 627.05023,
+      "processToFinalByteMs": 639.0760560000001,
+      "status": 200,
+      "ttfbMs": 384.2918800000002,
+      "totalMs": 396.31770600000027,
+      "bytes": 30169
+    },
+    {
+      "arm": "rust",
+      "readyMs": 1.7024350000001505,
+      "processToFirstByteMs": 12.697099000000435,
+      "processToFinalByteMs": 20.68219900000031,
+      "status": 200,
+      "ttfbMs": 10.994664000000284,
+      "totalMs": 18.97976400000016,
+      "bytes": 25250
+    },
+    {
+      "arm": "js",
+      "readyMs": 215.73629100000016,
+      "processToFirstByteMs": 588.6037730000003,
+      "processToFinalByteMs": 606.9180940000001,
+      "status": 200,
+      "ttfbMs": 372.8674820000001,
+      "totalMs": 391.18180299999995,
+      "bytes": 30126
+    },
+    {
+      "arm": "rust",
+      "readyMs": 2.236000000000331,
+      "processToFirstByteMs": 13.104505000000245,
+      "processToFinalByteMs": 18.267135000000508,
+      "status": 200,
+      "ttfbMs": 10.868504999999914,
+      "totalMs": 16.031135000000177,
+      "bytes": 25250
+    },
+    {
+      "arm": "rust",
+      "readyMs": 2.6670530000001236,
+      "processToFirstByteMs": 13.219554000000244,
+      "processToFinalByteMs": 33.18890400000009,
+      "status": 200,
+      "ttfbMs": 10.55250100000012,
+      "totalMs": 30.52185099999997,
+      "bytes": 25250
+    },
+    {
+      "arm": "js",
+      "readyMs": 213.1431520000001,
+      "processToFirstByteMs": 581.4165459999999,
+      "processToFinalByteMs": 592.6109529999999,
+      "status": 200,
+      "ttfbMs": 368.2733939999998,
+      "totalMs": 379.4678009999998,
+      "bytes": 30169
+    },
+    {
+      "arm": "rust",
+      "readyMs": 1.7932869999999639,
+      "processToFirstByteMs": 12.843605999999909,
+      "processToFinalByteMs": 20.978402999999616,
+      "status": 200,
+      "ttfbMs": 11.050318999999945,
+      "totalMs": 19.185115999999653,
+      "bytes": 25250
+    },
+    {
+      "arm": "js",
+      "readyMs": 223.826102,
+      "processToFirstByteMs": 567.9871290000001,
+      "processToFinalByteMs": 578.850794,
+      "status": 200,
+      "ttfbMs": 344.1610270000001,
+      "totalMs": 355.02469199999996,
+      "bytes": 30169
+    },
+    {
+      "arm": "js",
+      "readyMs": 218.37859600000047,
+      "processToFirstByteMs": 571.0747860000001,
+      "processToFinalByteMs": 582.6136830000005,
+      "status": 200,
+      "ttfbMs": 352.69618999999966,
+      "totalMs": 364.235087,
+      "bytes": 30169
+    },
+    {
+      "arm": "rust",
+      "readyMs": 1.900087999999414,
+      "processToFirstByteMs": 12.894200999999157,
+      "processToFinalByteMs": 21.239740999999412,
+      "status": 200,
+      "ttfbMs": 10.994112999999743,
+      "totalMs": 19.339653,
+      "bytes": 25250
+    }
+  ],
+  "summary": {
+    "js": {
+      "readyMs": {
+        "samples": 8,
+        "mean": 226.30313250000006,
+        "ci95": 11.459633838660094
+      },
+      "firstByteMs": {
+        "samples": 8,
+        "mean": 597.2960172500001,
+        "ci95": 30.421308779195677
+      },
+      "finalByteMs": {
+        "samples": 8,
+        "mean": 610.0532122500001,
+        "ci95": 31.29250284640236
+      }
+    },
+    "rust": {
+      "readyMs": {
+        "samples": 8,
+        "mean": 2.0342767499999894,
+        "ci95": 0.2602297911916945
+      },
+      "firstByteMs": {
+        "samples": 8,
+        "mean": 12.889871124999999,
+        "ci95": 0.19574701342552125
+      },
+      "finalByteMs": {
+        "samples": 8,
+        "mean": 22.16095412499999,
+        "ci95": 4.0475637491373115
+      }
+    }
+  }
+}

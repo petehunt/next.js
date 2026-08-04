@@ -168,7 +168,7 @@ impl AppProject {
         let conf = self.project.next_config();
         get_entrypoints(
             self.app_dir.clone(),
-            conf.page_extensions(),
+            conf.app_page_extensions(),
             conf.is_global_not_found_enabled(),
             self.project.next_mode(),
         )

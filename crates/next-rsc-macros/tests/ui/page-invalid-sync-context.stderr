@@ -1,0 +1,5 @@
+error: a synchronous page must take exactly one `PageProps` argument
+ --> tests/ui/page-invalid-sync-context.rs:4:15
+  |
+4 | pub fn render(_props: PageProps, _ctx: RequestContext) -> RenderResult { Ok(Node) }
+  |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

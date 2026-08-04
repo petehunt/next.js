@@ -421,6 +421,23 @@ function assignDefaultsAndValidate(
     },
   }
 
+  if (result.experimental.rustServerComponents) {
+    const rustLoader = require.resolve(
+      '../build/webpack/loaders/next-rsc-loader'
+    )
+    require(rustLoader).prepareRustErrorSidecars(dir)
+    result.turbopack = {
+      ...result.turbopack,
+      rules: {
+        ...result.turbopack?.rules,
+        '*.rs': {
+          loaders: [rustLoader],
+          as: '*.js',
+        },
+      },
+    }
+  }
+
   // Normalize prefetchInlining: true | { maxSize?, maxBundleSize? } into a
   // resolved object with concrete defaults, so consumers don't have to
   // resolve the values themselves.

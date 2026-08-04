@@ -1286,6 +1286,7 @@ pub struct ExperimentalConfig {
     // all fields should be private and access should be wrapped within a turbo-tasks function
     // Otherwise changing ExperimentalConfig will lead to invalidating all tasks accessing it.
     allowed_revalidate_header_keys: Option<Vec<RcStr>>,
+    rust_server_components: Option<bool>,
     client_router_filter: Option<bool>,
     /// decimal for percent for possible false positives e.g. 0.01 for 10%
     /// potential false matches lower percent increases size of the filter
@@ -1947,6 +1948,18 @@ impl NextConfig {
         // extension: https://github.com/vercel/next.js/blob/32476071fe331948d89a35c391eb578aed8de979/packages/next/src/build/entries.ts#L409
         let mut extensions = self.page_extensions.clone();
         extensions.sort_by_key(|ext| std::cmp::Reverse(ext.len()));
+        Vc::cell(extensions)
+    }
+
+    #[turbo_tasks::function]
+    pub fn app_page_extensions(&self) -> Vc<Vec<RcStr>> {
+        let mut extensions = self.page_extensions.clone();
+        if self.experimental.rust_server_components.unwrap_or_default()
+            && !extensions.iter().any(|extension| extension == "rs")
+        {
+            extensions.push("rs".into());
+        }
+        extensions.sort_by_key(|extension| std::cmp::Reverse(extension.len()));
         Vc::cell(extensions)
     }
 

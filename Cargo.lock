@@ -5148,6 +5148,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "next-rsc"
+version = "0.1.0"
+dependencies = [
+ "next-rsc-macros",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "next-rsc-flight"
+version = "0.1.0"
+dependencies = [
+ "next-rsc",
+]
+
+[[package]]
+name = "next-rsc-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.104",
+ "trybuild",
+]
+
+[[package]]
+name = "next-rsc-wasm-fixture"
+version = "0.1.0"
+dependencies = [
+ "next-rsc",
+]
+
+[[package]]
 name = "next-taskless"
 version = "0.0.1"
 dependencies = [

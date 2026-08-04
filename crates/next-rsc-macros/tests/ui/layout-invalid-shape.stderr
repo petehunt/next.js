@@ -1,0 +1,39 @@
+error: #[next_rsc::layout] does not accept arguments
+ --> tests/ui/layout-invalid-shape.rs:5:10
+  |
+5 | #[layout(unexpected)]
+  |          ^^^^^^^^^^
+
+error: a Rust Server Component layout entrypoint must be named `render`
+ --> tests/ui/layout-invalid-shape.rs:6:4
+  |
+6 | fn wrong_name<T>(_props: LayoutProps, _extra: T) {}
+  |    ^^^^^^^^^^
+
+error: a Rust Server Component layout entrypoint must be public
+ --> tests/ui/layout-invalid-shape.rs:5:1
+  |
+5 | #[layout(unexpected)]
+  | ^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: this error originates in the attribute macro `layout` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: a layout entrypoint cannot be generic
+ --> tests/ui/layout-invalid-shape.rs:6:14
+  |
+6 | fn wrong_name<T>(_props: LayoutProps, _extra: T) {}
+  |              ^^^
+
+error: a layout entrypoint must take exactly one `LayoutProps` argument
+ --> tests/ui/layout-invalid-shape.rs:6:18
+  |
+6 | fn wrong_name<T>(_props: LayoutProps, _extra: T) {}
+  |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: a layout entrypoint must return `RenderResult` or `Result<Node, RenderError>`
+ --> tests/ui/layout-invalid-shape.rs:5:1
+  |
+5 | #[layout(unexpected)]
+  | ^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: this error originates in the attribute macro `layout` (in Nightly builds, run with -Z macro-backtrace for more info)

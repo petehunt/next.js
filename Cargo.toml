@@ -4,6 +4,10 @@ resolver = "2"
 members = [
   "scripts/send-trace-to-jaeger",
   "crates/next-napi-bindings",
+  "crates/next-rsc",
+  "crates/next-rsc-flight",
+  "crates/next-rsc-macros",
+  "crates/next-rsc-wasm-fixture",
   "crates/wasm",
   "crates/next-api",
   "crates/next-build-test",
@@ -161,6 +165,9 @@ next-build = { path = "crates/next-build" }
 next-code-frame = { path = "crates/next-code-frame" }
 next-core = { path = "crates/next-core" }
 next-custom-transforms = { path = "crates/next-custom-transforms", default-features = false }
+next-rsc = { path = "crates/next-rsc" }
+next-rsc-flight = { path = "crates/next-rsc-flight" }
+next-rsc-macros = { path = "crates/next-rsc-macros" }
 next-taskless = { path = "crates/next-taskless" }
 
 # Turbopack

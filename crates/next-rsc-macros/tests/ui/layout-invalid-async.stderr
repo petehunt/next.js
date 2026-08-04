@@ -1,0 +1,5 @@
+error: async layouts require the future host-call ABI and are not supported yet
+ --> tests/ui/layout-invalid-async.rs:9:5
+  |
+9 | pub async fn render(_props: LayoutProps) -> RenderResult {
+  |     ^^^^^

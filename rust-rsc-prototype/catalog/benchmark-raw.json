@@ -1,0 +1,2175 @@
+{
+  "generatedAt": "2026-08-04T08:41:23.114Z",
+  "command": "BENCH_BLOCKS=4 CATALOG_JS_PID=<pid> CATALOG_RUST_PID=<pid> node rust-rsc-prototype/catalog/benchmark.js",
+  "blocks": 4,
+  "order": [
+    "js",
+    "rust",
+    "rust",
+    "js",
+    "rust",
+    "js",
+    "js",
+    "rust",
+    "js",
+    "rust",
+    "rust",
+    "js",
+    "rust",
+    "js",
+    "js",
+    "rust"
+  ],
+  "scenarios": [
+    {
+      "name": "document-c1-zero-uncached",
+      "concurrency": 1,
+      "query": "?cache=uncached"
+    },
+    {
+      "name": "document-c8-zero-uncached",
+      "concurrency": 8,
+      "query": "?cache=uncached"
+    },
+    {
+      "name": "document-c32-zero-uncached",
+      "concurrency": 32,
+      "query": "?cache=uncached"
+    },
+    {
+      "name": "document-c8-latency25-uncached",
+      "concurrency": 8,
+      "query": "?cache=uncached&delay=25"
+    },
+    {
+      "name": "document-c8-zero-warm",
+      "concurrency": 8,
+      "query": "?cache=warm",
+      "prime": true
+    },
+    {
+      "name": "flight-c8-zero-uncached",
+      "concurrency": 8,
+      "query": "?cache=uncached&_rsc=40x_cq0ikFYo6r3F",
+      "flight": true
+    }
+  ],
+  "runs": [
+    {
+      "arm": "js",
+      "scenario": "document-c1-zero-uncached",
+      "concurrency": 1,
+      "requests": 24,
+      "elapsedMs": 381.72942800000004,
+      "rps": 62.87175742709571,
+      "p50Ms": 10.660073000000011,
+      "p95Ms": 21.061226999999974,
+      "p99Ms": 102.79724700000001,
+      "ttfbP50Ms": 10.227370000000008,
+      "ttfbP95Ms": 20.982143999999977,
+      "bytes": 30181,
+      "cpuMs": 580,
+      "rssKb": 150444,
+      "peakRssKb": 153340,
+      "upstream": {
+        "categories": 24,
+        "products": 24
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c1-zero-uncached",
+      "concurrency": 1,
+      "requests": 24,
+      "elapsedMs": 319.95901699999996,
+      "rps": 75.00960662096297,
+      "p50Ms": 12.025936000000002,
+      "p95Ms": 19.59131199999996,
+      "p99Ms": 19.6848040000001,
+      "ttfbP50Ms": 3.914786000000049,
+      "ttfbP95Ms": 10.43184199999996,
+      "bytes": 25258,
+      "cpuMs": 30,
+      "rssKb": 5504,
+      "peakRssKb": 5504,
+      "upstream": {
+        "categories": 24,
+        "products": 24
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c1-zero-uncached",
+      "concurrency": 1,
+      "requests": 24,
+      "elapsedMs": 328.93139400000007,
+      "rps": 72.96354327309967,
+      "p50Ms": 12.61790499999995,
+      "p95Ms": 19.91017499999998,
+      "p99Ms": 19.95351100000005,
+      "ttfbP50Ms": 3.6770970000000034,
+      "ttfbP95Ms": 11.310227000000054,
+      "bytes": 25258,
+      "cpuMs": 40,
+      "rssKb": 5632,
+      "peakRssKb": 5632,
+      "upstream": {
+        "categories": 24,
+        "products": 24
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c1-zero-uncached",
+      "concurrency": 1,
+      "requests": 24,
+      "elapsedMs": 269.63753199999996,
+      "rps": 89.00838033185975,
+      "p50Ms": 8.072101999999859,
+      "p95Ms": 27.28383699999995,
+      "p99Ms": 33.69882099999995,
+      "ttfbP50Ms": 7.993899000000056,
+      "ttfbP95Ms": 27.20299399999999,
+      "bytes": 30138,
+      "cpuMs": 290,
+      "rssKb": 158624,
+      "peakRssKb": 158624,
+      "upstream": {
+        "categories": 24,
+        "products": 24
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c1-zero-uncached",
+      "concurrency": 1,
+      "requests": 24,
+      "elapsedMs": 350.06400399999984,
+      "rps": 68.55889130491695,
+      "p50Ms": 15.832712000000129,
+      "p95Ms": 20.35310699999991,
+      "p99Ms": 22.139355000000023,
+      "ttfbP50Ms": 4.153356000000031,
+      "ttfbP95Ms": 9.688855000000103,
+      "bytes": 25258,
+      "cpuMs": 30,
+      "rssKb": 5632,
+      "peakRssKb": 5632,
+      "upstream": {
+        "categories": 24,
+        "products": 24
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c1-zero-uncached",
+      "concurrency": 1,
+      "requests": 24,
+      "elapsedMs": 195.13141599999994,
+      "rps": 122.99403392839626,
+      "p50Ms": 7.376522000000023,
+      "p95Ms": 9.6549779999998,
+      "p99Ms": 14.164264000000003,
+      "ttfbP50Ms": 7.317457000000104,
+      "ttfbP95Ms": 9.592833999999812,
+      "bytes": 30138,
+      "cpuMs": 210,
+      "rssKb": 171424,
+      "peakRssKb": 171424,
+      "upstream": {
+        "categories": 24,
+        "products": 24
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c1-zero-uncached",
+      "concurrency": 1,
+      "requests": 24,
+      "elapsedMs": 184.73697100000004,
+      "rps": 129.9144392705237,
+      "p50Ms": 6.96900699999992,
+      "p95Ms": 10.848045999999613,
+      "p99Ms": 11.603902000000062,
+      "ttfbP50Ms": 6.733406999999943,
+      "ttfbP95Ms": 10.789201000000048,
+      "bytes": 30138,
+      "cpuMs": 220,
+      "rssKb": 173344,
+      "peakRssKb": 173344,
+      "upstream": {
+        "categories": 24,
+        "products": 24
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c1-zero-uncached",
+      "concurrency": 1,
+      "requests": 24,
+      "elapsedMs": 327.0539640000002,
+      "rps": 73.38238529957088,
+      "p50Ms": 12.151984999999968,
+      "p95Ms": 20.004437000000053,
+      "p99Ms": 20.081209999999828,
+      "ttfbP50Ms": 3.8644109999995635,
+      "ttfbP95Ms": 10.420512000000144,
+      "bytes": 25258,
+      "cpuMs": 40,
+      "rssKb": 5632,
+      "peakRssKb": 5632,
+      "upstream": {
+        "categories": 24,
+        "products": 24
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c1-zero-uncached",
+      "concurrency": 1,
+      "requests": 24,
+      "elapsedMs": 234.21196800000007,
+      "rps": 102.4712793498238,
+      "p50Ms": 7.442846000000372,
+      "p95Ms": 24.391963000000032,
+      "p99Ms": 32.72727400000031,
+      "ttfbP50Ms": 7.397750000000087,
+      "ttfbP95Ms": 24.295830999999907,
+      "bytes": 30138,
+      "cpuMs": 210,
+      "rssKb": 175520,
+      "peakRssKb": 175520,
+      "upstream": {
+        "categories": 24,
+        "products": 24
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c1-zero-uncached",
+      "concurrency": 1,
+      "requests": 24,
+      "elapsedMs": 249.23778900000025,
+      "rps": 96.29358411617099,
+      "p50Ms": 11.720272000000023,
+      "p95Ms": 12.562800000000152,
+      "p99Ms": 12.651231999999709,
+      "ttfbP50Ms": 3.5463180000001557,
+      "ttfbP95Ms": 5.219826000000012,
+      "bytes": 25258,
+      "cpuMs": 30,
+      "rssKb": 5504,
+      "peakRssKb": 5632,
+      "upstream": {
+        "categories": 24,
+        "products": 24
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c1-zero-uncached",
+      "concurrency": 1,
+      "requests": 24,
+      "elapsedMs": 353.428398,
+      "rps": 67.90625805909347,
+      "p50Ms": 12.380545999999867,
+      "p95Ms": 20.087368999999853,
+      "p99Ms": 20.115967000000182,
+      "ttfbP50Ms": 3.493083000000297,
+      "ttfbP95Ms": 10.954187000000275,
+      "bytes": 25258,
+      "cpuMs": 30,
+      "rssKb": 5504,
+      "peakRssKb": 5632,
+      "upstream": {
+        "categories": 24,
+        "products": 24
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c1-zero-uncached",
+      "concurrency": 1,
+      "requests": 24,
+      "elapsedMs": 208.6283669999998,
+      "rps": 115.03708889213529,
+      "p50Ms": 7.241343000000143,
+      "p95Ms": 12.50329499999998,
+      "p99Ms": 13.37827100000004,
+      "ttfbP50Ms": 7.193387000000257,
+      "ttfbP95Ms": 12.444340000000011,
+      "bytes": 30138,
+      "cpuMs": 220,
+      "rssKb": 179360,
+      "peakRssKb": 179360,
+      "upstream": {
+        "categories": 24,
+        "products": 24
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c1-zero-uncached",
+      "concurrency": 1,
+      "requests": 24,
+      "elapsedMs": 340.01327999999967,
+      "rps": 70.58547830837674,
+      "p50Ms": 12.034845000000132,
+      "p95Ms": 20.402931999999964,
+      "p99Ms": 20.726964999999836,
+      "ttfbP50Ms": 4.1271789999996145,
+      "ttfbP95Ms": 11.529877999999826,
+      "bytes": 25258,
+      "cpuMs": 40,
+      "rssKb": 5504,
+      "peakRssKb": 5632,
+      "upstream": {
+        "categories": 24,
+        "products": 24
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c1-zero-uncached",
+      "concurrency": 1,
+      "requests": 24,
+      "elapsedMs": 192.91785400000026,
+      "rps": 124.40528184602327,
+      "p50Ms": 7.002993999999944,
+      "p95Ms": 13.116053000000193,
+      "p99Ms": 17.2701790000001,
+      "ttfbP50Ms": 6.95173799999975,
+      "ttfbP95Ms": 13.025641000000178,
+      "bytes": 30138,
+      "cpuMs": 220,
+      "rssKb": 183840,
+      "peakRssKb": 183840,
+      "upstream": {
+        "categories": 24,
+        "products": 24
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c1-zero-uncached",
+      "concurrency": 1,
+      "requests": 24,
+      "elapsedMs": 169.62414800000033,
+      "rps": 141.4892884237211,
+      "p50Ms": 6.49747699999989,
+      "p95Ms": 10.249256999999943,
+      "p99Ms": 12.810829000000012,
+      "ttfbP50Ms": 6.450951000000714,
+      "ttfbP95Ms": 10.170943999999963,
+      "bytes": 30138,
+      "cpuMs": 230,
+      "rssKb": 186272,
+      "peakRssKb": 186272,
+      "upstream": {
+        "categories": 24,
+        "products": 24
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c1-zero-uncached",
+      "concurrency": 1,
+      "requests": 24,
+      "elapsedMs": 280.2957349999997,
+      "rps": 85.6238501095995,
+      "p50Ms": 11.92683500000021,
+      "p95Ms": 16.1955710000002,
+      "p99Ms": 19.352742000000035,
+      "ttfbP50Ms": 3.4728449999993245,
+      "ttfbP95Ms": 8.257986999999957,
+      "bytes": 25258,
+      "cpuMs": 30,
+      "rssKb": 5632,
+      "peakRssKb": 5632,
+      "upstream": {
+        "categories": 24,
+        "products": 24
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 247.21055200000046,
+      "rps": 129.44431271687762,
+      "p50Ms": 55.57089799999994,
+      "p95Ms": 82.27497499999936,
+      "p99Ms": 82.36934700000074,
+      "ttfbP50Ms": 51.74498399999993,
+      "ttfbP95Ms": 82.22173899999962,
+      "bytes": 30138,
+      "cpuMs": 260,
+      "rssKb": 190496,
+      "peakRssKb": 190496,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 105.14455799999996,
+      "rps": 304.34290284429187,
+      "p50Ms": 16.251226000000315,
+      "p95Ms": 53.53882200000044,
+      "p99Ms": 56.2338120000004,
+      "ttfbP50Ms": 8.504586000000018,
+      "ttfbP95Ms": 10.542932000000292,
+      "bytes": 25258,
+      "cpuMs": 40,
+      "rssKb": 8056,
+      "peakRssKb": 8192,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 74.11619900000005,
+      "rps": 431.75446706326613,
+      "p50Ms": 18.051002999999582,
+      "p95Ms": 21.043518000000404,
+      "p99Ms": 22.724944999999934,
+      "ttfbP50Ms": 8.334651000000122,
+      "ttfbP95Ms": 10.971235999999408,
+      "bytes": 25258,
+      "cpuMs": 40,
+      "rssKb": 8696,
+      "peakRssKb": 8696,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 230.9257779999998,
+      "rps": 138.57266294454155,
+      "p50Ms": 52.21079399999962,
+      "p95Ms": 77.60114299999987,
+      "p99Ms": 84.1115979999995,
+      "ttfbP50Ms": 52.16030899999987,
+      "ttfbP95Ms": 77.55263699999978,
+      "bytes": 30138,
+      "cpuMs": 250,
+      "rssKb": 193440,
+      "peakRssKb": 193440,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 65.74052199999915,
+      "rps": 486.76218299575436,
+      "p50Ms": 13.982119000000239,
+      "p95Ms": 18.55090999999993,
+      "p99Ms": 20.39446399999997,
+      "ttfbP50Ms": 2.0149179999998523,
+      "ttfbP95Ms": 8.20046100000036,
+      "bytes": 25258,
+      "cpuMs": 30,
+      "rssKb": 8944,
+      "peakRssKb": 9072,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 205.73099299999922,
+      "rps": 155.54292298584357,
+      "p50Ms": 50.633749000000535,
+      "p95Ms": 60.57426299999952,
+      "p99Ms": 62.53209599999991,
+      "ttfbP50Ms": 50.579853000000185,
+      "ttfbP95Ms": 60.52872699999989,
+      "bytes": 30138,
+      "cpuMs": 230,
+      "rssKb": 200352,
+      "peakRssKb": 200352,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 215.72166199999992,
+      "rps": 148.33929844282403,
+      "p50Ms": 50.01802099999986,
+      "p95Ms": 63.1165860000001,
+      "p99Ms": 70.58384999999998,
+      "ttfbP50Ms": 49.97105499999998,
+      "ttfbP95Ms": 63.075229000000036,
+      "bytes": 30138,
+      "cpuMs": 310,
+      "rssKb": 201476,
+      "peakRssKb": 203424,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 59.763630999999805,
+      "rps": 535.4427009296022,
+      "p50Ms": 12.819407999999385,
+      "p95Ms": 18.730635999999322,
+      "p99Ms": 18.891442000000097,
+      "ttfbP50Ms": 3.203918000000158,
+      "ttfbP95Ms": 8.034155999999712,
+      "bytes": 25258,
+      "cpuMs": 30,
+      "rssKb": 8940,
+      "peakRssKb": 9072,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 226.36193699999967,
+      "rps": 141.36652311823983,
+      "p50Ms": 51.54711099999986,
+      "p95Ms": 72.0322070000002,
+      "p99Ms": 72.23678899999959,
+      "ttfbP50Ms": 51.511913999999706,
+      "ttfbP95Ms": 72.00218000000041,
+      "bytes": 30138,
+      "cpuMs": 260,
+      "rssKb": 201476,
+      "peakRssKb": 203424,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 59.68102799999997,
+      "rps": 536.1837936169601,
+      "p50Ms": 12.02054599999974,
+      "p95Ms": 21.05011800000011,
+      "p99Ms": 22.21755799999937,
+      "ttfbP50Ms": 3.8529719999996814,
+      "ttfbP95Ms": 10.683719999999994,
+      "bytes": 25258,
+      "cpuMs": 40,
+      "rssKb": 8800,
+      "peakRssKb": 9072,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 50.72262200000023,
+      "rps": 630.8822126742551,
+      "p50Ms": 11.779226999999992,
+      "p95Ms": 15.992529000000104,
+      "p99Ms": 16.190840999999637,
+      "ttfbP50Ms": 3.7796079999998256,
+      "ttfbP95Ms": 8.037234999999782,
+      "bytes": 25258,
+      "cpuMs": 20,
+      "rssKb": 8796,
+      "peakRssKb": 9072,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 200.04282700000022,
+      "rps": 159.96574573503685,
+      "p50Ms": 49.243907000000036,
+      "p95Ms": 54.553154999999606,
+      "p99Ms": 55.248845000000074,
+      "ttfbP50Ms": 49.20079100000021,
+      "ttfbP95Ms": 54.50695899999937,
+      "bytes": 30138,
+      "cpuMs": 230,
+      "rssKb": 204676,
+      "peakRssKb": 204676,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 57.14398400000027,
+      "rps": 559.988957017765,
+      "p50Ms": 11.453985000000102,
+      "p95Ms": 16.036963999999898,
+      "p99Ms": 16.287962999999763,
+      "ttfbP50Ms": 3.847472999999809,
+      "ttfbP95Ms": 10.435690999999679,
+      "bytes": 25258,
+      "cpuMs": 40,
+      "rssKb": 8908,
+      "peakRssKb": 9072,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 199.26035500000035,
+      "rps": 160.5939124217657,
+      "p50Ms": 48.26532100000077,
+      "p95Ms": 54.55865499999982,
+      "p99Ms": 56.86779799999931,
+      "ttfbP50Ms": 48.229794000000766,
+      "ttfbP95Ms": 54.51322900000014,
+      "bytes": 30138,
+      "cpuMs": 210,
+      "rssKb": 209540,
+      "peakRssKb": 209540,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 195.6059150000001,
+      "rps": 163.5942348675907,
+      "p50Ms": 46.14030100000036,
+      "p95Ms": 57.107906999999614,
+      "p99Ms": 61.8822710000004,
+      "ttfbP50Ms": 46.104003999999804,
+      "ttfbP95Ms": 57.068201000000045,
+      "bytes": 30138,
+      "cpuMs": 220,
+      "rssKb": 217092,
+      "peakRssKb": 217092,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 64.98092699999961,
+      "rps": 492.45219293347714,
+      "p50Ms": 15.709743000000344,
+      "p95Ms": 20.330669000000853,
+      "p99Ms": 20.68065900000056,
+      "ttfbP50Ms": 3.9854009999999107,
+      "ttfbP95Ms": 10.677560999999514,
+      "bytes": 25258,
+      "cpuMs": 40,
+      "rssKb": 8908,
+      "peakRssKb": 9072,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c32-zero-uncached",
+      "concurrency": 32,
+      "requests": 128,
+      "elapsedMs": 920.6171050000003,
+      "rps": 139.037173331686,
+      "p50Ms": 199.25925499999994,
+      "p95Ms": 289.52900800000043,
+      "p99Ms": 294.78293099999973,
+      "ttfbP50Ms": 199.21580799999992,
+      "ttfbP95Ms": 259.2823530000005,
+      "bytes": 30138,
+      "cpuMs": 1000,
+      "rssKb": 255620,
+      "peakRssKb": 255620,
+      "upstream": {
+        "categories": 128,
+        "products": 128
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c32-zero-uncached",
+      "concurrency": 32,
+      "requests": 128,
+      "elapsedMs": 88.60559600000033,
+      "rps": 1444.6040180125815,
+      "p50Ms": 18.426290999999765,
+      "p95Ms": 33.57706099999996,
+      "p99Ms": 35.37331799999993,
+      "ttfbP50Ms": 5.149101999999402,
+      "ttfbP95Ms": 9.783227000000807,
+      "bytes": 25258,
+      "cpuMs": 200,
+      "rssKb": 16500,
+      "peakRssKb": 17004,
+      "upstream": {
+        "categories": 128,
+        "products": 128
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c32-zero-uncached",
+      "concurrency": 32,
+      "requests": 128,
+      "elapsedMs": 128.304075,
+      "rps": 997.6300440964169,
+      "p50Ms": 24.75922199999968,
+      "p95Ms": 62.25513899999987,
+      "p99Ms": 63.751781999999366,
+      "ttfbP50Ms": 7.567135999999664,
+      "ttfbP95Ms": 10.150045000000318,
+      "bytes": 25258,
+      "cpuMs": 160,
+      "rssKb": 17516,
+      "peakRssKb": 18520,
+      "upstream": {
+        "categories": 128,
+        "products": 128
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c32-zero-uncached",
+      "concurrency": 32,
+      "requests": 128,
+      "elapsedMs": 784.6952979999996,
+      "rps": 163.12064100070606,
+      "p50Ms": 194.5327359999992,
+      "p95Ms": 199.47780600000078,
+      "p99Ms": 206.2409089999992,
+      "ttfbP50Ms": 194.49269999999888,
+      "ttfbP95Ms": 199.42897000000085,
+      "bytes": 30138,
+      "cpuMs": 930,
+      "rssKb": 290820,
+      "peakRssKb": 290820,
+      "upstream": {
+        "categories": 128,
+        "products": 128
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c32-zero-uncached",
+      "concurrency": 32,
+      "requests": 128,
+      "elapsedMs": 91.37812899999881,
+      "rps": 1400.772826066527,
+      "p50Ms": 19.54687600000034,
+      "p95Ms": 33.48279900000125,
+      "p99Ms": 46.95060199999898,
+      "ttfbP50Ms": 6.334800000000541,
+      "ttfbP95Ms": 10.73299600000064,
+      "bytes": 25258,
+      "cpuMs": 180,
+      "rssKb": 17944,
+      "peakRssKb": 19096,
+      "upstream": {
+        "categories": 128,
+        "products": 128
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c32-zero-uncached",
+      "concurrency": 32,
+      "requests": 128,
+      "elapsedMs": 769.309808,
+      "rps": 166.3829040900516,
+      "p50Ms": 187.3257109999995,
+      "p95Ms": 207.05396099999962,
+      "p99Ms": 209.16501100000096,
+      "ttfbP50Ms": 187.28072500000053,
+      "ttfbP95Ms": 207.0088649999998,
+      "bytes": 30138,
+      "cpuMs": 890,
+      "rssKb": 326660,
+      "peakRssKb": 326660,
+      "upstream": {
+        "categories": 128,
+        "products": 128
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c32-zero-uncached",
+      "concurrency": 32,
+      "requests": 128,
+      "elapsedMs": 759.7258840000013,
+      "rps": 168.4818204772391,
+      "p50Ms": 185.15383500000098,
+      "p95Ms": 193.5966069999995,
+      "p99Ms": 207.84864299999936,
+      "ttfbP50Ms": 185.11797800000022,
+      "ttfbP95Ms": 193.53908200000114,
+      "bytes": 30138,
+      "cpuMs": 960,
+      "rssKb": 340232,
+      "peakRssKb": 347396,
+      "upstream": {
+        "categories": 128,
+        "products": 128
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c32-zero-uncached",
+      "concurrency": 32,
+      "requests": 128,
+      "elapsedMs": 91.97405900000012,
+      "rps": 1391.6967609312517,
+      "p50Ms": 20.06724199999917,
+      "p95Ms": 37.313883000000715,
+      "p99Ms": 41.30951300000015,
+      "ttfbP50Ms": 7.825283000000127,
+      "ttfbP95Ms": 13.42226699999992,
+      "bytes": 25258,
+      "cpuMs": 160,
+      "rssKb": 18272,
+      "peakRssKb": 19096,
+      "upstream": {
+        "categories": 128,
+        "products": 128
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c32-zero-uncached",
+      "concurrency": 32,
+      "requests": 128,
+      "elapsedMs": 751.3780340000012,
+      "rps": 170.35366248143447,
+      "p50Ms": 184.34265400000004,
+      "p95Ms": 197.58519700000033,
+      "p99Ms": 198.52957700000115,
+      "ttfbP50Ms": 184.28908899999988,
+      "ttfbP95Ms": 197.54582000000119,
+      "bytes": 30138,
+      "cpuMs": 870,
+      "rssKb": 341128,
+      "peakRssKb": 347396,
+      "upstream": {
+        "categories": 128,
+        "products": 128
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c32-zero-uncached",
+      "concurrency": 32,
+      "requests": 128,
+      "elapsedMs": 99.20429399999921,
+      "rps": 1290.2667297849125,
+      "p50Ms": 20.288212999999814,
+      "p95Ms": 34.66167800000039,
+      "p99Ms": 46.9251949999998,
+      "ttfbP50Ms": 6.805120000000898,
+      "ttfbP95Ms": 11.108723999999711,
+      "bytes": 25258,
+      "cpuMs": 180,
+      "rssKb": 18356,
+      "peakRssKb": 19448,
+      "upstream": {
+        "categories": 128,
+        "products": 128
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c32-zero-uncached",
+      "concurrency": 32,
+      "requests": 128,
+      "elapsedMs": 102.15721199999825,
+      "rps": 1252.9707643157117,
+      "p50Ms": 19.303357000000688,
+      "p95Ms": 41.47900799999843,
+      "p99Ms": 46.00611199999912,
+      "ttfbP50Ms": 7.642809000000852,
+      "ttfbP95Ms": 14.950806999999259,
+      "bytes": 25258,
+      "cpuMs": 180,
+      "rssKb": 18444,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 128,
+        "products": 128
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c32-zero-uncached",
+      "concurrency": 32,
+      "requests": 128,
+      "elapsedMs": 732.5382890000001,
+      "rps": 174.73489361864603,
+      "p50Ms": 179.84975699999995,
+      "p95Ms": 189.21842900000047,
+      "p99Ms": 196.378048999999,
+      "ttfbP50Ms": 179.8147800000006,
+      "ttfbP95Ms": 189.1752030000007,
+      "bytes": 30138,
+      "cpuMs": 760,
+      "rssKb": 341256,
+      "peakRssKb": 347396,
+      "upstream": {
+        "categories": 128,
+        "products": 128
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c32-zero-uncached",
+      "concurrency": 32,
+      "requests": 128,
+      "elapsedMs": 92.1741320000001,
+      "rps": 1388.6759465226085,
+      "p50Ms": 17.737419999999474,
+      "p95Ms": 34.802137000000585,
+      "p99Ms": 39.01246799999899,
+      "ttfbP50Ms": 8.70169000000169,
+      "ttfbP95Ms": 12.305641999999352,
+      "bytes": 25258,
+      "cpuMs": 180,
+      "rssKb": 18080,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 128,
+        "products": 128
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c32-zero-uncached",
+      "concurrency": 32,
+      "requests": 128,
+      "elapsedMs": 730.6302809999997,
+      "rps": 175.19120590623325,
+      "p50Ms": 183.41994300000079,
+      "p95Ms": 190.78348499999993,
+      "p99Ms": 195.63330300000052,
+      "ttfbP50Ms": 183.38089600000058,
+      "ttfbP95Ms": 190.73893899999894,
+      "bytes": 30138,
+      "cpuMs": 790,
+      "rssKb": 348296,
+      "peakRssKb": 348296,
+      "upstream": {
+        "categories": 128,
+        "products": 128
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c32-zero-uncached",
+      "concurrency": 32,
+      "requests": 128,
+      "elapsedMs": 756.6300879999999,
+      "rps": 169.1711736422515,
+      "p50Ms": 190.12464200000068,
+      "p95Ms": 196.7612570000001,
+      "p99Ms": 198.96030000000064,
+      "ttfbP50Ms": 190.07569700000022,
+      "ttfbP95Ms": 196.72815000000082,
+      "bytes": 30138,
+      "cpuMs": 780,
+      "rssKb": 381064,
+      "peakRssKb": 381064,
+      "upstream": {
+        "categories": 128,
+        "products": 128
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c32-zero-uncached",
+      "concurrency": 32,
+      "requests": 128,
+      "elapsedMs": 87.2169640000011,
+      "rps": 1467.6043986121597,
+      "p50Ms": 18.884071999998923,
+      "p95Ms": 30.48368400000072,
+      "p99Ms": 31.141868000000613,
+      "ttfbP50Ms": 5.0684780000010505,
+      "ttfbP95Ms": 10.466049000000567,
+      "bytes": 25258,
+      "cpuMs": 170,
+      "rssKb": 18380,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 128,
+        "products": 128
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-latency25-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 203.8798509999997,
+      "rps": 156.955186317063,
+      "p50Ms": 46.24325300000055,
+      "p95Ms": 58.94728100000066,
+      "p99Ms": 61.39358199999879,
+      "ttfbP50Ms": 26.642151999998532,
+      "ttfbP95Ms": 33.41801400000077,
+      "bytes": 30234,
+      "cpuMs": 210,
+      "rssKb": 387976,
+      "peakRssKb": 387976,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-latency25-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 160.49712499999987,
+      "rps": 199.38051849838448,
+      "p50Ms": 39.38236599999982,
+      "p95Ms": 45.38972500000091,
+      "p99Ms": 45.694398999999976,
+      "ttfbP50Ms": 6.268475999999282,
+      "ttfbP95Ms": 9.584692999998879,
+      "bytes": 25292,
+      "cpuMs": 30,
+      "rssKb": 18380,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-latency25-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 155.3275649999996,
+      "rps": 206.01623414363115,
+      "p50Ms": 36.685175999999046,
+      "p95Ms": 44.15079100000003,
+      "p99Ms": 48.51950899999974,
+      "ttfbP50Ms": 2.5355039999994915,
+      "ttfbP95Ms": 10.585167999999612,
+      "bytes": 25292,
+      "cpuMs": 50,
+      "rssKb": 17928,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-latency25-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 226.3249790000009,
+      "rps": 141.38960772862757,
+      "p50Ms": 47.22194899999886,
+      "p95Ms": 87.27316900000005,
+      "p99Ms": 93.08936399999948,
+      "ttfbP50Ms": 25.89003600000069,
+      "ttfbP95Ms": 66.29300599999988,
+      "bytes": 30191,
+      "cpuMs": 340,
+      "rssKb": 396552,
+      "peakRssKb": 396552,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-latency25-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 185.4116529999992,
+      "rps": 172.58893646776417,
+      "p50Ms": 42.40490999999929,
+      "p95Ms": 50.51704900000004,
+      "p99Ms": 52.40954799999963,
+      "ttfbP50Ms": 8.623486000000412,
+      "ttfbP95Ms": 11.54219699999885,
+      "bytes": 25292,
+      "cpuMs": 70,
+      "rssKb": 18056,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-latency25-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 231.57945300000029,
+      "rps": 138.18151647503873,
+      "p50Ms": 50.7459400000007,
+      "p95Ms": 80.73158599999988,
+      "p99Ms": 85.75551799999994,
+      "ttfbP50Ms": 28.67334899999878,
+      "ttfbP95Ms": 61.47354600000108,
+      "bytes": 30191,
+      "cpuMs": 260,
+      "rssKb": 403464,
+      "peakRssKb": 403464,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-latency25-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 207.1466819999987,
+      "rps": 154.47990617585756,
+      "p50Ms": 47.58612799999901,
+      "p95Ms": 66.35229099999924,
+      "p99Ms": 67.21780699999908,
+      "ttfbP50Ms": 27.9094640000003,
+      "ttfbP95Ms": 31.363720000001194,
+      "bytes": 30234,
+      "cpuMs": 210,
+      "rssKb": 411656,
+      "peakRssKb": 411656,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-latency25-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 161.39123800000016,
+      "rps": 198.2759435800348,
+      "p50Ms": 35.77742399999988,
+      "p95Ms": 43.85854599999948,
+      "p99Ms": 44.01110299999891,
+      "ttfbP50Ms": 2.5413339999995515,
+      "ttfbP95Ms": 10.66656200000034,
+      "bytes": 25292,
+      "cpuMs": 30,
+      "rssKb": 18028,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-latency25-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 219.79252599999927,
+      "rps": 145.59184783198728,
+      "p50Ms": 50.5849130000006,
+      "p95Ms": 60.41235699999925,
+      "p99Ms": 61.24487500000032,
+      "ttfbP50Ms": 28.256924000001163,
+      "ttfbP95Ms": 39.93221000000085,
+      "bytes": 30234,
+      "cpuMs": 210,
+      "rssKb": 418440,
+      "peakRssKb": 418440,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-latency25-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 156.76635200000055,
+      "rps": 204.12543630536155,
+      "p50Ms": 39.521505000000616,
+      "p95Ms": 41.27904599999965,
+      "p99Ms": 47.50319599999966,
+      "ttfbP50Ms": 2.094221999999718,
+      "ttfbP95Ms": 10.622346000000107,
+      "bytes": 25292,
+      "cpuMs": 40,
+      "rssKb": 18156,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-latency25-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 158.8767429999989,
+      "rps": 201.41399801983744,
+      "p50Ms": 36.04173199999968,
+      "p95Ms": 44.29784800000016,
+      "p99Ms": 47.57809900000029,
+      "ttfbP50Ms": 1.8260650000011083,
+      "ttfbP95Ms": 10.237379000000146,
+      "bytes": 25292,
+      "cpuMs": 30,
+      "rssKb": 18232,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-latency25-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 225.96047100000033,
+      "rps": 141.61769029061705,
+      "p50Ms": 50.008012000000235,
+      "p95Ms": 65.13700400000016,
+      "p99Ms": 70.49684800000068,
+      "ttfbP50Ms": 33.125,
+      "ttfbP95Ms": 43.257667000001675,
+      "bytes": 30191,
+      "cpuMs": 250,
+      "rssKb": 427144,
+      "peakRssKb": 427144,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-latency25-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 166.2977009999995,
+      "rps": 192.42599150543938,
+      "p50Ms": 40.02240299999903,
+      "p95Ms": 44.217665000000125,
+      "p99Ms": 44.78257699999995,
+      "ttfbP50Ms": 6.531574000000546,
+      "ttfbP95Ms": 9.846580999999787,
+      "bytes": 25292,
+      "cpuMs": 30,
+      "rssKb": 18096,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-latency25-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 217.48096299999997,
+      "rps": 147.1393153615933,
+      "p50Ms": 49.066272000000026,
+      "p95Ms": 67.00156499999866,
+      "p99Ms": 76.2190010000013,
+      "ttfbP50Ms": 27.01271000000088,
+      "ttfbP95Ms": 46.8667889999997,
+      "bytes": 30191,
+      "cpuMs": 210,
+      "rssKb": 435336,
+      "peakRssKb": 435336,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-latency25-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 203.64744100000098,
+      "rps": 157.13430938717195,
+      "p50Ms": 47.53080300000147,
+      "p95Ms": 54.962540000000445,
+      "p99Ms": 57.87531300000046,
+      "ttfbP50Ms": 24.34213699999964,
+      "ttfbP95Ms": 33.14006800000061,
+      "bytes": 30234,
+      "cpuMs": 230,
+      "rssKb": 442248,
+      "peakRssKb": 442248,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-latency25-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 157.34105400000044,
+      "rps": 203.37985024556852,
+      "p50Ms": 37.41397399999914,
+      "p95Ms": 42.32637600000089,
+      "p99Ms": 43.643073999999615,
+      "ttfbP50Ms": 4.640614000003552,
+      "ttfbP95Ms": 9.814575000000332,
+      "bytes": 25292,
+      "cpuMs": 30,
+      "rssKb": 18480,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-zero-warm",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 151.74319000000105,
+      "rps": 210.88261028386037,
+      "p50Ms": 35.514985999998316,
+      "p95Ms": 43.766593000000285,
+      "p99Ms": 47.761232999997446,
+      "ttfbP50Ms": 35.467139999997016,
+      "ttfbP95Ms": 43.721386999997776,
+      "bytes": 28772,
+      "cpuMs": 190,
+      "rssKb": 454024,
+      "peakRssKb": 454024,
+      "upstream": {
+        "categories": 0,
+        "products": 0
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-zero-warm",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 67.34946599999967,
+      "rps": 475.1336855439976,
+      "p50Ms": 15.828421999998682,
+      "p95Ms": 20.3463980000015,
+      "p99Ms": 20.794279999998253,
+      "ttfbP50Ms": 5.77538800000184,
+      "ttfbP95Ms": 10.634444999999687,
+      "bytes": 25250,
+      "cpuMs": 20,
+      "rssKb": 18344,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 0,
+        "products": 0
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-zero-warm",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 75.48580300000322,
+      "rps": 423.92077355259295,
+      "p50Ms": 16.0326750000022,
+      "p95Ms": 23.787343999996665,
+      "p99Ms": 24.136125000000902,
+      "ttfbP50Ms": 7.809224999997241,
+      "ttfbP95Ms": 10.5462320000006,
+      "bytes": 25250,
+      "cpuMs": 30,
+      "rssKb": 18336,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 0,
+        "products": 0
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-zero-warm",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 153.28514800000266,
+      "rps": 208.76125585238984,
+      "p50Ms": 35.72682800000257,
+      "p95Ms": 52.311766000002535,
+      "p99Ms": 56.68983300000036,
+      "ttfbP50Ms": 35.69724000000133,
+      "ttfbP95Ms": 52.28008899999986,
+      "bytes": 28772,
+      "cpuMs": 150,
+      "rssKb": 459912,
+      "peakRssKb": 459912,
+      "upstream": {
+        "categories": 0,
+        "products": 0
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-zero-warm",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 55.608956000000035,
+      "rps": 575.4468758593487,
+      "p50Ms": 12.195651999998518,
+      "p95Ms": 20.464968000000226,
+      "p99Ms": 20.715415999999095,
+      "ttfbP50Ms": 3.6946960000022955,
+      "ttfbP95Ms": 10.426342999999179,
+      "bytes": 25250,
+      "cpuMs": 20,
+      "rssKb": 18336,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 0,
+        "products": 0
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-zero-warm",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 136.40224600000147,
+      "rps": 234.6002425795808,
+      "p50Ms": 33.45222199999989,
+      "p95Ms": 40.267461999999796,
+      "p99Ms": 44.91819499999838,
+      "ttfbP50Ms": 33.42241400000057,
+      "ttfbP95Ms": 40.226214999998774,
+      "bytes": 28772,
+      "cpuMs": 150,
+      "rssKb": 466568,
+      "peakRssKb": 466568,
+      "upstream": {
+        "categories": 0,
+        "products": 0
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-zero-warm",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 145.43104799999855,
+      "rps": 220.03554564222296,
+      "p50Ms": 34.92477599999984,
+      "p95Ms": 40.90738699999929,
+      "p99Ms": 45.80032100000244,
+      "ttfbP50Ms": 34.892329000002064,
+      "ttfbP95Ms": 40.863171000000875,
+      "bytes": 28772,
+      "cpuMs": 160,
+      "rssKb": 473352,
+      "peakRssKb": 473352,
+      "upstream": {
+        "categories": 0,
+        "products": 0
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-zero-warm",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 55.37632500000109,
+      "rps": 577.8642768367055,
+      "p50Ms": 11.831363000001147,
+      "p95Ms": 19.463831999997637,
+      "p99Ms": 19.831091000000015,
+      "ttfbP50Ms": 2.0848729999997886,
+      "ttfbP95Ms": 10.519614000000729,
+      "bytes": 25250,
+      "cpuMs": 30,
+      "rssKb": 18196,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 0,
+        "products": 0
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-zero-warm",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 178.191648,
+      "rps": 179.58192967607553,
+      "p50Ms": 41.359888999999384,
+      "p95Ms": 68.04460599999948,
+      "p99Ms": 73.29566900000282,
+      "ttfbP50Ms": 41.32843099999809,
+      "ttfbP95Ms": 68.00720999999976,
+      "bytes": 28772,
+      "cpuMs": 200,
+      "rssKb": 479368,
+      "peakRssKb": 479368,
+      "upstream": {
+        "categories": 0,
+        "products": 0
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-zero-warm",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 55.51062400000228,
+      "rps": 576.4662274378088,
+      "p50Ms": 12.77838200000042,
+      "p95Ms": 16.64400299999761,
+      "p99Ms": 17.854890000002342,
+      "ttfbP50Ms": 4.8741250000020955,
+      "ttfbP95Ms": 10.598698000001605,
+      "bytes": 25250,
+      "cpuMs": 30,
+      "rssKb": 18056,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 0,
+        "products": 0
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-zero-warm",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 67.54887899999812,
+      "rps": 473.73102964448736,
+      "p50Ms": 16.17467299999771,
+      "p95Ms": 20.36102600000231,
+      "p99Ms": 20.7860299999993,
+      "ttfbP50Ms": 4.968387000000803,
+      "ttfbP95Ms": 10.56768000000011,
+      "bytes": 25250,
+      "cpuMs": 20,
+      "rssKb": 18048,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 0,
+        "products": 0
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-zero-warm",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 152.826047999999,
+      "rps": 209.38838907880555,
+      "p50Ms": 34.75583099999858,
+      "p95Ms": 47.95734699999957,
+      "p99Ms": 50.90828500000134,
+      "ttfbP50Ms": 34.71656399999847,
+      "ttfbP95Ms": 47.93105899999864,
+      "bytes": 28772,
+      "cpuMs": 150,
+      "rssKb": 485768,
+      "peakRssKb": 485768,
+      "upstream": {
+        "categories": 0,
+        "products": 0
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-zero-warm",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 63.00846499999898,
+      "rps": 507.8682681763557,
+      "p50Ms": 12.163864999998623,
+      "p95Ms": 19.48869100000229,
+      "p99Ms": 19.995966999998927,
+      "ttfbP50Ms": 4.2644470000013825,
+      "ttfbP95Ms": 10.786012000000483,
+      "bytes": 25250,
+      "cpuMs": 30,
+      "rssKb": 18176,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 0,
+        "products": 0
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-zero-warm",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 157.87802699999884,
+      "rps": 202.6881169473966,
+      "p50Ms": 36.134783999998035,
+      "p95Ms": 48.05985799999689,
+      "p99Ms": 48.407868999998755,
+      "ttfbP50Ms": 36.10904599999776,
+      "ttfbP95Ms": 48.02653099999952,
+      "bytes": 28772,
+      "cpuMs": 170,
+      "rssKb": 492936,
+      "peakRssKb": 492936,
+      "upstream": {
+        "categories": 0,
+        "products": 0
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "document-c8-zero-warm",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 142.97990599999684,
+      "rps": 223.80767266695995,
+      "p50Ms": 35.67810200000167,
+      "p95Ms": 42.659317000001465,
+      "p99Ms": 46.94752199999857,
+      "ttfbP50Ms": 35.63377599999876,
+      "ttfbP95Ms": 42.62170100000003,
+      "bytes": 28772,
+      "cpuMs": 160,
+      "rssKb": 498824,
+      "peakRssKb": 498824,
+      "upstream": {
+        "categories": 0,
+        "products": 0
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "document-c8-zero-warm",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 67.3438559999995,
+      "rps": 475.17326599178153,
+      "p50Ms": 15.4676529999997,
+      "p95Ms": 19.89873599999919,
+      "p99Ms": 24.396912999996857,
+      "ttfbP50Ms": 3.362304000002041,
+      "ttfbP95Ms": 10.603757000000769,
+      "bytes": 25250,
+      "cpuMs": 20,
+      "rssKb": 18560,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 0,
+        "products": 0
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "flight-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 135.412769999999,
+      "rps": 236.31449234810157,
+      "p50Ms": 31.396387000000686,
+      "p95Ms": 45.49355600000126,
+      "p99Ms": 49.06506199999785,
+      "ttfbP50Ms": 20.631382999999914,
+      "ttfbP95Ms": 34.378013000001374,
+      "bytes": 14726,
+      "cpuMs": 150,
+      "rssKb": 503560,
+      "peakRssKb": 503560,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "flight-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 58.24410999999964,
+      "rps": 549.4117774312322,
+      "p50Ms": 12.641553999997996,
+      "p95Ms": 17.572763999996823,
+      "p99Ms": 20.407443000000058,
+      "ttfbP50Ms": 3.740891000001284,
+      "ttfbP95Ms": 10.26080699999875,
+      "bytes": 12794,
+      "cpuMs": 40,
+      "rssKb": 18432,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "flight-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 60.446342999999615,
+      "rps": 529.3951364435761,
+      "p50Ms": 12.183003000001918,
+      "p95Ms": 23.87192700000014,
+      "p99Ms": 24.384924000001774,
+      "ttfbP50Ms": 3.8363640000025043,
+      "ttfbP95Ms": 10.849146000000474,
+      "bytes": 12794,
+      "cpuMs": 50,
+      "rssKb": 18432,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "flight-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 148.70381800000177,
+      "rps": 215.19286075088954,
+      "p50Ms": 30.958074000001943,
+      "p95Ms": 54.81977199999892,
+      "p99Ms": 55.458708000001934,
+      "ttfbP50Ms": 21.579612999998062,
+      "ttfbP95Ms": 44.91082599999936,
+      "bytes": 14726,
+      "cpuMs": 160,
+      "rssKb": 507656,
+      "peakRssKb": 507656,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "flight-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 71.84654299999966,
+      "rps": 445.3937331403705,
+      "p50Ms": 15.989999000001262,
+      "p95Ms": 23.06305599999905,
+      "p99Ms": 23.51720700000078,
+      "ttfbP50Ms": 5.942243999998027,
+      "ttfbP95Ms": 10.781831999996939,
+      "bytes": 12794,
+      "cpuMs": 20,
+      "rssKb": 18296,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "flight-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 134.96862799999872,
+      "rps": 237.0921337364436,
+      "p50Ms": 30.95279500000106,
+      "p95Ms": 40.788156999999046,
+      "p99Ms": 41.99849400000312,
+      "ttfbP50Ms": 20.062182000001485,
+      "ttfbP95Ms": 28.377693999998883,
+      "bytes": 14726,
+      "cpuMs": 150,
+      "rssKb": 510600,
+      "peakRssKb": 510600,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "flight-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 123.67709900000045,
+      "rps": 258.73828104586994,
+      "p50Ms": 28.571717999999237,
+      "p95Ms": 36.31725799999913,
+      "p99Ms": 39.17943400000149,
+      "ttfbP50Ms": 19.476590999998734,
+      "ttfbP95Ms": 24.983822999998665,
+      "bytes": 14726,
+      "cpuMs": 130,
+      "rssKb": 514568,
+      "peakRssKb": 514568,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "flight-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 51.49244499999986,
+      "rps": 621.4503894697579,
+      "p50Ms": 11.394480000002659,
+      "p95Ms": 14.994584000000032,
+      "p99Ms": 16.040374999996857,
+      "ttfbP50Ms": 2.692790999997669,
+      "ttfbP95Ms": 4.745324999999866,
+      "bytes": 12794,
+      "cpuMs": 20,
+      "rssKb": 18168,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "flight-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 143.41898899999796,
+      "rps": 223.1224764804363,
+      "p50Ms": 30.9590640000024,
+      "p95Ms": 55.9508059999971,
+      "p99Ms": 59.20190999999977,
+      "ttfbP50Ms": 19.01683100000082,
+      "ttfbP95Ms": 46.58587299999999,
+      "bytes": 14726,
+      "cpuMs": 150,
+      "rssKb": 518664,
+      "peakRssKb": 518664,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "flight-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 54.15454899999895,
+      "rps": 590.9014217808484,
+      "p50Ms": 11.915946000000986,
+      "p95Ms": 16.13595599999826,
+      "p99Ms": 17.03194000000076,
+      "ttfbP50Ms": 2.9246510000011767,
+      "ttfbP95Ms": 9.309056999998575,
+      "bytes": 12794,
+      "cpuMs": 30,
+      "rssKb": 18168,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "flight-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 88.06444199999896,
+      "rps": 363.37026923988657,
+      "p50Ms": 20.019615000001068,
+      "p95Ms": 26.20361899999989,
+      "p99Ms": 27.502057999998215,
+      "ttfbP50Ms": 7.940883999999642,
+      "ttfbP95Ms": 10.57999899999777,
+      "bytes": 12794,
+      "cpuMs": 70,
+      "rssKb": 17764,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "flight-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 164.9756129999987,
+      "rps": 193.968062419021,
+      "p50Ms": 34.67476799999713,
+      "p95Ms": 67.9994000000006,
+      "p99Ms": 71.6487789999992,
+      "ttfbP50Ms": 23.56296399999701,
+      "ttfbP95Ms": 54.58219300000201,
+      "bytes": 14726,
+      "cpuMs": 200,
+      "rssKb": 521608,
+      "peakRssKb": 521608,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "flight-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 60.379689000001235,
+      "rps": 529.9795432864742,
+      "p50Ms": 12.315982000000076,
+      "p95Ms": 20.048212999998213,
+      "p99Ms": 20.76788099999976,
+      "ttfbP50Ms": 4.538214000000153,
+      "ttfbP95Ms": 10.296772999998211,
+      "bytes": 12794,
+      "cpuMs": 30,
+      "rssKb": 17892,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "flight-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 117.83109700000205,
+      "rps": 271.57516831061537,
+      "p50Ms": 27.781984999997803,
+      "p95Ms": 32.25277399999686,
+      "p99Ms": 36.46750499999689,
+      "ttfbP50Ms": 19.50485900000058,
+      "ttfbP95Ms": 23.990387999998347,
+      "bytes": 14726,
+      "cpuMs": 130,
+      "rssKb": 525704,
+      "peakRssKb": 525704,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "js",
+      "scenario": "flight-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 115.07605200000035,
+      "rps": 278.07697121899787,
+      "p50Ms": 27.43430399999852,
+      "p95Ms": 30.722695000000385,
+      "p99Ms": 31.190043999999034,
+      "ttfbP50Ms": 18.944017000001622,
+      "ttfbP95Ms": 22.596475999998802,
+      "bytes": 14726,
+      "cpuMs": 120,
+      "rssKb": 529672,
+      "peakRssKb": 529672,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    },
+    {
+      "arm": "rust",
+      "scenario": "flight-c8-zero-uncached",
+      "concurrency": 8,
+      "requests": 32,
+      "elapsedMs": 62.96347899999819,
+      "rps": 508.2311287151227,
+      "p50Ms": 15.642428000002838,
+      "p95Ms": 19.466362000002846,
+      "p99Ms": 19.872667999999976,
+      "ttfbP50Ms": 4.2266100000015285,
+      "ttfbP95Ms": 9.48746200000096,
+      "bytes": 12794,
+      "cpuMs": 30,
+      "rssKb": 17756,
+      "peakRssKb": 19468,
+      "upstream": {
+        "categories": 32,
+        "products": 32
+      }
+    }
+  ],
+  "summary": [
+    {
+      "scenario": "document-c1-zero-uncached",
+      "js": {
+        "samples": 8,
+        "mean": 111.02394368369737,
+        "ci95": 21.200138487649216
+      },
+      "rust": {
+        "samples": 8,
+        "mean": 76.29044963647391,
+        "ci95": 8.186635452339425
+      },
+      "rustToJs": 0.6871531230580518
+    },
+    {
+      "scenario": "document-c8-zero-uncached",
+      "js": {
+        "samples": 8,
+        "mean": 149.67745165409,
+        "ci95": 10.273163018084034
+      },
+      "rust": {
+        "samples": 8,
+        "mean": 497.22617625942144,
+        "ci95": 81.4393960418699
+      },
+      "rustToJs": 3.3219845124603613
+    },
+    {
+      "scenario": "document-c32-zero-uncached",
+      "js": {
+        "samples": 8,
+        "mean": 165.809184318531,
+        "ci95": 9.643445424822813
+      },
+      "rust": {
+        "samples": 8,
+        "mean": 1329.2776860427712,
+        "ci95": 127.32191125348105
+      },
+      "rustToJs": 8.016912280860968
+    },
+    {
+      "scenario": "document-c8-latency25-uncached",
+      "js": {
+        "samples": 8,
+        "mean": 147.81117244599454,
+        "ci95": 6.262855233298359
+      },
+      "rust": {
+        "samples": 8,
+        "mean": 197.20086359575268,
+        "ci95": 9.028048672381207
+      },
+      "rustToJs": 1.3341404464388749
+    },
+    {
+      "scenario": "document-c8-zero-warm",
+      "js": {
+        "samples": 8,
+        "mean": 211.21822034091144,
+        "ci95": 13.65216475662434
+      },
+      "rust": {
+        "samples": 8,
+        "mean": 510.7005503803848,
+        "ci95": 49.42799872402248
+      },
+      "rustToJs": 2.417881135235878
+    },
+    {
+      "scenario": "flight-c8-zero-uncached",
+      "js": {
+        "samples": 8,
+        "mean": 239.2600557887969,
+        "ci95": 24.14074115395577
+      },
+      "rust": {
+        "samples": 8,
+        "mean": 517.2666749384085,
+        "ci95": 68.18613797300569
+      },
+      "rustToJs": 2.1619433015388814
+    }
+  ],
+  "cancellation": [
+    {
+      "arm": "js",
+      "abortedAtMs": 63,
+      "recoveryStatus": 200,
+      "recoveryMs": 21.46258200000011
+    },
+    {
+      "arm": "rust",
+      "abortedAtMs": 61,
+      "recoveryStatus": 200,
+      "recoveryMs": 21.756807000001572
+    }
+  ]
+}

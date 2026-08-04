@@ -403,7 +403,8 @@ export async function findPagePathData(
   extensions: string[],
   pagesDir: string | undefined,
   appDir: string | undefined,
-  isGlobalNotFoundEnabled: boolean
+  isGlobalNotFoundEnabled: boolean,
+  appExtensions: string[] = extensions
 ): Promise<PagePathData> {
   const normalizedPagePath = tryToNormalizePagePath(page)
   let pagePath: string | null = null
@@ -451,7 +452,7 @@ export async function findPagePathData(
         const globalNotFoundPath = await findPageFile(
           appDir,
           'global-not-found',
-          extensions,
+          appExtensions,
           true
         )
         if (globalNotFoundPath) {
@@ -466,7 +467,7 @@ export async function findPagePathData(
         const notFoundPath = await findPageFile(
           appDir,
           'not-found',
-          extensions,
+          appExtensions,
           true
         )
         if (notFoundPath) {
@@ -487,12 +488,17 @@ export async function findPagePathData(
         page: UNDERSCORE_NOT_FOUND_ROUTE_ENTRY,
       }
     }
-    pagePath = await findPageFile(appDir, normalizedPagePath, extensions, true)
+    pagePath = await findPageFile(
+      appDir,
+      normalizedPagePath,
+      appExtensions,
+      true
+    )
     if (pagePath) {
       const pageUrl = ensureLeadingSlash(
         removePagePathTail(normalizePathSep(pagePath), {
           keepIndex: true,
-          extensions,
+          extensions: appExtensions,
         })
       )
 
@@ -841,7 +847,10 @@ export function onDemandEntryHandler({
           nextConfig.pageExtensions,
           pagesDir,
           appDir,
-          !!nextConfig.experimental.globalNotFound
+          !!nextConfig.experimental.globalNotFound,
+          nextConfig.experimental.rustServerComponents
+            ? [...nextConfig.pageExtensions, 'rs']
+            : nextConfig.pageExtensions
         )
       }
 
@@ -920,7 +929,10 @@ export function onDemandEntryHandler({
         page,
         pageFilePath: route.filename,
         isInsideAppDir,
-        pageExtensions: nextConfig.pageExtensions,
+        pageExtensions:
+          isInsideAppDir && nextConfig.experimental.rustServerComponents
+            ? [...nextConfig.pageExtensions, 'rs']
+            : nextConfig.pageExtensions,
         isDev: true,
         config: nextConfig,
         appDir,

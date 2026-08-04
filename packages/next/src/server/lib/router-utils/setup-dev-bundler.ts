@@ -225,6 +225,10 @@ async function startWatcher(
     nextConfig.pageExtensions,
     appDir
   )
+  const appPageExtensions = nextConfig.experimental.rustServerComponents
+    ? [...nextConfig.pageExtensions, 'rs']
+    : nextConfig.pageExtensions
+  const validAppFileMatcher = createValidFileMatcher(appPageExtensions, appDir)
 
   const serverFields: ServerFields = {}
 
@@ -527,19 +531,29 @@ async function startWatcher(
           continue
         }
 
-        if (
-          meta?.accuracy === undefined ||
-          !validFileMatcher.isPageFile(fileName)
-        ) {
-          continue
-        }
-
         const isAppPath = Boolean(
           appDir &&
             normalizePathSep(fileName).startsWith(
               normalizePathSep(appDir) + '/'
             )
         )
+
+        const routeFileMatcher = isAppPath
+          ? validAppFileMatcher
+          : validFileMatcher
+        const isSupportedRustConvention =
+          !fileName.endsWith('.rs') ||
+          (isAppPath &&
+            /(?:^|[/\\])(?:page|layout|loading|not-found|error)\.rs$/.test(
+              fileName
+            ))
+        if (
+          meta?.accuracy === undefined ||
+          !isSupportedRustConvention ||
+          !routeFileMatcher.isPageFile(fileName)
+        ) {
+          continue
+        }
         const isPagePath = Boolean(
           pagesDir &&
             normalizePathSep(fileName).startsWith(
@@ -549,7 +563,7 @@ async function startWatcher(
 
         const rootFile = absolutePathToPage(fileName, {
           dir: dir,
-          extensions: nextConfig.pageExtensions,
+          extensions: isAppPath ? appPageExtensions : nextConfig.pageExtensions,
           keepIndex: false,
           pagesType: PAGE_TYPES.ROOT,
         })
@@ -608,7 +622,7 @@ async function startWatcher(
 
         let pageName = absolutePathToPage(fileName, {
           dir: isAppPath ? appDir! : pagesDir!,
-          extensions: nextConfig.pageExtensions,
+          extensions: isAppPath ? appPageExtensions : nextConfig.pageExtensions,
           keepIndex: isAppPath,
           pagesType: isAppPath ? PAGE_TYPES.APP : PAGE_TYPES.PAGES,
         })
@@ -652,7 +666,7 @@ async function startWatcher(
 
         if (isAppPath) {
           // Track root not-found
-          if (validFileMatcher.isRootNotFound(fileName)) {
+          if (routeFileMatcher.isRootNotFound(fileName)) {
             hasRootAppNotFound = true
             continue
           }
@@ -666,7 +680,7 @@ async function startWatcher(
           addSlotIfNew(slots, normalizedPageName)
 
           // Handle layouts separately - they don't get added to appPaths
-          if (validFileMatcher.isAppLayoutPage(fileName)) {
+          if (routeFileMatcher.isAppLayoutPage(fileName)) {
             const layoutRoute = ensureLeadingSlash(
               normalizeAppPath(normalizedPageName).replace(/\/layout$/, '')
             )
@@ -675,7 +689,7 @@ async function startWatcher(
           }
 
           // Skip non-router pages (loading.tsx, error.tsx, etc.)
-          if (!validFileMatcher.isAppRouterPage(fileName)) continue
+          if (!routeFileMatcher.isAppRouterPage(fileName)) continue
 
           const originalPageName = pageName
           pageName = normalizeAppPath(pageName).replace(/%5F/g, '_')
@@ -705,7 +719,7 @@ async function startWatcher(
           }
 
           const routeEntry = { route: appRoute, filePath: fileName }
-          if (validFileMatcher.isAppRouterRoute(fileName)) {
+          if (routeFileMatcher.isAppRouterRoute(fileName)) {
             appRouteHandlers.push(routeEntry)
           } else {
             appRoutes.push(routeEntry)

@@ -1,0 +1,16 @@
+[package]
+name = "next-rsc"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[features]
+default = ["json", "macros"]
+json = ["dep:serde", "dep:serde_json"]
+macros = ["dep:next-rsc-macros"]
+
+[dependencies]
+next-rsc-macros = { workspace = true, optional = true }
+serde = { version = "1", optional = true }
+serde_json = { version = "1", optional = true }

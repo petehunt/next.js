@@ -1,0 +1,5 @@
+error: the layout argument must have type `LayoutProps`
+ --> tests/ui/layout-invalid-argument.rs:9:23
+  |
+9 | pub fn render(_props: PageProps) -> RenderResult {
+  |                       ^^^^^^^^^

@@ -21,8 +21,9 @@ use turbo_tasks::{
     NonLocalValue, ResolvedVc, TryJoinIterExt, ValueDefault, Vc, trace::TraceRawVcs,
     util::WrapFuture,
 };
-use turbo_tasks_fs::FileSystemPath;
+use turbo_tasks_fs::{FileContent, FileSystemPath};
 use turbopack_core::{
+    asset::Asset,
     file_source::FileSource,
     ident::AssetIdent,
     issue::{Issue, IssueExt, IssueSeverity, IssueSource, IssueStage, StyledString},
@@ -368,6 +369,28 @@ pub async fn parse_segment_config_from_source(
 ) -> Result<Vc<NextSegmentConfig>> {
     let ident = source.ident().await?;
     let path = &ident.path;
+
+    if path.path.ends_with(".rs") {
+        let content = source.content().file_content().await?;
+        let FileContent::Content(file) = &*content else {
+            return Ok(Default::default());
+        };
+        let source = file.content().to_str()?;
+        let mut config = NextSegmentConfig::default();
+        for line in source.lines() {
+            if line.contains("pub const RUNTIME") {
+                if line.contains("\"edge\"") {
+                    config.runtime = Some(NextRuntime::Edge);
+                } else if line.contains("\"nodejs\"") {
+                    config.runtime = Some(NextRuntime::NodeJs);
+                } else {
+                    bail!("Rust RSC RUNTIME must be \"edge\" or \"nodejs\"");
+                }
+                break;
+            }
+        }
+        return Ok(config.cell());
+    }
 
     // Don't try parsing if it's not a javascript file, otherwise it will emit an
     // issue causing the build to "fail".

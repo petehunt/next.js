@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "runtime": "rust-native",
+  "include": ["*"],
+  "routing": {
+    "basePath": "",
+    "trailingSlash": false,
+    "locales": []
+  }
+}

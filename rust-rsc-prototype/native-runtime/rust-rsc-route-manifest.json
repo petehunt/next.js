@@ -1,0 +1,467 @@
+{
+  "version": 2,
+  "buildId": "4d278be0258f0c59",
+  "flightRevision": "19.3.0-canary-cbb046ab-20260731",
+  "metadata": {
+    "title": "RustWorks Supply",
+    "description": "A native Rust Server Components catalog",
+    "applicationName": "RustWorks",
+    "generator": "next-rsc",
+    "referrer": "origin",
+    "creator": "RustWorks",
+    "publisher": "Next.js Labs",
+    "category": "technology"
+  },
+  "nativeRuntime": {
+    "version": 1,
+    "runtime": "rust-native",
+    "include": ["*"],
+    "routing": {
+      "basePath": "",
+      "trailingSlash": false,
+      "locales": [],
+      "rewrites": [
+        {
+          "source": "/native-rust-page",
+          "destination": "/rust-page"
+        },
+        {
+          "source": "/native-blog/:slug",
+          "destination": "/blog/:slug"
+        },
+        {
+          "source": "/conditional-rust",
+          "destination": "/rust-page",
+          "has": [
+            {
+              "type": "header",
+              "key": "x-use-rust",
+              "value": "yes"
+            }
+          ]
+        },
+        {
+          "source": "/external-docs/:path*",
+          "destination": "https://example.com/:path*"
+        }
+      ]
+    }
+  },
+  "deployment": {
+    "entrypoint": "native-runtime",
+    "fallbackAddressEnv": "NEXT_FALLBACK_ADDR",
+    "nodeFallbackOptional": false,
+    "bindAddressEnv": "HOST",
+    "portEnv": "PORT",
+    "staticDirectoryEnv": "NEXT_STATIC_DIR",
+    "publicDirectoryEnv": "NEXT_PUBLIC_DIR",
+    "nativeRequestKinds": [
+      "document",
+      "navigation",
+      "prefetch",
+      "segment-prefetch"
+    ],
+    "fallbackRequestKinds": ["interception-navigation"]
+  },
+  "routes": [
+    {
+      "pathname": "/",
+      "layouts": ["app/layout.rs"],
+      "page": "app/page.js",
+      "parallelSlots": {},
+      "componentIds": ["app/layout.rs", "app/page.js"],
+      "requiredAssets": [],
+      "clientReferences": [],
+      "nativeFlight": false,
+      "nativeHtml": false,
+      "nodeInRequestPath": true,
+      "runtimeCapabilities": [],
+      "unsupportedCapabilities": ["javascript-server-component"]
+    },
+    {
+      "pathname": "/archive/[[...parts]]",
+      "layouts": ["app/layout.rs"],
+      "page": "app/archive/[[...parts]]/page.rs",
+      "parallelSlots": {},
+      "componentIds": ["app/layout.rs", "app/archive/[[...parts]]/page.rs"],
+      "requiredAssets": [
+        "/_next/static/chunks/webpack-605086c493bc8ccd.js",
+        "/_next/static/chunks/main-app-b025aa0bd74a79df.js",
+        "/_next/static/chunks/polyfills-42372ed130431b0a.js",
+        "/_next/static/css/9192fece8fe7c839.css",
+        "/rust-mark.svg"
+      ],
+      "clientReferences": [],
+      "nativeFlight": true,
+      "nativeHtml": "intrinsic-only",
+      "nodeInRequestPath": false,
+      "runtimeCapabilities": [
+        "intrinsic-elements",
+        "native-flight",
+        "native-html",
+        "navigation-prefetch",
+        "params",
+        "search-params",
+        "http-control-flow"
+      ],
+      "unsupportedCapabilities": []
+    },
+    {
+      "pathname": "/blog/[slug]",
+      "layouts": ["app/layout.rs", "app/blog/[slug]/layout.rs"],
+      "page": "app/blog/[slug]/page.rs",
+      "parallelSlots": {},
+      "componentIds": [
+        "app/layout.rs",
+        "app/blog/[slug]/layout.rs",
+        "app/blog/[slug]/page.rs"
+      ],
+      "requiredAssets": [
+        "/_next/static/chunks/webpack-605086c493bc8ccd.js",
+        "/_next/static/chunks/main-app-b025aa0bd74a79df.js",
+        "/_next/static/chunks/polyfills-42372ed130431b0a.js",
+        "/_next/static/css/9192fece8fe7c839.css",
+        "/rust-mark.svg"
+      ],
+      "clientReferences": [],
+      "nativeFlight": true,
+      "nativeHtml": "intrinsic-only",
+      "nodeInRequestPath": false,
+      "runtimeCapabilities": [
+        "intrinsic-elements",
+        "native-flight",
+        "native-html",
+        "navigation-prefetch",
+        "params",
+        "search-params",
+        "http-control-flow"
+      ],
+      "unsupportedCapabilities": []
+    },
+    {
+      "pathname": "/catalog/js",
+      "layouts": ["app/layout.rs"],
+      "page": "app/catalog/js/page.js",
+      "parallelSlots": {},
+      "componentIds": ["app/layout.rs", "app/catalog/js/page.js"],
+      "requiredAssets": [],
+      "clientReferences": [],
+      "nativeFlight": false,
+      "nativeHtml": false,
+      "nodeInRequestPath": true,
+      "runtimeCapabilities": [],
+      "unsupportedCapabilities": ["javascript-server-component"]
+    },
+    {
+      "pathname": "/catalog/js/product/[id]",
+      "layouts": ["app/layout.rs"],
+      "page": "app/catalog/js/product/[id]/page.js",
+      "parallelSlots": {},
+      "componentIds": ["app/layout.rs", "app/catalog/js/product/[id]/page.js"],
+      "requiredAssets": [],
+      "clientReferences": [],
+      "nativeFlight": false,
+      "nativeHtml": false,
+      "nodeInRequestPath": true,
+      "runtimeCapabilities": [],
+      "unsupportedCapabilities": ["javascript-server-component"]
+    },
+    {
+      "pathname": "/catalog/rust",
+      "layouts": ["app/layout.rs"],
+      "page": "app/catalog/rust/page.rs",
+      "parallelSlots": {},
+      "componentIds": ["app/layout.rs", "app/catalog/rust/page.rs"],
+      "requiredAssets": [
+        "/_next/static/chunks/webpack-605086c493bc8ccd.js",
+        "/_next/static/chunks/main-app-b025aa0bd74a79df.js",
+        "/_next/static/chunks/polyfills-42372ed130431b0a.js",
+        "/_next/static/css/9192fece8fe7c839.css",
+        "/_next/static/chunks/app/catalog/js/page-e3600af0b23c74f8.js",
+        "/rust-mark.svg"
+      ],
+      "clientReferences": [
+        {
+          "module": "app/catalog/controls.js",
+          "bundler": "webpack",
+          "id": "8561",
+          "exportName": "default",
+          "chunks": [
+            "536",
+            "static/chunks/app/catalog/js/page-e3600af0b23c74f8.js"
+          ],
+          "async": false
+        }
+      ],
+      "nativeFlight": true,
+      "nativeHtml": "intrinsic-only",
+      "nodeInRequestPath": false,
+      "runtimeCapabilities": [
+        "intrinsic-elements",
+        "native-flight",
+        "native-html",
+        "navigation-prefetch",
+        "params",
+        "search-params",
+        "http-control-flow"
+      ],
+      "unsupportedCapabilities": []
+    },
+    {
+      "pathname": "/catalog/rust/product/[id]",
+      "layouts": ["app/layout.rs"],
+      "page": "app/catalog/rust/product/[id]/page.rs",
+      "parallelSlots": {},
+      "componentIds": [
+        "app/layout.rs",
+        "app/catalog/rust/product/[id]/page.rs"
+      ],
+      "requiredAssets": [
+        "/_next/static/chunks/webpack-605086c493bc8ccd.js",
+        "/_next/static/chunks/main-app-b025aa0bd74a79df.js",
+        "/_next/static/chunks/polyfills-42372ed130431b0a.js",
+        "/_next/static/css/9192fece8fe7c839.css",
+        "/_next/static/chunks/app/catalog/js/page-e3600af0b23c74f8.js",
+        "/rust-mark.svg"
+      ],
+      "clientReferences": [
+        {
+          "module": "app/catalog/controls.js",
+          "bundler": "webpack",
+          "id": "8561",
+          "exportName": "default",
+          "chunks": [
+            "536",
+            "static/chunks/app/catalog/js/page-e3600af0b23c74f8.js"
+          ],
+          "async": false
+        }
+      ],
+      "nativeFlight": true,
+      "nativeHtml": "intrinsic-only",
+      "nodeInRequestPath": false,
+      "runtimeCapabilities": [
+        "intrinsic-elements",
+        "native-flight",
+        "native-html",
+        "navigation-prefetch",
+        "params",
+        "search-params",
+        "http-control-flow"
+      ],
+      "unsupportedCapabilities": []
+    },
+    {
+      "pathname": "/control/[kind]",
+      "layouts": ["app/layout.rs"],
+      "page": "app/control/[kind]/page.rs",
+      "parallelSlots": {},
+      "componentIds": ["app/layout.rs", "app/control/[kind]/page.rs"],
+      "requiredAssets": [
+        "/_next/static/chunks/webpack-605086c493bc8ccd.js",
+        "/_next/static/chunks/main-app-b025aa0bd74a79df.js",
+        "/_next/static/chunks/polyfills-42372ed130431b0a.js",
+        "/_next/static/css/9192fece8fe7c839.css",
+        "/rust-mark.svg"
+      ],
+      "clientReferences": [],
+      "nativeFlight": true,
+      "nativeHtml": "intrinsic-only",
+      "nodeInRequestPath": false,
+      "runtimeCapabilities": [
+        "intrinsic-elements",
+        "native-flight",
+        "native-html",
+        "navigation-prefetch",
+        "params",
+        "search-params",
+        "http-control-flow"
+      ],
+      "unsupportedCapabilities": []
+    },
+    {
+      "pathname": "/dashboard",
+      "layouts": ["app/layout.rs", "app/dashboard/layout.rs"],
+      "page": "app/dashboard/page.rs",
+      "parallelSlots": {
+        "team": "app/dashboard/@team/page.rs"
+      },
+      "componentIds": [
+        "app/layout.rs",
+        "app/dashboard/layout.rs",
+        "app/dashboard/page.rs",
+        "app/dashboard/@team/page.rs"
+      ],
+      "requiredAssets": [
+        "/_next/static/chunks/webpack-605086c493bc8ccd.js",
+        "/_next/static/chunks/main-app-b025aa0bd74a79df.js",
+        "/_next/static/chunks/polyfills-42372ed130431b0a.js",
+        "/_next/static/css/9192fece8fe7c839.css",
+        "/rust-mark.svg"
+      ],
+      "clientReferences": [],
+      "nativeFlight": true,
+      "nativeHtml": "intrinsic-only",
+      "nodeInRequestPath": false,
+      "runtimeCapabilities": [
+        "intrinsic-elements",
+        "native-flight",
+        "native-html",
+        "navigation-prefetch",
+        "params",
+        "search-params",
+        "http-control-flow",
+        "parallel-slots"
+      ],
+      "unsupportedCapabilities": []
+    },
+    {
+      "pathname": "/dashboard/settings",
+      "layouts": ["app/layout.rs", "app/dashboard/layout.rs"],
+      "page": "app/dashboard/settings/page.rs",
+      "parallelSlots": {
+        "team": "app/dashboard/@team/settings/page.rs"
+      },
+      "componentIds": [
+        "app/layout.rs",
+        "app/dashboard/layout.rs",
+        "app/dashboard/settings/page.rs",
+        "app/dashboard/@team/settings/page.rs"
+      ],
+      "requiredAssets": [
+        "/_next/static/chunks/webpack-605086c493bc8ccd.js",
+        "/_next/static/chunks/main-app-b025aa0bd74a79df.js",
+        "/_next/static/chunks/polyfills-42372ed130431b0a.js",
+        "/_next/static/css/9192fece8fe7c839.css",
+        "/rust-mark.svg"
+      ],
+      "clientReferences": [],
+      "nativeFlight": true,
+      "nativeHtml": "intrinsic-only",
+      "nodeInRequestPath": false,
+      "runtimeCapabilities": [
+        "intrinsic-elements",
+        "native-flight",
+        "native-html",
+        "navigation-prefetch",
+        "params",
+        "search-params",
+        "http-control-flow",
+        "parallel-slots"
+      ],
+      "unsupportedCapabilities": []
+    },
+    {
+      "pathname": "/docs/[...parts]",
+      "layouts": ["app/layout.rs"],
+      "page": "app/docs/[...parts]/page.rs",
+      "parallelSlots": {},
+      "componentIds": ["app/layout.rs", "app/docs/[...parts]/page.rs"],
+      "requiredAssets": [
+        "/_next/static/chunks/webpack-605086c493bc8ccd.js",
+        "/_next/static/chunks/main-app-b025aa0bd74a79df.js",
+        "/_next/static/chunks/polyfills-42372ed130431b0a.js",
+        "/_next/static/css/9192fece8fe7c839.css",
+        "/rust-mark.svg"
+      ],
+      "clientReferences": [],
+      "nativeFlight": true,
+      "nativeHtml": "intrinsic-only",
+      "nodeInRequestPath": false,
+      "runtimeCapabilities": [
+        "intrinsic-elements",
+        "native-flight",
+        "native-html",
+        "navigation-prefetch",
+        "params",
+        "search-params",
+        "http-control-flow"
+      ],
+      "unsupportedCapabilities": []
+    },
+    {
+      "pathname": "/request",
+      "layouts": ["app/layout.rs"],
+      "page": "app/request/page.rs",
+      "parallelSlots": {},
+      "componentIds": ["app/layout.rs", "app/request/page.rs"],
+      "requiredAssets": [
+        "/_next/static/chunks/webpack-605086c493bc8ccd.js",
+        "/_next/static/chunks/main-app-b025aa0bd74a79df.js",
+        "/_next/static/chunks/polyfills-42372ed130431b0a.js",
+        "/_next/static/css/9192fece8fe7c839.css",
+        "/rust-mark.svg"
+      ],
+      "clientReferences": [],
+      "nativeFlight": true,
+      "nativeHtml": "intrinsic-only",
+      "nodeInRequestPath": false,
+      "runtimeCapabilities": [
+        "intrinsic-elements",
+        "native-flight",
+        "native-html",
+        "navigation-prefetch",
+        "params",
+        "search-params",
+        "http-control-flow"
+      ],
+      "unsupportedCapabilities": []
+    },
+    {
+      "pathname": "/rust-page",
+      "layouts": ["app/layout.rs"],
+      "page": "app/rust-page/page.rs",
+      "parallelSlots": {},
+      "componentIds": ["app/layout.rs", "app/rust-page/page.rs"],
+      "requiredAssets": [
+        "/_next/static/chunks/webpack-605086c493bc8ccd.js",
+        "/_next/static/chunks/main-app-b025aa0bd74a79df.js",
+        "/_next/static/chunks/polyfills-42372ed130431b0a.js",
+        "/_next/static/css/9192fece8fe7c839.css",
+        "/rust-mark.svg"
+      ],
+      "clientReferences": [],
+      "nativeFlight": true,
+      "nativeHtml": "intrinsic-only",
+      "nodeInRequestPath": false,
+      "runtimeCapabilities": [
+        "intrinsic-elements",
+        "native-flight",
+        "native-html",
+        "navigation-prefetch",
+        "params",
+        "search-params",
+        "http-control-flow"
+      ],
+      "unsupportedCapabilities": []
+    },
+    {
+      "pathname": "/search",
+      "layouts": ["app/layout.rs"],
+      "page": "app/search/page.rs",
+      "parallelSlots": {},
+      "componentIds": ["app/layout.rs", "app/search/page.rs"],
+      "requiredAssets": [
+        "/_next/static/chunks/webpack-605086c493bc8ccd.js",
+        "/_next/static/chunks/main-app-b025aa0bd74a79df.js",
+        "/_next/static/chunks/polyfills-42372ed130431b0a.js",
+        "/_next/static/css/9192fece8fe7c839.css",
+        "/rust-mark.svg"
+      ],
+      "clientReferences": [],
+      "nativeFlight": true,
+      "nativeHtml": "intrinsic-only",
+      "nodeInRequestPath": false,
+      "runtimeCapabilities": [
+        "intrinsic-elements",
+        "native-flight",
+        "native-html",
+        "navigation-prefetch",
+        "params",
+        "search-params",
+        "http-control-flow"
+      ],
+      "unsupportedCapabilities": []
+    }
+  ]
+}

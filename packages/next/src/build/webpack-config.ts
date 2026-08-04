@@ -926,7 +926,12 @@ export default async function getBaseWebpackConfig(
     dir,
   })
 
-  const pageExtensionsRegex = new RegExp(`\\.(${pageExtensions.join('|')})$`)
+  const pageExtensionsRegex = new RegExp(
+    `\\.(${[
+      ...pageExtensions,
+      ...(config.experimental.rustServerComponents ? ['rs'] : []),
+    ].join('|')})$`
+  )
 
   const aliasCodeConditionTest = [codeCondition.test, pageExtensionsRegex]
 
@@ -1398,6 +1403,7 @@ export default async function getBaseWebpackConfig(
         'next-middleware-asset-loader',
         'next-middleware-wasm-loader',
         'next-app-loader',
+        'next-rsc-loader',
         'next-route-loader',
         'next-font-loader',
         'next-invalid-import-error-loader',
@@ -1706,6 +1712,46 @@ export default async function getBaseWebpackConfig(
           : []),
         {
           oneOf: [
+            ...(config.experimental.rustServerComponents
+              ? [
+                  ...(isClient
+                    ? [
+                        {
+                          test: /error\.rs$/,
+                          use: [swcBrowserLayerLoader, 'next-rsc-loader'],
+                        },
+                      ]
+                    : []),
+                  ...(isNodeServer || isEdgeServer
+                    ? [
+                        {
+                          test: /error\.rs$/,
+                          // Loaders run right-to-left. Rust must become a
+                          // JavaScript module before SWC marks it as a client
+                          // boundary. The existing outer Flight rule then
+                          // registers its exports exactly once.
+                          issuerLayer: shouldUseReactServerCondition,
+                          use: [swcServerLayerLoader, 'next-rsc-loader'],
+                        },
+                        {
+                          test: /error\.rs$/,
+                          issuerLayer: WEBPACK_LAYERS.serverSideRendering,
+                          use: [swcSSRLayerLoader, 'next-rsc-loader'],
+                        },
+                      ]
+                    : []),
+                ]
+              : []),
+            ...(config.experimental.rustServerComponents &&
+            (isNodeServer || isEdgeServer)
+              ? [
+                  {
+                    test: /(?:layout|page|loading|not-found)\.rs$/,
+                    issuerLayer: shouldUseReactServerCondition,
+                    use: ['next-rsc-loader'],
+                  },
+                ]
+              : []),
             {
               ...codeCondition,
               issuerLayer: WEBPACK_LAYERS.apiNode,

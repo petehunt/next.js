@@ -1,0 +1,5 @@
+error: an async page must take exactly `PageProps, RequestContext`
+ --> tests/ui/page-invalid-async-context.rs:4:21
+  |
+4 | pub async fn render(_props: PageProps) -> RenderResult { Ok(Node) }
+  |                     ^^^^^^^^^^^^^^^^^

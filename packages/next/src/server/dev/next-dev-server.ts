@@ -286,6 +286,9 @@ export default class DevServer extends Server {
     )
     const extensions = this.nextConfig.pageExtensions
     const extensionsExpression = new RegExp(`\\.(?:${extensions.join('|')})$`)
+    const appExtensions = this.nextConfig.experimental.rustServerComponents
+      ? [...extensions, 'rs']
+      : extensions
 
     // If the pages directory is available, then configure those matchers.
     if (pagesDir) {
@@ -323,6 +326,12 @@ export default class DevServer extends Server {
         new DefaultFileReader({
           // Ignore any directory prefixed with an underscore.
           ignorePartFilter: (part) => part.startsWith('_'),
+          pathnameFilter: (pathname) =>
+            extensionsExpression.test(pathname) ||
+            (this.nextConfig.experimental.rustServerComponents === true &&
+              /(?:^|[/\\])(?:page|layout|loading|not-found|error)\.rs$/.test(
+                pathname
+              )),
         })
       )
 
@@ -331,7 +340,7 @@ export default class DevServer extends Server {
       matchers.push(
         new DevAppPageRouteMatcherProvider(
           appDir,
-          extensions,
+          appExtensions,
           fileReader,
           isTurbopack
         )
@@ -339,7 +348,7 @@ export default class DevServer extends Server {
       matchers.push(
         new DevAppRouteRouteMatcherProvider(
           appDir,
-          extensions,
+          appExtensions,
           fileReader,
           isTurbopack
         )
@@ -419,10 +428,13 @@ export default class DevServer extends Server {
     let pagesFile: string | null = null
 
     if (this.appDir) {
+      const appExtensions = this.nextConfig.experimental.rustServerComponents
+        ? [...this.nextConfig.pageExtensions, 'rs']
+        : this.nextConfig.pageExtensions
       appFile = await findPageFile(
         this.appDir,
         normalizedPath + '/page',
-        this.nextConfig.pageExtensions,
+        appExtensions,
         true
       )
     }

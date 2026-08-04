@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply m-0 bg-slate-50 font-sans text-slate-900;
+  }
+  button,
+  input,
+  select {
+    @apply rounded border border-slate-300 bg-white px-3 py-2;
+  }
+  button {
+    @apply cursor-pointer bg-amber-400 font-semibold hover:bg-amber-300;
+  }
+}
+
+@layer components {
+  .catalog-shell {
+    @apply min-h-screen bg-slate-50;
+  }
+  .catalog-header {
+    @apply sticky top-0 z-10 flex flex-col gap-4 border-b border-slate-300 bg-slate-900 px-4 py-3 text-white md:flex-row md:items-center;
+  }
+  .catalog-brand {
+    @apply whitespace-nowrap text-xl font-black tracking-tight text-amber-400 no-underline;
+  }
+  .catalog-search {
+    @apply flex flex-1 items-end gap-2;
+  }
+  .catalog-search label {
+    @apply sr-only;
+  }
+  .catalog-search input {
+    @apply min-w-0 flex-1 text-slate-900;
+  }
+  .catalog-grid {
+    @apply grid md:grid-cols-[14rem_minmax(0,1fr)];
+  }
+  .catalog-sidebar {
+    @apply flex gap-2 overflow-x-auto border-b border-slate-300 bg-white p-4 md:min-h-[calc(100vh-4.5rem)] md:flex-col md:border-b-0 md:border-r;
+  }
+  .catalog-sidebar h2 {
+    @apply hidden text-sm font-bold uppercase tracking-wide text-slate-500 md:block;
+  }
+  .catalog-sidebar a {
+    @apply whitespace-nowrap rounded px-2 py-1 text-sm font-medium text-blue-800 hover:bg-blue-50;
+  }
+  .catalog-grid main {
+    @apply min-w-0 p-4;
+  }
+  .catalog-filters {
+    @apply mb-3 flex flex-wrap items-end gap-3 rounded border border-slate-300 bg-white p-3;
+  }
+  .catalog-filters label {
+    @apply flex flex-col gap-1 text-xs font-bold uppercase tracking-wide text-slate-600;
+  }
+  .catalog-summary {
+    @apply mb-3 text-sm font-semibold text-slate-600;
+  }
+  .catalog-table {
+    @apply w-full border-collapse bg-white text-left text-sm shadow-sm;
+  }
+  .catalog-table th {
+    @apply sticky top-[4.5rem] border-b-2 border-slate-300 bg-slate-100 px-3 py-2 text-xs uppercase tracking-wide text-slate-600;
+  }
+  .catalog-table td {
+    @apply border-b border-slate-200 px-3 py-3 align-top;
+  }
+  .catalog-table tbody tr {
+    @apply hover:bg-amber-50;
+  }
+  .catalog-table a {
+    @apply font-mono font-bold text-blue-800;
+  }
+  .catalog-table small {
+    @apply block text-xs text-slate-500;
+  }
+  [data-loading-region] {
+    @apply animate-pulse rounded bg-slate-200 p-6 font-semibold text-slate-500;
+  }
+  .catalog-detail {
+    @apply mx-auto max-w-3xl p-6;
+  }
+  .catalog-detail h1 {
+    @apply mt-2 text-3xl font-black;
+  }
+  .catalog-eyebrow {
+    @apply mt-8 text-xs font-bold uppercase tracking-widest text-blue-800;
+  }
+  .catalog-part {
+    @apply font-mono text-slate-500;
+  }
+  .catalog-detail dl {
+    @apply my-6 grid gap-px overflow-hidden rounded border border-slate-300 bg-slate-300 sm:grid-cols-2;
+  }
+  .catalog-detail dl div {
+    @apply bg-white p-4;
+  }
+  .catalog-detail dt {
+    @apply text-xs font-bold uppercase text-slate-500;
+  }
+  .catalog-detail dd {
+    @apply mt-1 font-semibold;
+  }
+  .catalog-price {
+    @apply text-2xl font-black text-emerald-700;
+  }
+  .catalog-detail form {
+    @apply mt-4 flex items-end gap-3;
+  }
+}

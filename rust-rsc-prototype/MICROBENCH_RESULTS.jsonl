@@ -1,0 +1,3 @@
+{"name":"ir-construction","samples":9,"iterationsPerSample":20000,"medianNs":127.9,"meanNs":141.1}
+{"name":"flight-framing-escaping","samples":9,"iterationsPerSample":20000,"medianNs":587.8,"meanNs":632.5}
+{"name":"task-reserve-resolve-drain","samples":9,"iterationsPerSample":20000,"medianNs":395.9,"meanNs":395.8}

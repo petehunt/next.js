@@ -1825,7 +1825,10 @@ export async function createHotReloaderTurbopack(
               nextConfig.pageExtensions,
               opts.pagesDir,
               opts.appDir,
-              !!nextConfig.experimental.globalNotFound
+              !!nextConfig.experimental.globalNotFound,
+              nextConfig.experimental.rustServerComponents
+                ? [...nextConfig.pageExtensions, 'rs']
+                : nextConfig.pageExtensions
             ))
 
           // If the route is actually an app page route, then we should have access

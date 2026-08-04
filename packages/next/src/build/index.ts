@@ -102,6 +102,7 @@ import {
   TurborepoAccessTraceResult,
   writeTurborepoAccessTraceResult,
 } from './turborepo-access-trace'
+import { emitRustRscNativeManifest } from './rust-rsc-native'
 
 import {
   eventBuildOptimize,
@@ -1456,6 +1457,8 @@ export default async function build(
             isSrcDir,
             appDirOnly,
             debugBuildPaths,
+            rustServerComponents:
+              config.experimental.rustServerComponents === true,
           })
         )
 
@@ -4520,6 +4523,12 @@ export default async function build(
           .traceAsyncFn(() =>
             writeRouteBundleStats(pageKeys, buildManifest, distDir, dir)
           )
+      }
+
+      if (config.experimental.rustServerComponents) {
+        await nextBuildSpan
+          .traceChild('rust-rsc-native-manifest')
+          .traceAsyncFn(async () => emitRustRscNativeManifest(dir))
       }
 
       await nextBuildSpan

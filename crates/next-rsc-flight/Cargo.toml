@@ -1,0 +1,9 @@
+[package]
+name = "next-rsc-flight"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[dependencies]
+next-rsc = { path = "../next-rsc", default-features = false }

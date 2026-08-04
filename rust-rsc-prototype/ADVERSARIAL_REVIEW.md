@@ -6,6 +6,30 @@ Branch: `codex/rust-server-components`
 
 Commit: `a16d3935cf`
 
+## Remediation result
+
+All findings below were remediated on `codex/rust-server-components` and
+rechecked on August 4, 2026. This document retains the original hostile review
+as the historical problem statement; the table records the current closure
+evidence.
+
+| ID   | Resolution evidence                                                                                                                                                                                                                                                                                         |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F-01 | Manifest generation now extracts current LayoutRouter, template-context, and application client-module identities; a fresh native catalog browser run hydrated with zero errors.                                                                                                                            |
+| F-02 | Generated layout segments contain real `LayoutRouter` outlets for `children` and named slots; decoded dashboard bundles assert both router keys and browser navigation preserves client state.                                                                                                              |
+| F-03 | Header/cookie access is tracked across cloned request data, forces `staleTime=0`, and sends `private, no-store`; two same-key requests returned distinct values.                                                                                                                                            |
+| F-04 | Catalog segment rendering calls the same async catalog renderer used by document/navigation requests and returns the same 24-product semantics.                                                                                                                                                             |
+| F-05 | The 128-bit build identity covers runtime and encoder Rust sources, Cargo/toolchain inputs, deployment assets, route config, and generated client references.                                                                                                                                               |
+| F-06 | Compilation writes a unique temporary Wasm, validates it, atomically renames it, and releases only token-owned locks; the cache smoke covers abandoned partial output and stale-lock recovery.                                                                                                              |
+| F-07 | The loader no longer writes Wasm or JavaScript beside source; both Turbopack and Webpack boundary fixtures pass without the prepass.                                                                                                                                                                        |
+| F-08 | Admission is capped at 128 active requests, ambiguous framing and malformed headers fail closed, and focused parser/admission tests pass.                                                                                                                                                                   |
+| F-09 | Mutation routes are disabled without a token, authenticate in constant time, reject unsupported operations, count only applied mutations, and are private/non-cacheable.                                                                                                                                    |
+| F-10 | Adapter and native-generator paths are explicit typed/schema-validated experimental config; framework code no longer silently discovers executable magic filenames.                                                                                                                                         |
+| F-11 | Native and bridge classification fail closed for transitive modules, includes, and unclassified macros; evaluated routing inputs come from explicit JSON rather than regex-scanning `next.config.js`.                                                                                                       |
+| F-12 | Edge and Node instantiation live in one explicit compile-time `if/else`; the source-side conditional `require()` and Wasm sidecar were removed.                                                                                                                                                             |
+| F-13 | Gates now include crash recovery, two-request cache isolation, real Webpack/Turbopack boundary behavior, and a hydrated catalog-to-dashboard SPA run that observed `/_tree` segment prefetch, composed the named team slot, preserved a window marker, used one document, and produced zero browser errors. |
+| F-14 | Generation emits an application-wide client-reference table and a pathname-keyed Rust mutation-route registry; the runtime no longer imports the catalog handler at a fixed path.                                                                                                                           |
+
 ## Executive verdict
 
 The embedded-Wasm bridge is a convincing local spike: Rust conventions are

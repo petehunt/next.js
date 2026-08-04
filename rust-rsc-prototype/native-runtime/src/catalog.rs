@@ -411,6 +411,9 @@ fn product_content_with_filters(
             element("label", [Node::text("Material "), material_select]),
             element("label", [Node::text("Sort "), sort_select]),
             element("button", [Node::text("Apply")]),
+            element("a", [Node::text("Open dashboard")])
+                .prop("href", "/dashboard")
+                .prop("data-native-navigation", true),
         ],
     )
     .prop("className", "catalog-filters");

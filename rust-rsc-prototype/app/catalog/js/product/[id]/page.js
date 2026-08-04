@@ -1,4 +1,5 @@
 const dataOrigin = process.env.CATALOG_DATA_ORIGIN || 'http://127.0.0.1:3041'
+import CatalogControls from '../../../controls'
 
 export default async function JavaScriptProduct({ params }) {
   const { id } = await params
@@ -13,7 +14,11 @@ export default async function JavaScriptProduct({ params }) {
       </main>
     )
   const product = await response.json()
-  return <ProductDetail implementation="js" product={product} />
+  return (
+    <CatalogControls basePath="/catalog/js">
+      <ProductDetail implementation="js" product={product} />
+    </CatalogControls>
+  )
 }
 
 function ProductDetail({ implementation, product }) {
@@ -23,7 +28,9 @@ function ProductDetail({ implementation, product }) {
       data-product-detail={product.id}
       data-catalog={implementation}
     >
-      <a href="/catalog/js">← Back to catalog</a>
+      <a href="/catalog/js" data-catalog-navigation>
+        ← Back to catalog
+      </a>
       <p className="catalog-eyebrow">{product.category}</p>
       <h1>{product.name}</h1>
       <p className="catalog-part">Part {product.id}</p>

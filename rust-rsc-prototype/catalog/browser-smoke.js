@@ -138,8 +138,8 @@ async function main() {
   await page.evaluate(() => {
     window.__catalogNavigationMarker = 'survived-dashboard-navigation'
   })
-  await page.hover('[data-native-navigation]')
-  await page.click('[data-native-navigation]')
+  await page.hover('a[href="/dashboard"]')
+  await page.click('a[href="/dashboard"]')
   await page.waitForURL(/\/dashboard$/)
   await page.waitForSelector('[data-slot="team"]')
   const dashboard = await page.evaluate(() => ({

@@ -277,7 +277,9 @@ fn query(params: &BTreeMap<String, ParamValue>, name: &str, fallback: &str) -> S
 }
 
 fn link(href: String, label: impl Into<String>) -> Node {
-    element("a", [Node::text(label.into())]).prop("href", href)
+    element("a", [Node::text(label.into())])
+        .prop("href", href)
+        .prop("data-catalog-navigation", true)
 }
 
 fn catalog_view(
@@ -309,7 +311,7 @@ fn catalog_view(
         ],
     )
     .prop("className", "catalog-header");
-    element(
+    let catalog = element(
         "div",
         [
             header,
@@ -317,7 +319,14 @@ fn catalog_view(
         ],
     )
     .prop("className", "catalog-shell")
-    .prop("data-catalog", "rust")
+    .prop("data-catalog", "rust");
+    client_reference(
+        crate::RUST_RSC_CATALOG_CONTROLS_MODULE_ID,
+        "default",
+        crate::RUST_RSC_CATALOG_CONTROLS_CHUNKS.iter().copied(),
+        [catalog],
+    )
+    .prop("basePath", "/catalog/rust")
 }
 
 fn category_sidebar(categories: &[Category]) -> Node {
@@ -413,17 +422,10 @@ fn product_content_with_filters(
             element("button", [Node::text("Apply")]),
             element("a", [Node::text("Open dashboard")])
                 .prop("href", "/dashboard")
-                .prop("data-native-navigation", true),
+                .prop("data-catalog-navigation", true),
         ],
     )
     .prop("className", "catalog-filters");
-    let filters = client_reference(
-        crate::RUST_RSC_CATALOG_CONTROLS_MODULE_ID,
-        "default",
-        crate::RUST_RSC_CATALOG_CONTROLS_CHUNKS.iter().copied(),
-        [filters],
-    )
-    .prop("basePath", "/catalog/rust");
     let headings = [
         "Part",
         "Description",

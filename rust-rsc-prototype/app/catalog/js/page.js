@@ -52,45 +52,47 @@ export default async function JavaScriptCatalog({ searchParams }) {
   )
   const products = getJson(`/products?${queryString}`, cacheMode, requestCache)
   return (
-    <div className="catalog-shell" data-catalog="js">
-      <header className="catalog-header">
-        <a href="/catalog/js" className="catalog-brand">
-          RustWorks Supply
-        </a>
-        <form className="catalog-search">
-          <label htmlFor="catalog-q">Search products</label>
-          <input id="catalog-q" name="q" defaultValue={query} />
-          <button>Search</button>
-        </form>
-      </header>
-      <div className="catalog-grid">
-        <Suspense
-          fallback={
-            <nav
-              className="catalog-sidebar"
-              aria-label="Categories"
-              data-loading-region="categories"
-            >
-              Loading categories...
-            </nav>
-          }
-        >
-          <CategoriesRegion categories={categories} />
-        </Suspense>
-        <Suspense
-          fallback={
-            <main aria-label="Products" data-loading-region="products">
-              Loading products...
-            </main>
-          }
-        >
-          <ProductsRegion
-            products={products}
-            {...{ query, material, sort, page }}
-          />
-        </Suspense>
+    <CatalogControls basePath="/catalog/js">
+      <div className="catalog-shell" data-catalog="js">
+        <header className="catalog-header">
+          <a href="/catalog/js" className="catalog-brand">
+            RustWorks Supply
+          </a>
+          <form className="catalog-search">
+            <label htmlFor="catalog-q">Search products</label>
+            <input id="catalog-q" name="q" defaultValue={query} />
+            <button>Search</button>
+          </form>
+        </header>
+        <div className="catalog-grid">
+          <Suspense
+            fallback={
+              <nav
+                className="catalog-sidebar"
+                aria-label="Categories"
+                data-loading-region="categories"
+              >
+                Loading categories...
+              </nav>
+            }
+          >
+            <CategoriesRegion categories={categories} />
+          </Suspense>
+          <Suspense
+            fallback={
+              <main aria-label="Products" data-loading-region="products">
+                Loading products...
+              </main>
+            }
+          >
+            <ProductsRegion
+              products={products}
+              {...{ query, material, sort, page }}
+            />
+          </Suspense>
+        </div>
       </div>
-    </div>
+    </CatalogControls>
   )
 }
 async function CategoriesRegion({ categories }) {
@@ -98,11 +100,11 @@ async function CategoriesRegion({ categories }) {
   return (
     <nav aria-label="Categories" className="catalog-sidebar">
       <h2>Categories</h2>
-      <a href="?category=all">
+      <a href="?category=all" data-catalog-navigation>
         All products <span>720</span>
       </a>
       {resolved.map((item) => (
-        <a key={item.id} href={`?category=${item.id}`}>
+        <a key={item.id} href={`?category=${item.id}`} data-catalog-navigation>
           {item.name} <span>{item.count}</span>
         </a>
       ))}
@@ -113,30 +115,28 @@ async function ProductsRegion({ products, query, material, sort, page }) {
   const result = await products
   return (
     <main>
-      <CatalogControls basePath="/catalog/js">
-        <form className="catalog-filters">
-          <input type="hidden" name="q" value={query} readOnly />
-          <input type="hidden" name="productDelay" value="150" readOnly />
-          <label>
-            Material{' '}
-            <select name="material" defaultValue={material}>
-              <option value="all">All</option>
-              <option>Zinc Steel</option>
-              <option>Stainless Steel</option>
-              <option>Aluminum</option>
-              <option>Brass</option>
-            </select>
-          </label>
-          <label>
-            Sort{' '}
-            <select name="sort" defaultValue={sort}>
-              <option value="name">Name</option>
-              <option value="price">Price</option>
-            </select>
-          </label>
-          <button>Apply</button>
-        </form>
-      </CatalogControls>
+      <form className="catalog-filters">
+        <input type="hidden" name="q" value={query} readOnly />
+        <input type="hidden" name="productDelay" value="150" readOnly />
+        <label>
+          Material{' '}
+          <select name="material" defaultValue={material}>
+            <option value="all">All</option>
+            <option>Zinc Steel</option>
+            <option>Stainless Steel</option>
+            <option>Aluminum</option>
+            <option>Brass</option>
+          </select>
+        </label>
+        <label>
+          Sort{' '}
+          <select name="sort" defaultValue={sort}>
+            <option value="name">Name</option>
+            <option value="price">Price</option>
+          </select>
+        </label>
+        <button>Apply</button>
+      </form>
       <p className="catalog-summary">
         {result.total} products · page {page}
       </p>
@@ -155,7 +155,12 @@ async function ProductsRegion({ products, query, material, sort, page }) {
           {result.products.map((product) => (
             <tr key={product.id} data-product-id={product.id}>
               <td>
-                <a href={`/catalog/js/product/${product.id}`}>{product.id}</a>
+                <a
+                  href={`/catalog/js/product/${product.id}`}
+                  data-catalog-navigation
+                >
+                  {product.id}
+                </a>
               </td>
               <td>
                 {product.name}

@@ -300,6 +300,34 @@ fn handle_request_inner(
         }
         return write_streaming_catalog_flight(stream, &search_params, &rendered_search);
     }
+    if let Some(id) = pathname.strip_prefix("/catalog/rust/product/")
+        && request_kind != RequestKind::Document
+        && method == "GET"
+    {
+        let Some(page) = render_native_ppr_segment(
+            pathname,
+            "/catalog/rust/product/$d$id/__PAGE__",
+            &search_params,
+            &request_data,
+        ) else {
+            return write_response(stream, "404 Not Found", "text/plain", b"Not found");
+        };
+        let page = page?;
+        let page = next_rsc::client_reference(
+            RUST_RSC_CATALOG_DETAIL_CONTROLS_MODULE_ID,
+            "default",
+            RUST_RSC_CATALOG_DETAIL_CONTROLS_CHUNKS.iter().copied(),
+            [page],
+        )
+        .prop("basePath", "/catalog/rust");
+        trace_request_selection(request_id, method, request_target, request_kind, "native");
+        return write_flight_response(
+            stream,
+            &catalog_product_navigation_payload(id, page),
+            method,
+            request_data.accessed_runtime_data(),
+        );
+    }
     let rendered = if pathname == "/catalog/rust" {
         let cancelled = Arc::new(AtomicBool::new(false));
         let monitor_stop = Arc::new(AtomicBool::new(false));
@@ -805,6 +833,9 @@ fn write_streaming_catalog_document(
     for asset in RUST_RSC_MAIN_ASSETS {
         write!(initial, "<script src=\"{asset}\" async></script>").unwrap();
     }
+    for asset in RUST_RSC_ENTRY_CLIENT_ASSETS {
+        write!(initial, "<script src=\"{asset}\" async></script>").unwrap();
+    }
     for asset in RUST_RSC_POLYFILL_ASSETS {
         write!(initial, "<script src=\"{asset}\" nomodule></script>").unwrap();
     }
@@ -965,6 +996,91 @@ fn catalog_navigation_payload_with_seed(
     ])
 }
 
+fn catalog_product_navigation_payload(id: &str, page_node: Node) -> next_rsc_flight::FlightValue {
+    use next_rsc_flight::FlightValue::{
+        Array, Bool, Node as FlightNode, Null, Number, Object, String as FlightString, Undefined,
+    };
+    let page_tree = Array(vec![
+        FlightString("__PAGE__".to_owned()),
+        Object(Default::default()),
+        Undefined,
+        Undefined,
+        Number(4096.0),
+    ]);
+    let id_tree = Array(vec![
+        Array(vec![
+            FlightString("id".to_owned()),
+            FlightString(id.to_owned()),
+            FlightString("d".to_owned()),
+            Array(Vec::new()),
+        ]),
+        Object(BTreeMap::from([("children".to_owned(), page_tree)])),
+        Undefined,
+        Undefined,
+        Number(4096.0),
+    ]);
+    let product_tree = Array(vec![
+        FlightString("product".to_owned()),
+        Object(BTreeMap::from([("children".to_owned(), id_tree)])),
+        Undefined,
+        Undefined,
+        Number(4096.0),
+    ]);
+    let page_seed = Array(vec![
+        FlightNode(page_node),
+        Object(Default::default()),
+        Null,
+        Bool(false),
+        Null,
+    ]);
+    let id_seed = Array(vec![
+        FlightNode(router_fragment()),
+        Object(BTreeMap::from([("children".to_owned(), page_seed)])),
+        Null,
+        Bool(false),
+        Null,
+    ]);
+    let product_seed = Array(vec![
+        FlightNode(router_fragment()),
+        Object(BTreeMap::from([("children".to_owned(), id_seed)])),
+        Null,
+        Bool(false),
+        Null,
+    ]);
+    let flight_path = Array(vec![
+        FlightString("children".to_owned()),
+        FlightString("catalog".to_owned()),
+        FlightString("children".to_owned()),
+        FlightString("rust".to_owned()),
+        FlightString("children".to_owned()),
+        FlightString("product".to_owned()),
+        product_tree,
+        product_seed,
+        Null,
+        Bool(false),
+    ]);
+    next_rsc_flight::FlightValue::object([
+        (
+            "c",
+            Array(vec![
+                FlightString("".to_owned()),
+                FlightString("catalog".to_owned()),
+                FlightString("rust".to_owned()),
+                FlightString("product".to_owned()),
+                FlightString(id.to_owned()),
+            ]),
+        ),
+        ("f", Array(vec![flight_path])),
+        ("q", FlightString(String::new())),
+        ("i", Bool(false)),
+        ("h", Null),
+        ("r", Undefined),
+        ("G", Array(vec![Null, Undefined])),
+        ("S", Bool(false)),
+        ("b", FlightString(RUST_RSC_BUILD_ID.to_owned())),
+    ])
+}
+
 fn catalog_refetch_payload(rendered_search: &str, page_node: Node) -> next_rsc_flight::FlightValue {
     use next_rsc_flight::FlightValue::{
         Array, Bool, Node as FlightNode, Null, Number, Object, String as FlightString, Undefined,
@@ -1035,13 +1151,13 @@ fn catalog_refetch_payload(rendered_search: &str, page_node: Node) -> next_rsc_f
 fn next_layout_router(parallel_router_key: &str) -> Node {
     let template = next_rsc::client_reference(
         RUST_RSC_TEMPLATE_CONTEXT_MODULE_ID,
-        "",
+        RUST_RSC_TEMPLATE_CONTEXT_EXPORT,
         RUST_RSC_TEMPLATE_CONTEXT_CHUNKS.iter().copied(),
         [],
     );
     next_rsc::client_reference(
         RUST_RSC_LAYOUT_ROUTER_MODULE_ID,
-        "",
+        RUST_RSC_LAYOUT_ROUTER_EXPORT,
         RUST_RSC_LAYOUT_ROUTER_CHUNKS.iter().copied(),
         [],
     )
@@ -1384,17 +1500,14 @@ fn serve_static_asset(
     pathname: &str,
     method: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let relative = pathname.trim_start_matches("/_next/static/");
-    if relative.split('/').any(|segment| {
-        segment.is_empty() || segment == "." || segment == ".." || segment.contains(['\\', '%'])
-    }) {
+    let Some(relative) = safe_static_asset_relative(pathname) else {
         return write_response(
             stream,
             "400 Bad Request",
             "text/plain",
             b"Invalid asset path",
         );
-    }
+    };
     let root = env::var("NEXT_STATIC_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|_| {
@@ -1417,6 +1530,20 @@ fn serve_static_asset(
         &body,
         method,
     )
+}
+
+fn safe_static_asset_relative(pathname: &str) -> Option<PathBuf> {
+    let relative = pathname.strip_prefix("/_next/static/")?;
+    let mut decoded = PathBuf::new();
+    for segment in relative.split('/') {
+        let segment = percent_decode_path_segment(segment)?;
+        if segment.is_empty() || segment == "." || segment == ".." || segment.contains(['/', '\\'])
+        {
+            return None;
+        }
+        decoded.push(segment);
+    }
+    Some(decoded)
 }
 
 fn asset_content_type(filename: &Path) -> &'static str {
@@ -1456,6 +1583,9 @@ fn inject_app_router_bootstrap(
     );
     push_native_metadata(&mut head);
     for asset in RUST_RSC_MAIN_ASSETS {
+        write!(head, "<script src=\"{asset}\" async></script>").unwrap();
+    }
+    for asset in RUST_RSC_ENTRY_CLIENT_ASSETS {
         write!(head, "<script src=\"{asset}\" async></script>").unwrap();
     }
     for asset in RUST_RSC_POLYFILL_ASSETS {
@@ -1847,6 +1977,11 @@ fn navigation_payload_with_seed(
         .split('/')
         .filter(|segment| !segment.is_empty())
         .collect();
+    let route_pattern_segments: Vec<_> = native_ppr_route_pattern(pathname)
+        .unwrap_or(pathname)
+        .split('/')
+        .filter(|segment| !segment.is_empty())
+        .collect();
     let canonical_url_parts = Array(
         pathname
             .split('/')
@@ -1877,7 +2012,13 @@ fn navigation_payload_with_seed(
             }
         }
         children_tree = Array(vec![
-            FlightString((*segment).to_owned()),
+            router_segment_value(
+                route_pattern_segments
+                    .get(index)
+                    .copied()
+                    .unwrap_or(segment),
+                segment,
+            ),
             Object(parallel_routes),
             Null,
             Null,
@@ -1917,6 +2058,35 @@ fn navigation_payload_with_seed(
         ("S", Bool(false)),
         ("b", FlightString(RUST_RSC_BUILD_ID.to_owned())),
     ])
+}
+
+fn router_segment_value(pattern: &str, value: &str) -> next_rsc_flight::FlightValue {
+    use next_rsc_flight::FlightValue::{Array, String as FlightString};
+    let dynamic = if let Some(name) = pattern
+        .strip_prefix("[[...")
+        .and_then(|name| name.strip_suffix("]]"))
+    {
+        Some((name, "oc"))
+    } else if let Some(name) = pattern
+        .strip_prefix("[...")
+        .and_then(|name| name.strip_suffix(']'))
+    {
+        Some((name, "c"))
+    } else {
+        pattern
+            .strip_prefix('[')
+            .and_then(|name| name.strip_suffix(']'))
+            .map(|name| (name, "d"))
+    };
+    match dynamic {
+        Some((name, kind)) => Array(vec![
+            FlightString(name.to_owned()),
+            FlightString(value.to_owned()),
+            FlightString(kind.to_owned()),
+            Array(Vec::new()),
+        ]),
+        None => FlightString(value.to_owned()),
+    }
 }
 
 fn route_tree_for_segments<'a>(
@@ -2019,7 +2189,7 @@ mod tests {
     use crate::{
         ActiveRequest, MAX_ACTIVE_REQUESTS, NativeRewrite, RequestKind, apply_native_rewrite,
         classify_request, constant_time_equal, normalize_request_path, proxy_to_fallback,
-        read_request, trailing_slash_redirect,
+        read_request, safe_static_asset_relative, trailing_slash_redirect,
     };
 
     fn parse_raw_request(raw: &'static [u8]) -> Result<Vec<u8>, (&'static str, String)> {
@@ -2070,6 +2240,16 @@ mod tests {
         assert!(constant_time_equal("local-secret", "local-secret"));
         assert!(!constant_time_equal("local-secreu", "local-secret"));
         assert!(!constant_time_equal("local-secret-extra", "local-secret"));
+    }
+
+    #[test]
+    fn static_asset_paths_decode_route_segments_without_allowing_traversal() {
+        assert_eq!(
+            safe_static_asset_relative("/_next/static/chunks/app/catalog/product/%5Bid%5D/page.js"),
+            Some("chunks/app/catalog/product/[id]/page.js".into())
+        );
+        assert!(safe_static_asset_relative("/_next/static/%2e%2e/secret").is_none());
+        assert!(safe_static_asset_relative("/_next/static/chunks%2fsecret").is_none());
     }
 
     #[test]

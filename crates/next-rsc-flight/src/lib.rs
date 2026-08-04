@@ -1186,7 +1186,16 @@ impl Encoder {
         } else {
             let id = self.allocate_chunk_id();
             let mut import = format!("{id:x}:I[");
-            push_json_string(&mut import, &reference.module_id);
+            if reference
+                .module_id
+                .bytes()
+                .all(|byte| byte.is_ascii_digit())
+                && !reference.module_id.is_empty()
+            {
+                import.push_str(&reference.module_id);
+            } else {
+                push_json_string(&mut import, &reference.module_id);
+            }
             import.push_str(",[");
             for (index, chunk) in reference.chunks.iter().enumerate() {
                 if index != 0 {
@@ -1493,7 +1502,7 @@ mod tests {
         assert_eq!(
             String::from_utf8(encode_root(&model).unwrap()).unwrap(),
             concat!(
-                "1:I[\"42\",[\"7\",\"button.js\"],\"default\"]\n",
+                "1:I[42,[\"7\",\"button.js\"],\"default\"]\n",
                 "0:[\"$\",\"main\",null,{\"children\":[",
                 "[\"$\",\"$L1\",\"0\",{\"label\":\"press\"}],",
                 "[\"$\",\"$L1\",\"1\",{\"label\":\"press\"}]",

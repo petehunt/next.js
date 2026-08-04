@@ -32,7 +32,9 @@ pub fn render(props: PageProps) -> RenderResult {
     Ok(element(
         "article",
         [
-            element("a", [Node::text("← Back to catalog")]).prop("href", "/catalog/rust"),
+            element("a", [Node::text("← Back to catalog")])
+                .prop("href", "/catalog/rust")
+                .prop("data-catalog-navigation", true),
             element("p", [Node::text(category)]).prop("className", "catalog-eyebrow"),
             element("h1", [Node::text(name)]),
             element("p", [Node::text(format!("Part {id}"))]).prop("className", "catalog-part"),

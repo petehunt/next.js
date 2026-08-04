@@ -9,10 +9,33 @@ const routes = []
 const publicFiles = listFiles(path.join(__dirname, 'public')).map(relative)
 const bootstrapAssets = readBootstrapAssets()
 const applicationClientReferences = readApplicationClientReferences()
-const catalogClientReference = applicationClientReferences.find(
-  (reference) => reference.module === 'app/catalog/controls.js'
+const catalogClientReference = readRouteClientReference(
+  path.join(
+    __dirname,
+    '.next/server/app/catalog/js/page_client-reference-manifest.js'
+  )
+)
+const catalogDetailClientReference = readRouteClientReference(
+  path.join(
+    __dirname,
+    '.next/server/app/catalog/js/product/[id]/page_client-reference-manifest.js'
+  )
 )
 const nextInternalClientReferences = readNextInternalClientReferences()
+const internalClientChunks = [
+  ...nextInternalClientReferences.layoutRouter.chunks,
+  ...nextInternalClientReferences.templateContext.chunks,
+]
+for (const reference of [
+  catalogClientReference,
+  catalogDetailClientReference,
+]) {
+  if (reference.bundler === 'turbopack') {
+    reference.chunks = [
+      ...new Set([...reference.chunks, ...internalClientChunks]),
+    ]
+  }
+}
 const flightRevision = verifyFlightRevision()
 const nativeConfig = readNativeConfig()
 const nativeRewrites = readNativeRewrites()
@@ -76,6 +99,8 @@ const buildId = crypto
   .update(
     JSON.stringify({
       applicationClientReferences,
+      catalogClientReference,
+      catalogDetailClientReference,
       nextInternalClientReferences,
     })
   )
@@ -180,9 +205,20 @@ ${slots
     }`
       )
       .join('\n')
+    const pageNavigationWrap = route.pathname.startsWith(
+      '/catalog/rust/product/'
+    )
+      ? `    node = next_rsc::client_reference(
+        RUST_RSC_CATALOG_DETAIL_CONTROLS_MODULE_ID,
+        "default",
+        RUST_RSC_CATALOG_DETAIL_CONTROLS_CHUNKS.iter().copied(),
+        [node],
+    ).prop("basePath", "/catalog/rust");`
+      : ''
     return `fn render_route_${index}(params: Params, search_params: std::collections::BTreeMap<String, ParamValue>, request: RequestData) -> RenderResult {
 ${slotCalls}
     let mut node = ${pageModule}::render(PageProps::with_search_params(params.clone(), search_params).with_request(request.clone()))?;
+${pageNavigationWrap}
 ${layoutCalls}
     Ok(node)
 }`
@@ -335,14 +371,19 @@ pub const RUST_RSC_METADATA_PUBLISHER: &str = ${JSON.stringify(nativeMetadata.pu
 pub const RUST_RSC_METADATA_CATEGORY: &str = ${JSON.stringify(nativeMetadata.category || '')};
 pub const RUST_RSC_WEBPACK_ASSET: &str = ${JSON.stringify(bootstrapAssets.webpack)};
 pub const RUST_RSC_MAIN_ASSETS: &[&str] = &[${bootstrapAssets.main.map(JSON.stringify).join(', ')}];
+pub const RUST_RSC_ENTRY_CLIENT_ASSETS: &[&str] = &[${[...new Set([nextInternalClientReferences.layoutRouter, nextInternalClientReferences.templateContext, catalogClientReference, catalogDetailClientReference].filter(Boolean).flatMap(clientReferenceAssets))].map(JSON.stringify).join(', ')}];
 pub const RUST_RSC_POLYFILL_ASSETS: &[&str] = &[${bootstrapAssets.polyfills.map(JSON.stringify).join(', ')}];
 pub const RUST_RSC_CSS_ASSETS: &[&str] = &[${bootstrapAssets.css.map(JSON.stringify).join(', ')}];
 pub const RUST_RSC_CATALOG_CONTROLS_MODULE_ID: &str = ${JSON.stringify(catalogClientReference?.id || '')};
 pub const RUST_RSC_CATALOG_CONTROLS_CHUNKS: &[&str] = &[${(catalogClientReference?.chunks || []).map(JSON.stringify).join(', ')}];
+pub const RUST_RSC_CATALOG_DETAIL_CONTROLS_MODULE_ID: &str = ${JSON.stringify(catalogDetailClientReference?.id || '')};
+pub const RUST_RSC_CATALOG_DETAIL_CONTROLS_CHUNKS: &[&str] = &[${(catalogDetailClientReference?.chunks || []).map(JSON.stringify).join(', ')}];
 pub const RUST_RSC_APPLICATION_CLIENT_REFERENCES: &[(&str, &str, &[&str], bool)] = &[${applicationClientReferences.map((reference) => `(${JSON.stringify(reference.module)}, ${JSON.stringify(reference.id)}, &[${reference.chunks.map(JSON.stringify).join(', ')}], ${reference.async})`).join(', ')}];
 pub const RUST_RSC_LAYOUT_ROUTER_MODULE_ID: &str = ${JSON.stringify(nextInternalClientReferences.layoutRouter.id)};
+pub const RUST_RSC_LAYOUT_ROUTER_EXPORT: &str = ${JSON.stringify(nextInternalClientReferences.layoutRouter.exportName)};
 pub const RUST_RSC_LAYOUT_ROUTER_CHUNKS: &[&str] = &[${nextInternalClientReferences.layoutRouter.chunks.map(JSON.stringify).join(', ')}];
 pub const RUST_RSC_TEMPLATE_CONTEXT_MODULE_ID: &str = ${JSON.stringify(nextInternalClientReferences.templateContext.id)};
+pub const RUST_RSC_TEMPLATE_CONTEXT_EXPORT: &str = ${JSON.stringify(nextInternalClientReferences.templateContext.exportName)};
 pub const RUST_RSC_TEMPLATE_CONTEXT_CHUNKS: &[&str] = &[${nextInternalClientReferences.templateContext.chunks.map(JSON.stringify).join(', ')}];
 
 pub fn application_client_reference(module: &str) -> Option<(&'static str, &'static [&'static str], bool)> {
@@ -668,7 +709,9 @@ function readApplicationClientReferences() {
   const references = new Map()
   for (const manifestPath of listFiles(
     path.join(__dirname, '.next', 'server', 'app')
-  ).filter((filename) => filename.endsWith('client-reference-manifest.js'))) {
+  )
+    .filter((filename) => filename.endsWith('client-reference-manifest.js'))
+    .sort()) {
     const manifest = readClientReferenceManifest(manifestPath)
     for (const [moduleKey, value] of Object.entries(
       manifest.clientModules || {}
@@ -698,18 +741,8 @@ function readApplicationClientReferences() {
         ) {
           throw new Error(`Conflicting client reference metadata for ${module}`)
         }
-        if (reference.bundler === 'webpack') {
-          const chunks = new Map()
-          for (const values of [previous.chunks, reference.chunks]) {
-            for (let index = 0; index < values.length; index += 2) {
-              chunks.set(values[index], values[index + 1])
-            }
-          }
-          previous.chunks = [...chunks].flat()
-        } else {
-          previous.chunks = [
-            ...new Set([...previous.chunks, ...reference.chunks]),
-          ]
+        if (reference.chunks.length < previous.chunks.length) {
+          references.set(module, reference)
         }
         continue
       }
@@ -719,6 +752,24 @@ function readApplicationClientReferences() {
   return [...references.values()].sort((left, right) =>
     left.module.localeCompare(right.module)
   )
+}
+
+function readRouteClientReference(manifestPath) {
+  if (!fs.existsSync(manifestPath)) {
+    throw new Error(`Missing client reference manifest: ${manifestPath}`)
+  }
+  const reference = findClientReference(
+    readClientReferenceManifest(manifestPath),
+    '/app/catalog/controls.js',
+    'app/catalog/controls.js',
+    'default'
+  )
+  if (!reference) {
+    throw new Error(
+      `Missing client reference app/catalog/controls.js in ${manifestPath}`
+    )
+  }
+  return reference
 }
 
 function readNextInternalClientReferences() {
@@ -740,13 +791,13 @@ function readNextInternalClientReferences() {
     manifest,
     '/client/components/layout-router.js',
     'next/dist/client/components/layout-router.js',
-    ''
+    'default'
   )
   const templateContext = findClientReference(
     manifest,
     '/client/components/render-from-template-context.js',
     'next/dist/client/components/render-from-template-context.js',
-    ''
+    'default'
   )
   if (!layoutRouter || !templateContext) {
     throw new Error(
@@ -765,6 +816,7 @@ function readClientReferenceManifest(manifestPath) {
   const serialized = source
     .slice(assignmentIndex + (source[assignmentIndex] === ']' ? 2 : 1))
     .replace(/;\s*$/, '')
+    .trim()
   if (assignmentIndex < 0 || !serialized.startsWith('{')) {
     throw new Error(`Invalid client reference manifest: ${manifestPath}`)
   }

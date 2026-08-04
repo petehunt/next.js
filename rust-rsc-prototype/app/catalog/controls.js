@@ -1,28 +1,29 @@
 'use client'
 
-import { cloneElement, useTransition } from 'react'
+import { cloneElement, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function CatalogControls({ basePath, children }) {
   const router = useRouter()
-  const [pending, startTransition] = useTransition()
+  const [ready, setReady] = useState(false)
+  useEffect(() => setReady(true), [])
   return cloneElement(children, {
-    'aria-busy': pending,
+    'data-catalog-controls-ready': ready ? 'true' : undefined,
     onMouseOver(event) {
-      if (event.target.closest('[data-native-navigation]')) {
-        router.prefetch('/dashboard')
-      }
+      const link = event.target.closest('a[data-catalog-navigation]')
+      if (link) router.prefetch(link.getAttribute('href'))
     },
     onClick(event) {
-      if (event.target.closest('[data-native-navigation]')) {
+      const link = event.target.closest('a[data-catalog-navigation]')
+      if (link) {
         event.preventDefault()
-        startTransition(() => router.push('/dashboard'))
+        router.push(link.getAttribute('href'))
       }
     },
     onSubmit(event) {
       event.preventDefault()
-      const query = new URLSearchParams(new FormData(event.currentTarget))
-      startTransition(() => router.push(`${basePath}?${query}`))
+      const query = new URLSearchParams(new FormData(event.target))
+      router.push(`${basePath}?${query}`)
     },
   })
 }

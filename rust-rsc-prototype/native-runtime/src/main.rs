@@ -216,9 +216,15 @@ fn handle_request_inner(
             };
             return write_native_ppr_tree(stream, route_pattern, pathname, method);
         }
-        let Some(segment) =
+        let segment = if pathname == "/catalog/rust" && request_key == "/catalog/rust/__PAGE__" {
+            Some(catalog::render(
+                &search_params,
+                Arc::new(AtomicBool::new(false)),
+            ))
+        } else {
             render_native_ppr_segment(pathname, request_key, &search_params, &request_data)
-        else {
+        };
+        let Some(segment) = segment else {
             return fallback_segment_prefetch(
                 stream,
                 &request,
@@ -898,23 +904,33 @@ fn catalog_refetch_payload(rendered_search: &str, page_node: Node) -> next_rsc_f
     ])
 }
 
-fn next_layout_router() -> Node {
-    let template = next_rsc::client_reference("3761", "", std::iter::empty::<&str>(), []);
-    next_rsc::client_reference("6565", "", std::iter::empty::<&str>(), [])
-        .prop("parallelRouterKey", "children")
-        .prop("error", PropValue::Undefined)
-        .prop("errorStyles", PropValue::Undefined)
-        .prop("errorScripts", PropValue::Undefined)
-        .prop("template", PropValue::Node(Box::new(template)))
-        .prop("templateStyles", PropValue::Undefined)
-        .prop("templateScripts", PropValue::Undefined)
-        .prop("notFound", PropValue::Undefined)
-        .prop("forbidden", PropValue::Undefined)
-        .prop("unauthorized", PropValue::Undefined)
+fn next_layout_router(parallel_router_key: &str) -> Node {
+    let template = next_rsc::client_reference(
+        RUST_RSC_TEMPLATE_CONTEXT_MODULE_ID,
+        "",
+        RUST_RSC_TEMPLATE_CONTEXT_CHUNKS.iter().copied(),
+        [],
+    );
+    next_rsc::client_reference(
+        RUST_RSC_LAYOUT_ROUTER_MODULE_ID,
+        "",
+        RUST_RSC_LAYOUT_ROUTER_CHUNKS.iter().copied(),
+        [],
+    )
+    .prop("parallelRouterKey", parallel_router_key)
+    .prop("error", PropValue::Undefined)
+    .prop("errorStyles", PropValue::Undefined)
+    .prop("errorScripts", PropValue::Undefined)
+    .prop("template", PropValue::Node(Box::new(template)))
+    .prop("templateStyles", PropValue::Undefined)
+    .prop("templateScripts", PropValue::Undefined)
+    .prop("notFound", PropValue::Undefined)
+    .prop("forbidden", PropValue::Undefined)
+    .prop("unauthorized", PropValue::Undefined)
 }
 
 fn router_fragment() -> Node {
-    Node::react_fragment(Some("c"), [Node::Null, next_layout_router()])
+    Node::react_fragment(Some("c"), [Node::Null, next_layout_router("children")])
 }
 
 fn catalog_initial_payload(
@@ -979,7 +995,7 @@ fn catalog_initial_payload(
         Null,
     ]);
     let root_node = component_0::render(next_rsc::LayoutProps::new(
-        next_layout_router(),
+        next_layout_router("children"),
         next_rsc::Params::default(),
     ))?;
     let root_seed = Array(vec![

@@ -1,6 +1,9 @@
 const assert = require('node:assert/strict')
 const path = require('node:path')
 
+globalThis.__webpack_chunk_load__ = () => Promise.resolve()
+globalThis.__next_require__ = () => ({ default() {} })
+
 const { createFromReadableStream } = require(
   path.join(
     __dirname,
@@ -82,6 +85,15 @@ async function main() {
   assert.equal(dashboard.slots.team.name, '__PAGE__')
   const dashboardLayout = await fetchSegment('/dashboard', '/dashboard')
   assert.equal(dashboardLayout.data[0].rsc.type, 'section')
+  const dashboardChildren = dashboardLayout.data[0].rsc.props.children
+  assert.equal(
+    dashboardChildren[0].props.children.props.parallelRouterKey,
+    'children'
+  )
+  assert.equal(
+    dashboardChildren[1].props.children.props.parallelRouterKey,
+    'team'
+  )
   const team = await fetchSegment('/dashboard/@team/__PAGE__', '/dashboard')
   assert.equal(team.data[0].rsc.type, 'p')
 
@@ -97,20 +109,48 @@ async function main() {
     '/dashboard/settings'
   )
   assert.equal(settingsTeam.data[0].rsc.type, 'p')
+
+  const catalog = await fetchSegment(
+    '/catalog/rust/__PAGE__',
+    '/catalog/rust',
+    'category=fasteners'
+  )
+  assert.equal(catalog.data[0].rsc.props['data-catalog'], 'rust')
+  assert.equal(countNodesWithProp(catalog.data[0].rsc, 'data-product-id'), 24)
   process.stdout.write(
-    'Native PPR static/dynamic/parallel trees and independent segment bundles decoded\n'
+    'Native PPR composable layout/slot/catalog segment bundles decoded\n'
   )
 }
 
-async function fetchSegment(segmentPath, pathname = '/rust-page') {
-  const response = await fetchPpr(pathname, segmentPath)
+function countNodesWithProp(node, prop) {
+  if (!node || typeof node !== 'object') return 0
+  if (Array.isArray(node)) {
+    return node.reduce(
+      (count, child) => count + countNodesWithProp(child, prop),
+      0
+    )
+  }
+  let count = node.props && Object.hasOwn(node.props, prop) ? 1 : 0
+  const children = node.props?.children
+  for (const child of Array.isArray(children) ? children : [children]) {
+    count += countNodesWithProp(child, prop)
+  }
+  return count
+}
+
+async function fetchSegment(
+  segmentPath,
+  pathname = '/rust-page',
+  query = 'q=segment'
+) {
+  const response = await fetchPpr(pathname, segmentPath, query)
   assert.equal(response.status, 200)
   assert.equal(response.headers.get('x-nextjs-postponed'), '2')
   return decode(response)
 }
 
-function fetchPpr(pathname, segmentPath) {
-  return fetch(`http://127.0.0.1:3030${pathname}?q=segment`, {
+function fetchPpr(pathname, segmentPath, query = 'q=segment') {
+  return fetch(`http://127.0.0.1:3030${pathname}?${query}`, {
     headers: {
       RSC: '1',
       'Next-Router-Prefetch': '1',

@@ -9,16 +9,21 @@ import path from 'node:path'
  * contract is evolving, but Next owns invocation, failure propagation, and
  * the requirement that the declared artifact is actually produced.
  */
-export function emitRustRscNativeManifest(projectDir: string): void {
+export function emitRustRscNativeManifest(
+  projectDir: string,
+  configuredGenerator?: string
+): void {
   const optIn = path.join(projectDir, 'rust-rsc-native.json')
   if (!fs.existsSync(optIn)) return
 
-  const generator = path.join(projectDir, 'generate-native-manifest.js')
-  if (!fs.existsSync(generator)) {
+  if (!configuredGenerator) {
     throw new Error(
-      `Rust native routes are enabled by ${optIn}, but ${generator} is missing`
+      `Rust native routes are enabled by ${optIn}, but rustServerComponentsNativeGenerator is missing`
     )
   }
+  const generator = path.resolve(projectDir, configuredGenerator)
+  if (!fs.existsSync(generator))
+    throw new Error(`Missing Rust native route generator: ${generator}`)
 
   execFileSync(process.execPath, [generator], {
     cwd: projectDir,

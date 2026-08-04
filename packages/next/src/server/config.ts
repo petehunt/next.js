@@ -422,6 +422,13 @@ function assignDefaultsAndValidate(
   }
 
   if (result.experimental.rustServerComponents) {
+    const adapter = result.experimental.rustServerComponentsAdapter
+    if (!adapter) {
+      throw new Error(
+        'experimental.rustServerComponents requires rustServerComponentsAdapter'
+      )
+    }
+    process.env.__NEXT_PRIVATE_RUST_RSC_ADAPTER = resolve(dir, adapter)
     const rustLoader = require.resolve(
       '../build/webpack/loaders/next-rsc-loader'
     )

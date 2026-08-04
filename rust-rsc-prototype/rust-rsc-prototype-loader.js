@@ -23,6 +23,19 @@ module.exports = function rustRscPrototypeLoader(source) {
   ) {
     throw new Error(`Unsupported Rust RSC convention: ${componentKind}`)
   }
+  if (/\bmod\s+[A-Za-z_]\w*\s*;|\binclude(?:_str|_bytes)?!\s*\(/.test(source)) {
+    throw new Error(
+      'Rust RSC components must be self-contained until compiler capability manifests cover transitive modules'
+    )
+  }
+  const unsupportedMacro = [...source.matchAll(/\b([A-Za-z_]\w*)!\s*\(/g)].find(
+    (match) => match[1] !== 'format'
+  )
+  if (unsupportedMacro) {
+    throw new Error(
+      `Rust RSC macro ${unsupportedMacro[1]}! requires a compiler capability manifest`
+    )
+  }
   for (const extension of ['js', 'jsx', 'ts', 'tsx']) {
     const conflict = path.join(
       path.dirname(this.resourcePath),

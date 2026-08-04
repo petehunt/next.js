@@ -17,8 +17,6 @@ use std::{
 use next_rsc::{Node, PropValue, RenderError};
 
 mod catalog;
-#[path = "../../app/api/revalidate/route.rs"]
-mod revalidate_route;
 include!("generated_routes.rs");
 
 const MAX_HEADER_BYTES: usize = 32 * 1024;
@@ -217,8 +215,8 @@ fn handle_request_inner(
     // `_rsc` is an App Router transport cache-buster, not user search state.
     search_params.remove("_rsc");
     let rendered_search = ordered_search(raw_query).ok_or("Invalid query string")?;
-    if pathname == "/api/revalidate" && method == "POST" {
-        return execute_native_revalidation(stream, &headers);
+    if method == "POST" && has_native_mutation_route(&pathname) {
+        return execute_native_revalidation(stream, &headers, &pathname);
     }
     if method != "GET" && method != "HEAD" {
         return write_method_not_allowed(stream);
@@ -371,6 +369,7 @@ fn handle_request_inner(
 fn execute_native_revalidation(
     stream: &mut TcpStream,
     headers: &[(&str, &str)],
+    pathname: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     use next_rsc::{RevalidationPathKind, RevalidationRequest};
     let Ok(expected_token) = env::var("RUST_RSC_REVALIDATE_TOKEN") else {
@@ -406,7 +405,8 @@ fn execute_native_revalidation(
     }
 
     let mut context = next_rsc::MutationContext::default();
-    revalidate_route::handle(&mut context)?;
+    execute_native_mutation_route(pathname, &mut context)
+        .ok_or("native mutation route disappeared")??;
     let requests = context.into_requests();
     if requests.iter().any(|request| {
         !matches!(

@@ -1472,5 +1472,10 @@
   "1471": "Rust native routes are enabled by %s, but %s is missing",
   "1472": "Rust component compiler produced a truncated Wasm module",
   "1473": "Rust native route build did not emit %s",
-  "1474": "Rust component compiler produced an invalid Wasm module"
+  "1474": "Rust component compiler produced an invalid Wasm module",
+  "1475": "experimental.rustServerComponents could not load adapter %s",
+  "1476": "Rust RSC adapter was not configured",
+  "1477": "Missing Rust native route generator: %s",
+  "1478": "Rust native routes are enabled by %s, but rustServerComponentsNativeGenerator is missing",
+  "1479": "experimental.rustServerComponents requires rustServerComponentsAdapter"
 }

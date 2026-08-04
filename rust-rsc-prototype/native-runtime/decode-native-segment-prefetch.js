@@ -50,7 +50,7 @@ async function main() {
   assert.deepEqual(staleTimes, [300])
 
   const requestResponse = await fetchPpr('/request', '/request/__PAGE__', '', {
-    'x-demo-mode': 'first',
+    'x-rust-fixture': 'first',
     cookie: 'session=one',
   })
   assert.equal(
@@ -62,6 +62,20 @@ async function main() {
   for await (const staleTime of requestPage.data[0].staleTime)
     requestStaleTimes.push(staleTime)
   assert.deepEqual(requestStaleTimes, [0])
+  assert.match(
+    collectText(requestPage.data[0].rsc),
+    /Rust request data: first\/one\/filtered/
+  )
+  const changedRequestPage = await decode(
+    await fetchPpr('/request', '/request/__PAGE__', '', {
+      'x-rust-fixture': 'second',
+      cookie: 'session=two',
+    })
+  )
+  assert.match(
+    collectText(changedRequestPage.data[0].rsc),
+    /Rust request data: second\/two\/filtered/
+  )
 
   const page = await fetchSegment('/rust-page/__PAGE__')
   assert.equal(page.data[0].rsc.type, 'article')
@@ -156,6 +170,13 @@ function countNodesWithProp(node, prop) {
     count += countNodesWithProp(child, prop)
   }
   return count
+}
+
+function collectText(node) {
+  if (typeof node === 'string') return node
+  if (!node || typeof node !== 'object') return ''
+  if (Array.isArray(node)) return node.map(collectText).join('')
+  return collectText(node.props?.children)
 }
 
 async function fetchSegment(

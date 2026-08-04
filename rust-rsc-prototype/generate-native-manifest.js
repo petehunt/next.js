@@ -8,7 +8,10 @@ const runtimeDir = path.join(__dirname, 'native-runtime')
 const routes = []
 const publicFiles = listFiles(path.join(__dirname, 'public')).map(relative)
 const bootstrapAssets = readBootstrapAssets()
-const catalogClientReference = readCatalogClientReference()
+const applicationClientReferences = readApplicationClientReferences()
+const catalogClientReference = applicationClientReferences.find(
+  (reference) => reference.module === 'app/catalog/controls.js'
+)
 const nextInternalClientReferences = readNextInternalClientReferences()
 const flightRevision = verifyFlightRevision()
 const nativeConfig = readNativeConfig()
@@ -71,7 +74,10 @@ const buildId = crypto
   .update(JSON.stringify(bootstrapAssets))
   .update('\0client-references\0')
   .update(
-    JSON.stringify({ catalogClientReference, nextInternalClientReferences })
+    JSON.stringify({
+      applicationClientReferences,
+      nextInternalClientReferences,
+    })
   )
   .digest('hex')
   .slice(0, 32)
@@ -131,6 +137,21 @@ const moduleDeclarations = componentPaths
     (componentPath) =>
       `#[path = ${JSON.stringify(`../../${componentPath}`)}]\nmod ${moduleNames.get(componentPath)};`
   )
+  .join('\n')
+const routeHandlerPaths = listFiles(appDir)
+  .filter((filename) => filename.endsWith(`${path.sep}route.rs`))
+  .sort()
+const routeHandlerDeclarations = routeHandlerPaths
+  .map(
+    (filename, index) =>
+      `#[path = ${JSON.stringify(`../../${relative(filename)}`)}]\nmod route_handler_${index};`
+  )
+  .join('\n')
+const routeHandlerBranches = routeHandlerPaths
+  .map((filename, index) => {
+    const pathname = `/${relative(path.dirname(filename)).replace(/^app\/?/, '')}`
+    return `        ${JSON.stringify(pathname)} => Some(route_handler_${index}::handle(context)),`
+  })
   .join('\n')
 const rootLayoutModule = moduleNames.get('app/layout.rs')
 if (!rootLayoutModule) throw new Error('Native routes require app/layout.rs')
@@ -318,12 +339,32 @@ pub const RUST_RSC_POLYFILL_ASSETS: &[&str] = &[${bootstrapAssets.polyfills.map(
 pub const RUST_RSC_CSS_ASSETS: &[&str] = &[${bootstrapAssets.css.map(JSON.stringify).join(', ')}];
 pub const RUST_RSC_CATALOG_CONTROLS_MODULE_ID: &str = ${JSON.stringify(catalogClientReference?.id || '')};
 pub const RUST_RSC_CATALOG_CONTROLS_CHUNKS: &[&str] = &[${(catalogClientReference?.chunks || []).map(JSON.stringify).join(', ')}];
+pub const RUST_RSC_APPLICATION_CLIENT_REFERENCES: &[(&str, &str, &[&str], bool)] = &[${applicationClientReferences.map((reference) => `(${JSON.stringify(reference.module)}, ${JSON.stringify(reference.id)}, &[${reference.chunks.map(JSON.stringify).join(', ')}], ${reference.async})`).join(', ')}];
 pub const RUST_RSC_LAYOUT_ROUTER_MODULE_ID: &str = ${JSON.stringify(nextInternalClientReferences.layoutRouter.id)};
 pub const RUST_RSC_LAYOUT_ROUTER_CHUNKS: &[&str] = &[${nextInternalClientReferences.layoutRouter.chunks.map(JSON.stringify).join(', ')}];
 pub const RUST_RSC_TEMPLATE_CONTEXT_MODULE_ID: &str = ${JSON.stringify(nextInternalClientReferences.templateContext.id)};
 pub const RUST_RSC_TEMPLATE_CONTEXT_CHUNKS: &[&str] = &[${nextInternalClientReferences.templateContext.chunks.map(JSON.stringify).join(', ')}];
 
+pub fn application_client_reference(module: &str) -> Option<(&'static str, &'static [&'static str], bool)> {
+    RUST_RSC_APPLICATION_CLIENT_REFERENCES
+        .iter()
+        .find(|reference| reference.0 == module)
+        .map(|reference| (reference.1, reference.2, reference.3))
+}
+
 ${moduleDeclarations}
+${routeHandlerDeclarations}
+
+pub fn execute_native_mutation_route(pathname: &str, context: &mut next_rsc::MutationContext) -> Option<Result<(), next_rsc::RenderError>> {
+    match pathname {
+${routeHandlerBranches}
+        _ => None,
+    }
+}
+
+pub fn has_native_mutation_route(pathname: &str) -> bool {
+    matches!(pathname, ${routeHandlerPaths.map((filename) => JSON.stringify(`/${relative(path.dirname(filename)).replace(/^app\/?/, '')}`)).join(' | ') || '""'})
+}
 
 pub fn render_native_path(pathname: &str, search_params: &std::collections::BTreeMap<String, ParamValue>, request: &RequestData) -> Option<RenderResult> {
 ${routeBranches}
@@ -623,23 +664,60 @@ function readBootstrapAssets() {
   }
 }
 
-function readCatalogClientReference() {
-  const manifestPath = path.join(
-    __dirname,
-    '.next',
-    'server',
-    'app',
-    'catalog',
-    'js',
-    'page_client-reference-manifest.js'
-  )
-  if (!fs.existsSync(manifestPath)) return null
-  const manifest = readClientReferenceManifest(manifestPath)
-  return findClientReference(
-    manifest,
-    '/app/catalog/controls.js',
-    'app/catalog/controls.js',
-    'default'
+function readApplicationClientReferences() {
+  const references = new Map()
+  for (const manifestPath of listFiles(
+    path.join(__dirname, '.next', 'server', 'app')
+  ).filter((filename) => filename.endsWith('client-reference-manifest.js'))) {
+    const manifest = readClientReferenceManifest(manifestPath)
+    for (const [moduleKey, value] of Object.entries(
+      manifest.clientModules || {}
+    )) {
+      const normalized = moduleKey.replaceAll('\\', '/')
+      const appIndex = normalized.lastIndexOf('/app/')
+      const projectIndex = normalized.indexOf('[project]/app/')
+      if (appIndex === -1 && projectIndex === -1) continue
+      const module =
+        projectIndex === -1
+          ? normalized.slice(appIndex + 1)
+          : normalized.slice(projectIndex + '[project]/'.length)
+      if (!Array.isArray(value.chunks) || value.id == null) continue
+      const reference = {
+        module,
+        bundler: moduleKey.startsWith('[project]/') ? 'turbopack' : 'webpack',
+        id: String(value.id),
+        chunks: value.chunks.map(String),
+        async: Boolean(value.async),
+      }
+      const previous = references.get(module)
+      if (previous) {
+        if (
+          previous.id !== reference.id ||
+          previous.bundler !== reference.bundler ||
+          previous.async !== reference.async
+        ) {
+          throw new Error(`Conflicting client reference metadata for ${module}`)
+        }
+        if (reference.bundler === 'webpack') {
+          const chunks = new Map()
+          for (const values of [previous.chunks, reference.chunks]) {
+            for (let index = 0; index < values.length; index += 2) {
+              chunks.set(values[index], values[index + 1])
+            }
+          }
+          previous.chunks = [...chunks].flat()
+        } else {
+          previous.chunks = [
+            ...new Set([...previous.chunks, ...reference.chunks]),
+          ]
+        }
+        continue
+      }
+      references.set(module, reference)
+    }
+  }
+  return [...references.values()].sort((left, right) =>
+    left.module.localeCompare(right.module)
   )
 }
 
@@ -680,13 +758,17 @@ function readNextInternalClientReferences() {
 
 function readClientReferenceManifest(manifestPath) {
   const source = fs.readFileSync(manifestPath, 'utf8')
-  const assignment = source.match(
-    /__RSC_MANIFEST(?:\[[^\]]+\])?\s*=\s*(\{.*\});?\s*$/s
+  const assignmentIndex = Math.max(
+    source.lastIndexOf(']='),
+    source.lastIndexOf('=')
   )
-  if (!assignment) {
+  const serialized = source
+    .slice(assignmentIndex + (source[assignmentIndex] === ']' ? 2 : 1))
+    .replace(/;\s*$/, '')
+  if (assignmentIndex < 0 || !serialized.startsWith('{')) {
     throw new Error(`Invalid client reference manifest: ${manifestPath}`)
   }
-  return JSON.parse(assignment[1])
+  return JSON.parse(serialized)
 }
 
 function findClientReference(manifest, suffix, moduleName, exportName) {
@@ -813,8 +895,19 @@ function analyzeRoute(pathname, componentIds, directoryEntries) {
   }
   for (const filename of componentIds.filter((item) => item.endsWith('.rs'))) {
     const source = fs.readFileSync(path.join(__dirname, filename), 'utf8')
-    if (/\bclient_reference\s*\(/.test(source)) {
-      reasons.push(`client-reference-manifest-unavailable:${filename}`)
+    if (
+      /\bmod\s+[A-Za-z_]\w*\s*;|\binclude(?:_str|_bytes)?!\s*\(/.test(source)
+    ) {
+      reasons.push(`transitive-capabilities-unknown:${filename}`)
+      break
+    }
+    const unsupportedMacro = [
+      ...source.matchAll(/\b([A-Za-z_]\w*)!\s*\(/g),
+    ].find((match) => match[1] !== 'format')
+    if (unsupportedMacro) {
+      reasons.push(
+        `macro-capabilities-unknown:${filename}:${unsupportedMacro[1]}`
+      )
       break
     }
     if (/['"]use server['"]|\bserver_action\s*\(/.test(source)) {
@@ -836,19 +929,6 @@ function detectGlobalUnsupportedCapabilities() {
     ) {
       reasons.push('middleware-unsupported')
     }
-  }
-  const configSource = fs.readFileSync(
-    path.join(__dirname, 'next.config.js'),
-    'utf8'
-  )
-  if (
-    /\basync\s+rewrites\s*\(|\brewrites\s*:\s*/.test(configSource) &&
-    !fs.existsSync(path.join(__dirname, 'rust-rsc-rewrites.json'))
-  ) {
-    reasons.push('rewrites-unsupported')
-  }
-  if (/\basync\s+redirects\s*\(|\bredirects\s*:\s*/.test(configSource)) {
-    reasons.push('redirects-unsupported')
   }
   return reasons
 }

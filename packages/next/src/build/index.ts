@@ -4528,7 +4528,12 @@ export default async function build(
       if (config.experimental.rustServerComponents) {
         await nextBuildSpan
           .traceChild('rust-rsc-native-manifest')
-          .traceAsyncFn(async () => emitRustRscNativeManifest(dir))
+          .traceAsyncFn(async () =>
+            emitRustRscNativeManifest(
+              dir,
+              config.experimental.rustServerComponentsNativeGenerator
+            )
+          )
       }
 
       await nextBuildSpan

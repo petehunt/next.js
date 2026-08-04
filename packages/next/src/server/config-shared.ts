@@ -466,6 +466,10 @@ export function resolveCssChunkingMode(
 export interface ExperimentalConfig {
   /** Enable experimental Rust Server Component file conventions. */
   rustServerComponents?: boolean
+  /** Explicit project adapter used by the experimental Rust RSC compiler. */
+  rustServerComponentsAdapter?: string
+  /** Explicit native route manifest generator used by experimental Rust RSC builds. */
+  rustServerComponentsNativeGenerator?: string
   /**
    * @deprecated Use the top-level `outputHashSalt` option instead.
    */

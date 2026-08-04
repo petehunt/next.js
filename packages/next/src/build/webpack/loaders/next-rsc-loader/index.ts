@@ -1,4 +1,3 @@
-import path from 'node:path'
 import type { webpack } from 'next/dist/compiled/webpack/webpack'
 
 const { compileRustComponent } =
@@ -11,10 +10,10 @@ export default function nextRustRscLoader(
   this: webpack.LoaderContext<{}>,
   source: string
 ) {
-  const prototypeLoaderPath = path.join(
-    this.rootContext,
-    'rust-rsc-prototype-loader.js'
-  )
+  const prototypeLoaderPath = process.env.__NEXT_PRIVATE_RUST_RSC_ADAPTER
+  if (!prototypeLoaderPath) {
+    throw new Error('Rust RSC adapter was not configured')
+  }
   let prototypeLoader: (
     this: webpack.LoaderContext<{}>,
     source: string
@@ -23,7 +22,7 @@ export default function nextRustRscLoader(
     prototypeLoader = require(prototypeLoaderPath)
   } catch {
     throw new Error(
-      `experimental.rustServerComponents requires ${prototypeLoaderPath} while the compiler is prototyped`
+      `experimental.rustServerComponents could not load adapter ${prototypeLoaderPath}`
     )
   }
   const loaderContext = Object.create(this)

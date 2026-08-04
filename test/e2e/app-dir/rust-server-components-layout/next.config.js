@@ -4,6 +4,7 @@
 const nextConfig = {
   experimental: {
     rustServerComponents: true,
+    rustServerComponentsAdapter: './rust-rsc-prototype-loader.js',
   },
 }
 

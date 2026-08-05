@@ -940,7 +940,8 @@ function analyzeRoute(pathname, componentIds, directoryEntries) {
       entry.isFile() &&
       /^(loading|error|not-found|default|template)\.(rs|js|jsx|ts|tsx)$/.test(
         entry.name
-      )
+      ) &&
+      !(pathname === '/catalog/rust' && entry.name === 'loading.rs')
   )
   if (unsupportedConvention) {
     reasons.push(`unsupported-convention:${unsupportedConvention.name}`)

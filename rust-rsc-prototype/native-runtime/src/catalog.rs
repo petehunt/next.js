@@ -282,6 +282,18 @@ fn link(href: String, label: impl Into<String>) -> Node {
         .prop("data-catalog-navigation", true)
 }
 
+fn category_link(href: String, label: impl Into<String>, count: usize) -> Node {
+    element(
+        "a",
+        [
+            Node::text(format!("{} ", label.into())),
+            element("span", [Node::text(count.to_string())]),
+        ],
+    )
+    .prop("href", href)
+    .prop("data-catalog-navigation", true)
+}
+
 fn catalog_view(
     categories: Vec<Category>,
     result: ProductResult,
@@ -330,13 +342,15 @@ fn catalog_view(
 }
 
 fn category_sidebar(categories: &[Category]) -> Node {
-    let category_links = std::iter::once(link("?category=all".to_owned(), "All products")).chain(
-        categories.iter().map(|item| {
-            link(
-                format!("?category={}", item.id),
-                format!("{} {}", item.name, item.count),
-            )
-        }),
+    let category_links = std::iter::once(category_link(
+        "?category=all".to_owned(),
+        "All products",
+        720,
+    ))
+    .chain(
+        categories
+            .iter()
+            .map(|item| category_link(format!("?category={}", item.id), &item.name, item.count)),
     );
     element(
         "nav",
@@ -385,27 +399,23 @@ fn product_content_with_filters(
         )
         .prop("data-product-id", id)
     });
-    let option = |value: &str, label: &str, current: &str| {
-        element("option", [Node::text(label)])
-            .prop("value", value)
-            .prop("selected", value == current)
-    };
+    let option =
+        |value: &str, label: &str| element("option", [Node::text(label)]).prop("value", value);
     let material_select = element(
         "select",
         [
-            option("all", "All", material),
-            option("Zinc Steel", "Zinc Steel", material),
-            option("Stainless Steel", "Stainless Steel", material),
-            option("Aluminum", "Aluminum", material),
-            option("Brass", "Brass", material),
+            option("all", "All"),
+            option("Zinc Steel", "Zinc Steel"),
+            option("Stainless Steel", "Stainless Steel"),
+            option("Aluminum", "Aluminum"),
+            option("Brass", "Brass"),
         ],
     )
-    .prop("name", "material");
-    let sort_select = element(
-        "select",
-        [option("name", "Name", sort), option("price", "Price", sort)],
-    )
-    .prop("name", "sort");
+    .prop("name", "material")
+    .prop("defaultValue", material);
+    let sort_select = element("select", [option("name", "Name"), option("price", "Price")])
+        .prop("name", "sort")
+        .prop("defaultValue", sort);
     let filters = element(
         "form",
         [
@@ -420,9 +430,6 @@ fn product_content_with_filters(
             element("label", [Node::text("Material "), material_select]),
             element("label", [Node::text("Sort "), sort_select]),
             element("button", [Node::text("Apply")]),
-            element("a", [Node::text("Open dashboard")])
-                .prop("href", "/dashboard")
-                .prop("data-catalog-navigation", true),
         ],
     )
     .prop("className", "catalog-filters");

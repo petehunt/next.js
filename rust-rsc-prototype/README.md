@@ -153,7 +153,42 @@ RUST_RSC_REVALIDATE_TOKEN=local-secret PORT=3039 \
 Compare `/catalog/js` and `/catalog/rust` on port 3027 with the Node-free Rust
 catalog at `http://localhost:3039/catalog/rust`. Query parameters such as
 `category`, `q`, `material`, `sort`, `page`, `categoryDelay`, and
-`productDelay` exercise filtering and independent async regions.
+`productDelay` exercise filtering and loading boundaries. The conventional and
+native renderers stream the category and product regions independently; the
+Wasm hybrid currently resolves both regions through one Next loading boundary.
+
+The prototype has four production architectures:
+
+1. Conventional Next/JS at port 3027, route `/catalog/js`
+2. Next + Rust/Wasm at port 3027, route `/catalog/rust`
+3. Native Rust with a selective Next fallback at port 3038
+4. Node-free native Rust for eligible routes at port 3039
+
+After a production build and native manifest generation, run the Playwright
+feature and screenshot-parity matrix with:
+
+```bash
+pnpm catalog:test-architectures
+```
+
+The suite launches the required topology, checks SSR and Flight responses,
+streams loading UI, exercises list/detail/filter client navigations without
+document reloads, compares deterministic product results, and compares decoded
+list/detail screenshot pixels. It also proves that the selective topology
+proxies `/catalog/js` while the Node-free topology refuses it.
+
+For the release-mode local architecture benchmark:
+
+```bash
+cargo build --release --manifest-path native-runtime/Cargo.toml
+pnpm catalog:benchmark-architectures
+```
+
+This measures repeated document and Flight phases at concurrency 1 and 32,
+warm browser list-to-detail navigation, response sizes, TTFB, selective proxy
+overhead, and per-topology resident memory. Results are written to
+`CATALOG_ARCHITECTURE_BENCHMARK_RESULTS.md` and `.json`. These are exploratory
+single-host measurements, not independent-VM confidence intervals.
 
 To populate and invalidate the native warm cache:
 

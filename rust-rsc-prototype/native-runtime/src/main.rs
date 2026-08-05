@@ -76,7 +76,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     });
             }
             Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
-                thread::sleep(Duration::from_millis(10));
+                thread::sleep(Duration::from_millis(1));
             }
             Err(error) => eprintln!("accept failed: {error}"),
         }
@@ -1284,7 +1284,7 @@ fn monitor_disconnect(
     stop: Arc<AtomicBool>,
 ) -> Result<thread::JoinHandle<()>, std::io::Error> {
     let probe = stream.try_clone()?;
-    probe.set_read_timeout(Some(Duration::from_millis(2)))?;
+    probe.set_read_timeout(Some(Duration::from_millis(1)))?;
     Ok(thread::spawn(move || {
         let mut byte = [0_u8; 1];
         while !stop.load(Ordering::Acquire) {

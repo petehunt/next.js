@@ -1,0 +1,564 @@
+{
+  "generatedAt": "2026-08-05T01:13:05.327Z",
+  "platform": {
+    "node": "v22.18.0",
+    "arch": "x64",
+    "platform": "linux",
+    "cpus": 16,
+    "model": "Intel(R) Core(TM) i7-10700 CPU @ 2.90GHz"
+  },
+  "methodology": {
+    "phaseMs": 2000,
+    "repetitions": 5,
+    "browserRepetitions": 12,
+    "concurrency": [1, 32],
+    "order": "alternating forward/reverse across repeated local phases",
+    "limitation": "Single-host exploratory benchmark; repeated phases are not independent VM boots and are not confidence intervals."
+  },
+  "memoryBefore": {
+    "next-js": {
+      "totalRssMiB": 177.77,
+      "processes": [
+        {
+          "pid": 3510803,
+          "rssMiB": 177.7734375
+        }
+      ]
+    },
+    "next-rust-wasm": {
+      "totalRssMiB": 169.25,
+      "processes": [
+        {
+          "pid": 3510804,
+          "rssMiB": 169.25390625
+        }
+      ]
+    },
+    "native-fallback": {
+      "totalRssMiB": 171.52,
+      "processes": [
+        {
+          "pid": 3510806,
+          "rssMiB": 5.5
+        },
+        {
+          "pid": 3510805,
+          "rssMiB": 166.0234375
+        }
+      ]
+    },
+    "native-only": {
+      "totalRssMiB": 5.5,
+      "processes": [
+        {
+          "pid": 3510817,
+          "rssMiB": 5.5
+        }
+      ]
+    }
+  },
+  "memoryAfter": {
+    "next-js": {
+      "totalRssMiB": 761.62,
+      "processes": [
+        {
+          "pid": 3510803,
+          "rssMiB": 761.6171875
+        }
+      ]
+    },
+    "next-rust-wasm": {
+      "totalRssMiB": 236.88,
+      "processes": [
+        {
+          "pid": 3510804,
+          "rssMiB": 236.8828125
+        }
+      ]
+    },
+    "native-fallback": {
+      "totalRssMiB": 425.13,
+      "processes": [
+        {
+          "pid": 3510806,
+          "rssMiB": 18.22265625
+        },
+        {
+          "pid": 3510805,
+          "rssMiB": 406.90234375
+        }
+      ]
+    },
+    "native-only": {
+      "totalRssMiB": 19.11,
+      "processes": [
+        {
+          "pid": 3510817,
+          "rssMiB": 19.109375
+        }
+      ]
+    }
+  },
+  "server": {
+    "list-document": {
+      "c1": {
+        "next-js": {
+          "rps": 229.64,
+          "rpsSamples": [193.81, 228.17, 243.4, 242.27, 240.55],
+          "rpsCvPercent": 8.16,
+          "latencyP50Ms": 3.93,
+          "latencyP95Ms": 6.15,
+          "ttfbP50Ms": 3.85,
+          "ttfbP95Ms": 6.07,
+          "bytes": 31055,
+          "requests": 2299
+        },
+        "next-rust-wasm": {
+          "rps": 191.37,
+          "rpsSamples": [168.86, 188.42, 196.43, 197.06, 206.1],
+          "rpsCvPercent": 6.57,
+          "latencyP50Ms": 4.84,
+          "latencyP95Ms": 6.98,
+          "ttfbP50Ms": 4.76,
+          "ttfbP95Ms": 6.89,
+          "bytes": 30357,
+          "requests": 1916
+        },
+        "native-fallback": {
+          "rps": 103.06,
+          "rpsSamples": [101.98, 103.8, 100.87, 101.43, 107.19],
+          "rpsCvPercent": 2.22,
+          "latencyP50Ms": 8.05,
+          "latencyP95Ms": 12.1,
+          "ttfbP50Ms": 1.16,
+          "ttfbP95Ms": 1.9,
+          "bytes": 27931,
+          "requests": 1033
+        },
+        "native-only": {
+          "rps": 102.87,
+          "rpsSamples": [104.3, 103.88, 101.6, 103.45, 101.09],
+          "rpsCvPercent": 1.25,
+          "latencyP50Ms": 8.05,
+          "latencyP95Ms": 12.08,
+          "ttfbP50Ms": 1.2,
+          "ttfbP95Ms": 1.84,
+          "bytes": 27931,
+          "requests": 1032
+        }
+      },
+      "c32": {
+        "next-js": {
+          "rps": 290.54,
+          "rpsSamples": [281.83, 284.57, 295.98, 292.47, 297.84],
+          "rpsCvPercent": 2.17,
+          "latencyP50Ms": 106.85,
+          "latencyP95Ms": 132.65,
+          "ttfbP50Ms": 106.8,
+          "ttfbP95Ms": 132.56,
+          "bytes": 31055,
+          "requests": 2973
+        },
+        "next-rust-wasm": {
+          "rps": 237.73,
+          "rpsSamples": [222.05, 241.84, 231.32, 241.8, 251.65],
+          "rpsCvPercent": 4.27,
+          "latencyP50Ms": 130.99,
+          "latencyP95Ms": 157.29,
+          "ttfbP50Ms": 130.91,
+          "ttfbP95Ms": 157.26,
+          "bytes": 30357,
+          "requests": 2440
+        },
+        "native-fallback": {
+          "rps": 2626.22,
+          "rpsSamples": [2714.95, 2668.44, 2705.38, 2486.52, 2555.84],
+          "rpsCvPercent": 3.42,
+          "latencyP50Ms": 11.97,
+          "latencyP95Ms": 17.93,
+          "ttfbP50Ms": 3.2,
+          "ttfbP95Ms": 7.17,
+          "bytes": 27931,
+          "requests": 26429
+        },
+        "native-only": {
+          "rps": 2632.57,
+          "rpsSamples": [2625.21, 2786.31, 2638.67, 2585.85, 2526.81],
+          "rpsCvPercent": 3.27,
+          "latencyP50Ms": 11.88,
+          "latencyP95Ms": 18.25,
+          "ttfbP50Ms": 3.18,
+          "ttfbP95Ms": 7.47,
+          "bytes": 27931,
+          "requests": 26489
+        }
+      }
+    },
+    "filtered-document": {
+      "c1": {
+        "next-js": {
+          "rps": 262.95,
+          "rpsSamples": [264.61, 246.42, 266.25, 263.17, 274.3],
+          "rpsCvPercent": 3.47,
+          "latencyP50Ms": 3.45,
+          "latencyP95Ms": 5.49,
+          "ttfbP50Ms": 3.38,
+          "ttfbP95Ms": 5.41,
+          "bytes": 31103,
+          "requests": 2632
+        },
+        "next-rust-wasm": {
+          "rps": 227.5,
+          "rpsSamples": [227.7, 218.67, 233.13, 230.16, 227.82],
+          "rpsCvPercent": 2.13,
+          "latencyP50Ms": 4.1,
+          "latencyP95Ms": 5.97,
+          "ttfbP50Ms": 4.02,
+          "ttfbP95Ms": 5.9,
+          "bytes": 30418,
+          "requests": 2278
+        },
+        "native-fallback": {
+          "rps": 102.7,
+          "rpsSamples": [103.84, 95.93, 103.12, 104.8, 105.82],
+          "rpsCvPercent": 3.41,
+          "latencyP50Ms": 8.04,
+          "latencyP95Ms": 12.07,
+          "ttfbP50Ms": 1.05,
+          "ttfbP95Ms": 1.63,
+          "bytes": 27949,
+          "requests": 1030
+        },
+        "native-only": {
+          "rps": 103.07,
+          "rpsSamples": [100, 100.4, 106.09, 105.79, 103.09],
+          "rpsCvPercent": 2.5,
+          "latencyP50Ms": 8.05,
+          "latencyP95Ms": 12.08,
+          "ttfbP50Ms": 1.18,
+          "ttfbP95Ms": 2.08,
+          "bytes": 27949,
+          "requests": 1034
+        }
+      },
+      "c32": {
+        "next-js": {
+          "rps": 316.73,
+          "rpsSamples": [314.71, 320.99, 322.62, 308.79, 316.55],
+          "rpsCvPercent": 1.55,
+          "latencyP50Ms": 98.35,
+          "latencyP95Ms": 120.15,
+          "ttfbP50Ms": 98.29,
+          "ttfbP95Ms": 120.11,
+          "bytes": 31103,
+          "requests": 3248
+        },
+        "next-rust-wasm": {
+          "rps": 257.86,
+          "rpsSamples": [250.7, 267.15, 276.5, 237.91, 257.03],
+          "rpsCvPercent": 5.16,
+          "latencyP50Ms": 119.35,
+          "latencyP95Ms": 151.15,
+          "ttfbP50Ms": 119.29,
+          "ttfbP95Ms": 151.13,
+          "bytes": 30418,
+          "requests": 2641
+        },
+        "native-fallback": {
+          "rps": 2539.65,
+          "rpsSamples": [2570.74, 2535.1, 2620.85, 2439.96, 2531.62],
+          "rpsCvPercent": 2.33,
+          "latencyP50Ms": 12.27,
+          "latencyP95Ms": 18.88,
+          "ttfbP50Ms": 3.58,
+          "ttfbP95Ms": 8.2,
+          "bytes": 27949,
+          "requests": 25577
+        },
+        "native-only": {
+          "rps": 2554.01,
+          "rpsSamples": [2619.51, 2687.63, 2534.57, 2584.38, 2343.97],
+          "rpsCvPercent": 4.55,
+          "latencyP50Ms": 12.18,
+          "latencyP95Ms": 18.96,
+          "ttfbP50Ms": 3.61,
+          "ttfbP95Ms": 7.82,
+          "bytes": 27949,
+          "requests": 25690
+        }
+      }
+    },
+    "detail-document": {
+      "c1": {
+        "next-js": {
+          "rps": 269.02,
+          "rpsSamples": [257.96, 264.83, 275.88, 266.69, 279.72],
+          "rpsCvPercent": 2.91,
+          "latencyP50Ms": 3.47,
+          "latencyP95Ms": 5.19,
+          "ttfbP50Ms": 3.41,
+          "ttfbP95Ms": 5.12,
+          "bytes": 9288,
+          "requests": 2692
+        },
+        "next-rust-wasm": {
+          "rps": 322.37,
+          "rpsSamples": [307.19, 329.33, 301.76, 339.74, 333.82],
+          "rpsCvPercent": 4.68,
+          "latencyP50Ms": 2.8,
+          "latencyP95Ms": 4.56,
+          "ttfbP50Ms": 2.73,
+          "ttfbP95Ms": 4.48,
+          "bytes": 9447,
+          "requests": 3226
+        },
+        "native-fallback": {
+          "rps": 859.56,
+          "rpsSamples": [841.68, 867.72, 860.06, 869.35, 858.97],
+          "rpsCvPercent": 1.14,
+          "latencyP50Ms": 1.12,
+          "latencyP95Ms": 1.26,
+          "ttfbP50Ms": 1.09,
+          "ttfbP95Ms": 1.22,
+          "bytes": 4171,
+          "requests": 8598
+        },
+        "native-only": {
+          "rps": 866.53,
+          "rpsSamples": [875.91, 872.81, 840.16, 860.01, 883.76],
+          "rpsCvPercent": 1.76,
+          "latencyP50Ms": 1.11,
+          "latencyP95Ms": 1.26,
+          "ttfbP50Ms": 1.08,
+          "ttfbP95Ms": 1.21,
+          "bytes": 4171,
+          "requests": 8668
+        }
+      },
+      "c32": {
+        "next-js": {
+          "rps": 361.61,
+          "rpsSamples": [337.22, 351.82, 366.15, 364.52, 388.33],
+          "rpsCvPercent": 4.68,
+          "latencyP50Ms": 85.21,
+          "latencyP95Ms": 108.49,
+          "ttfbP50Ms": 85.17,
+          "ttfbP95Ms": 108.45,
+          "bytes": 9288,
+          "requests": 3696
+        },
+        "next-rust-wasm": {
+          "rps": 420.51,
+          "rpsSamples": [415.81, 421.65, 416.34, 415.12, 433.61],
+          "rpsCvPercent": 1.65,
+          "latencyP50Ms": 74.58,
+          "latencyP95Ms": 94.4,
+          "ttfbP50Ms": 74.53,
+          "ttfbP95Ms": 94.33,
+          "bytes": 9447,
+          "requests": 4267
+        },
+        "native-fallback": {
+          "rps": 5136.36,
+          "rpsSamples": [5331.96, 5191.12, 4986.7, 5107.23, 5064.77],
+          "rpsCvPercent": 2.3,
+          "latencyP50Ms": 5.79,
+          "latencyP95Ms": 9.42,
+          "ttfbP50Ms": 5.77,
+          "ttfbP95Ms": 9.4,
+          "bytes": 4171,
+          "requests": 51460
+        },
+        "native-only": {
+          "rps": 5241.45,
+          "rpsSamples": [5368.48, 5297.38, 5199.83, 5168.77, 5172.81],
+          "rpsCvPercent": 1.5,
+          "latencyP50Ms": 5.75,
+          "latencyP95Ms": 8.97,
+          "ttfbP50Ms": 5.73,
+          "ttfbP95Ms": 8.95,
+          "bytes": 4171,
+          "requests": 52512
+        }
+      }
+    },
+    "list-flight": {
+      "c1": {
+        "next-js": {
+          "rps": 423.74,
+          "rpsSamples": [426.73, 397.49, 411.89, 431.81, 450.79],
+          "rpsCvPercent": 4.27,
+          "latencyP50Ms": 1.96,
+          "latencyP95Ms": 4.59,
+          "ttfbP50Ms": 1.89,
+          "ttfbP95Ms": 4.5,
+          "bytes": 15981,
+          "requests": 4239
+        },
+        "next-rust-wasm": {
+          "rps": 329.04,
+          "rpsSamples": [307.31, 338.24, 339.29, 334.63, 325.75],
+          "rpsCvPercent": 3.61,
+          "latencyP50Ms": 2.77,
+          "latencyP95Ms": 4.85,
+          "ttfbP50Ms": 2.69,
+          "ttfbP95Ms": 4.77,
+          "bytes": 15547,
+          "requests": 3293
+        },
+        "native-fallback": {
+          "rps": 103.49,
+          "rpsSamples": [101.77, 101.61, 105.08, 106.1, 102.89],
+          "rpsCvPercent": 1.74,
+          "latencyP50Ms": 8.07,
+          "latencyP95Ms": 12.1,
+          "ttfbP50Ms": 1.19,
+          "ttfbP95Ms": 2.11,
+          "bytes": 13984,
+          "requests": 1038
+        },
+        "native-only": {
+          "rps": 101.87,
+          "rpsSamples": [101.4, 103.08, 100.09, 99.49, 105.28],
+          "rpsCvPercent": 2.07,
+          "latencyP50Ms": 8.07,
+          "latencyP95Ms": 12.07,
+          "ttfbP50Ms": 1.1,
+          "ttfbP95Ms": 1.7,
+          "bytes": 13984,
+          "requests": 1022
+        }
+      },
+      "c32": {
+        "next-js": {
+          "rps": 565.91,
+          "rpsSamples": [533.61, 576, 599.37, 566.51, 554.07],
+          "rpsCvPercent": 3.88,
+          "latencyP50Ms": 54.59,
+          "latencyP95Ms": 71.45,
+          "ttfbP50Ms": 54.52,
+          "ttfbP95Ms": 71.37,
+          "bytes": 15981,
+          "requests": 5801
+        },
+        "next-rust-wasm": {
+          "rps": 399.52,
+          "rpsSamples": [399.07, 401.07, 403.25, 401.42, 392.81],
+          "rpsCvPercent": 0.9,
+          "latencyP50Ms": 78.2,
+          "latencyP95Ms": 99.68,
+          "ttfbP50Ms": 78.13,
+          "ttfbP95Ms": 99.62,
+          "bytes": 15547,
+          "requests": 4151
+        },
+        "native-fallback": {
+          "rps": 3115.22,
+          "rpsSamples": [3160.19, 3112.7, 3062.78, 3101.43, 3138.99],
+          "rpsCvPercent": 1.07,
+          "latencyP50Ms": 10.45,
+          "latencyP95Ms": 15.83,
+          "ttfbP50Ms": 2.47,
+          "ttfbP95Ms": 5.25,
+          "bytes": 13984,
+          "requests": 31314
+        },
+        "native-only": {
+          "rps": 3163.57,
+          "rpsSamples": [3164.69, 3124.96, 3182.29, 3208.71, 3137.21],
+          "rpsCvPercent": 0.96,
+          "latencyP50Ms": 10.28,
+          "latencyP95Ms": 15.49,
+          "ttfbP50Ms": 2.38,
+          "ttfbP95Ms": 4.95,
+          "bytes": 13984,
+          "requests": 31823
+        }
+      }
+    }
+  },
+  "fallback": {
+    "c1": {
+      "direct": {
+        "rps": 258.55,
+        "rpsSamples": [248.36, 258.98, 268.57, 257.38, 259.47],
+        "rpsCvPercent": 2.49,
+        "latencyP50Ms": 3.52,
+        "latencyP95Ms": 5.71,
+        "ttfbP50Ms": 3.44,
+        "ttfbP95Ms": 5.61,
+        "bytes": 31055,
+        "requests": 2588
+      },
+      "proxy": {
+        "rps": 170.68,
+        "rpsSamples": [148.42, 164.52, 165.36, 185.53, 189.6],
+        "rpsCvPercent": 8.85,
+        "latencyP50Ms": 5.45,
+        "latencyP95Ms": 7.94,
+        "ttfbP50Ms": 5.36,
+        "ttfbP95Ms": 7.82,
+        "bytes": 31055,
+        "requests": 1710
+      }
+    },
+    "c32": {
+      "direct": {
+        "rps": 310.27,
+        "rpsSamples": [305.94, 312.68, 303.22, 306.82, 322.68],
+        "rpsCvPercent": 2.23,
+        "latencyP50Ms": 100.31,
+        "latencyP95Ms": 124.87,
+        "ttfbP50Ms": 100.25,
+        "ttfbP95Ms": 124.83,
+        "bytes": 31055,
+        "requests": 3214
+      },
+      "proxy": {
+        "rps": 244.95,
+        "rpsSamples": [237.39, 245.96, 238.31, 247.52, 255.59],
+        "rpsCvPercent": 2.72,
+        "latencyP50Ms": 129.2,
+        "latencyP95Ms": 143.26,
+        "ttfbP50Ms": 129.13,
+        "ttfbP95Ms": 143.16,
+        "bytes": 31055,
+        "requests": 2594
+      }
+    }
+  },
+  "browser": {
+    "next-js": {
+      "medianMs": 65.96,
+      "p95Ms": 77.54,
+      "samples": [
+        77.54, 58.14, 65.96, 55.14, 63.14, 64.54, 69.21, 63.6, 66.04, 65.7,
+        68.66, 66.69
+      ]
+    },
+    "next-rust-wasm": {
+      "medianMs": 62.57,
+      "p95Ms": 68.03,
+      "samples": [
+        68.03, 63.22, 59.17, 62.04, 62, 62.45, 62.57, 62.88, 60.74, 64.38,
+        58.49, 63.18
+      ]
+    },
+    "native-fallback": {
+      "medianMs": 61.03,
+      "p95Ms": 66.51,
+      "samples": [
+        57.71, 57.68, 60.32, 61.97, 64.1, 57.68, 61.03, 64.01, 66.51, 58.13,
+        60.69, 62.08
+      ]
+    },
+    "native-only": {
+      "medianMs": 61.56,
+      "p95Ms": 63.22,
+      "samples": [
+        63.22, 60.02, 61.41, 58.91, 61.56, 60.28, 61.51, 60.52, 62.05, 62.02,
+        62.88, 61.9
+      ]
+    }
+  }
+}

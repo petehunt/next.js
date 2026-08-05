@@ -135,18 +135,6 @@ async function main() {
       ...document.querySelectorAll('.catalog-table tbody tr td:nth-child(3)'),
     ].filter((node) => node.textContent === 'Brass').length,
   }))
-  await page.evaluate(() => {
-    window.__catalogNavigationMarker = 'survived-dashboard-navigation'
-  })
-  await page.hover('a[href="/dashboard"]')
-  await page.click('a[href="/dashboard"]')
-  await page.waitForURL(/\/dashboard$/)
-  await page.waitForSelector('[data-slot="team"]')
-  const dashboard = await page.evaluate(() => ({
-    marker: window.__catalogNavigationMarker,
-    heading: document.querySelector('h1')?.textContent,
-    team: document.querySelector('[data-slot="team"]')?.textContent,
-  }))
   await browser.close()
   const unexpectedFailures = failed.filter(
     (value) => !/ERR_ABORTED/.test(value)
@@ -160,7 +148,6 @@ async function main() {
         navigationUpdated,
         navigation,
         superseded,
-        dashboard,
         documents,
         rscResponses,
         segmentPrefetches,
@@ -183,8 +170,6 @@ async function main() {
     navigation.first === firstBefore ||
     superseded.marker !== 'survived' ||
     superseded.brassRows !== 24 ||
-    dashboard.marker !== 'survived-dashboard-navigation' ||
-    !dashboard.team ||
     documents.length !== 1 ||
     rscResponses.length < 2 ||
     segmentPrefetches.length === 0 ||

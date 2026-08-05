@@ -308,6 +308,18 @@ async function RustComponentImpl(props) {
   const resolvedSearchParams = ${readsSearchParams} && props.searchParams
     ? await props.searchParams
     : {}
+  if (${Boolean(catalogControlsRequest)}) {
+    const delay = Math.min(
+      5000,
+      Math.max(
+        Number(resolvedSearchParams.categoryDelay || resolvedSearchParams.delay || 0),
+        Number(resolvedSearchParams.productDelay || resolvedSearchParams.delay || 0)
+      ) || 0
+    )
+    if (delay > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delay))
+    }
+  }
   const records = []
   for (const [name, value] of Object.entries(resolvedParams)) {
     const normalizedValue =

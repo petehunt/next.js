@@ -160,6 +160,36 @@ for (const implementation of implementations) {
   })
 }
 
+test('Next-hosted Rust catalog navigates list to detail and back without documents', async ({
+  page,
+}) => {
+  const origin = process.env.CATALOG_JS_ORIGIN || 'http://127.0.0.1:3027'
+  const documents = []
+  const flights = []
+  page.on('request', (request) => {
+    if (request.resourceType() === 'document') documents.push(request.url())
+    if (request.headers().rsc === '1') flights.push(request.url())
+  })
+
+  await page.goto(`${origin}/catalog/rust`)
+  await expect(page.locator('[data-catalog-controls-ready]')).toHaveAttribute(
+    'data-catalog-controls-ready',
+    'true'
+  )
+  await page.evaluate(() => {
+    window.__catalogParityMarker = 'next-hosted-rust'
+  })
+  await page.locator('a[href^="/catalog/rust/product/"]').first().click()
+  await expect(page.locator('[data-product-detail]')).toBeVisible()
+  expect(await page.evaluate(() => window.__catalogParityMarker)).toBe(
+    'next-hosted-rust'
+  )
+  await page.locator('a[href="/catalog/rust"]').first().click()
+  await expect(page.locator('[data-product-id]')).toHaveCount(24)
+  expect(documents).toHaveLength(1)
+  expect(flights.length).toBeGreaterThanOrEqual(2)
+})
+
 async function productIds(page) {
   return page
     .locator('[data-product-id]')

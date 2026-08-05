@@ -10,7 +10,9 @@ fn query(props: &PageProps, name: &str, fallback: &str) -> String {
     }
 }
 fn link(href: String, label: impl Into<String>) -> Node {
-    element("a", [Node::text(label.into())]).prop("href", href)
+    element("a", [Node::text(label.into())])
+        .prop("href", href)
+        .prop("data-catalog-navigation", true)
 }
 pub fn render(props: PageProps) -> RenderResult {
     let category = query(&props, "category", "all");
@@ -65,7 +67,7 @@ pub fn render(props: PageProps) -> RenderResult {
             element("input", [])
                 .prop("id", "catalog-q")
                 .prop("name", "q")
-                .prop("value", search),
+                .prop("defaultValue", search),
             element("button", [Node::text("Search")]),
         ],
     )

@@ -90,6 +90,16 @@ module.exports = function rustRscPrototypeLoader(source) {
   const importsCatalogCss =
     this.resourcePath === path.join(this.rootContext, 'app', 'layout.rs') &&
     fs.existsSync(path.join(this.rootContext, 'app', 'catalog.css'))
+  const catalogControlsRequest =
+    componentKind === 'page' &&
+    this.resourcePath.startsWith(
+      path.join(this.rootContext, 'app', 'catalog', 'rust') + path.sep
+    )
+      ? normalizeRelativeImport(
+          path.dirname(this.resourcePath),
+          path.join(this.rootContext, 'app', 'catalog', 'controls.js')
+        )
+      : null
   if (componentKind === 'error') {
     return createErrorAdapterSource(wasm.toString('base64'))
   }
@@ -107,8 +117,14 @@ module.exports = function rustRscPrototypeLoader(source) {
     readsCacheTag,
     digest,
     runtime,
-    this.resourcePath
+    this.resourcePath,
+    catalogControlsRequest
   )
+}
+
+function normalizeRelativeImport(from, to) {
+  const request = path.relative(from, to).replaceAll(path.sep, '/')
+  return request.startsWith('.') ? request : `./${request}`
 }
 
 function parseRuntime(source, componentKind) {
@@ -221,10 +237,12 @@ function createAdapterSource(
   readsCacheTag,
   digest,
   runtime,
-  componentPath
+  componentPath,
+  catalogControlsRequest
 ) {
   return `
 ${importsCatalogCss ? `import './catalog.css'` : ''}
+${catalogControlsRequest ? `import CatalogControls from ${JSON.stringify(catalogControlsRequest)}` : ''}
 import { createElement, Fragment, Suspense } from 'react'
 import { forbidden, notFound, redirect, unauthorized } from 'next/navigation'
 import { cookies as nextCookies, headers as nextHeaders } from 'next/headers'
@@ -430,7 +448,8 @@ async function RustComponentImpl(props) {
         throw new Error('Rust component failed: ' + envelope.result.error)
     }
   }
-  return convertNode(envelope.result.node, slots)
+  const rendered = convertNode(envelope.result.node, slots)
+  return ${catalogControlsRequest ? `createElement(CatalogControls, { basePath: '/catalog/rust' }, rendered)` : 'rendered'}
 }
 
 function invokeWasm(records) {

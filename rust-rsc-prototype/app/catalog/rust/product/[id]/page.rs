@@ -66,7 +66,7 @@ pub fn render(props: PageProps) -> RenderResult {
                                 .prop("name", "quantity")
                                 .prop("type", "number")
                                 .prop("min", "1")
-                                .prop("value", "1"),
+                                .prop("defaultValue", "1"),
                         ],
                     ),
                     element("button", [Node::text("Add to order")]).prop("type", "button"),

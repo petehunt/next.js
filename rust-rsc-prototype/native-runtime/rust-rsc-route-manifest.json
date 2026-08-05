@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildId": "58d01f10fcd238af9e7e0ab33d524cf2",
+  "buildId": "154dca130c1e8abae957277a39495a53",
   "flightRevision": "19.3.0-canary-cbb046ab-20260731",
   "metadata": {
     "title": "RustWorks Supply",
@@ -177,7 +177,7 @@
         "/_next/static/chunks/main-app-b025aa0bd74a79df.js",
         "/_next/static/chunks/polyfills-42372ed130431b0a.js",
         "/_next/static/css/9192fece8fe7c839.css",
-        "/_next/static/chunks/app/catalog/js/page-4d8a3a378924cdf7.js",
+        "/_next/static/chunks/app/catalog/js/page-0b1ab2e2af5d4fd6.js",
         "/rust-mark.svg"
       ],
       "clientReferences": [
@@ -188,7 +188,7 @@
           "exportName": "default",
           "chunks": [
             "536",
-            "static/chunks/app/catalog/js/page-4d8a3a378924cdf7.js"
+            "static/chunks/app/catalog/js/page-0b1ab2e2af5d4fd6.js"
           ],
           "async": false
         }
@@ -221,7 +221,7 @@
         "/_next/static/chunks/main-app-b025aa0bd74a79df.js",
         "/_next/static/chunks/polyfills-42372ed130431b0a.js",
         "/_next/static/css/9192fece8fe7c839.css",
-        "/_next/static/chunks/app/catalog/js/page-4d8a3a378924cdf7.js",
+        "/_next/static/chunks/app/catalog/js/page-0b1ab2e2af5d4fd6.js",
         "/rust-mark.svg"
       ],
       "clientReferences": [
@@ -232,7 +232,7 @@
           "exportName": "default",
           "chunks": [
             "536",
-            "static/chunks/app/catalog/js/page-4d8a3a378924cdf7.js"
+            "static/chunks/app/catalog/js/page-0b1ab2e2af5d4fd6.js"
           ],
           "async": false
         }

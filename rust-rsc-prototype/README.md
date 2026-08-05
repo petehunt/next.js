@@ -190,6 +190,48 @@ overhead, and per-topology resident memory. Results are written to
 `CATALOG_ARCHITECTURE_BENCHMARK_RESULTS.md` and `.json`. These are exploratory
 single-host measurements, not independent-VM confidence intervals.
 
+### Vercel Build Output API
+
+The prototype can emit a Build Output API v3 deployment without deploying it:
+
+```bash
+RUST_RSC_VERCEL_MODE=native-fallback pnpm vercel:build
+pnpm vercel:validate .vercel/output
+```
+
+`RUST_RSC_VERCEL_MODE` accepts four configurations:
+
+| Mode | Emitted functions | Routing |
+| --- | --- | --- |
+| `next-js` | Next/Node | All requests go through conventional Next routes |
+| `next-wasm` | Next/Node with compiled Rust Wasm | All requests go through Next, including Rust conventions |
+| `native-fallback` | Rust executable plus Next/Node | Native-eligible routes go to Rust; unsupported and conditional routes go to Next |
+| `native-only` | Rust executable | Native-eligible routes go to Rust; unsupported routes return the platform 404 |
+
+The default is `native-fallback`. The Rust function uses Vercel's executable
+runtime contract, listens through `vercel_runtime`, and advertises response
+streaming. Static Next chunks and public assets are emitted under `static/`.
+The Node-containing modes package a production Next standalone server and
+prune build caches, development output, and Cargo artifacts from the function.
+
+For a connected project, `vercel.json` runs the same builder. Set
+`RUST_RSC_VERCEL_MODE` in the build environment to select a different topology.
+Its install command pins the repository's Rust nightly and installs the
+`wasm32-wasip1` target used by the hybrid compiler.
+The catalog demo also needs `CATALOG_DATA_ORIGIN` to point at a reachable data
+service; the localhost default is only for local tests.
+
+To generate, structurally validate, and execute all four outputs through the
+same Playwright feature and screenshot-parity matrix:
+
+```bash
+pnpm vercel:test
+```
+
+The local Build Output router exercises the emitted `.vc-config.json` handlers
+and v3 routing rules. It is a deployment-shape and runtime integration test,
+not a replacement for an authenticated Vercel deployment.
+
 To populate and invalidate the native warm cache:
 
 ```bash

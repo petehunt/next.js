@@ -6,7 +6,7 @@ const configurations = [
   {
     key: 'next-js',
     name: 'Conventional Next/JS',
-    origin: 'http://127.0.0.1:3027',
+    origin: process.env.CATALOG_NEXT_JS_ORIGIN || 'http://127.0.0.1:3027',
     path: '/catalog/js',
     catalog: 'js',
     streamsRegions: true,
@@ -14,7 +14,7 @@ const configurations = [
   {
     key: 'next-rust-wasm',
     name: 'Next + Rust/Wasm hybrid',
-    origin: 'http://127.0.0.1:3027',
+    origin: process.env.CATALOG_NEXT_WASM_ORIGIN || 'http://127.0.0.1:3027',
     path: '/catalog/rust',
     catalog: 'rust',
     streamsRegions: true,
@@ -22,7 +22,8 @@ const configurations = [
   {
     key: 'native-fallback',
     name: 'Native Rust with selective Next fallback',
-    origin: 'http://127.0.0.1:3038',
+    origin:
+      process.env.CATALOG_NATIVE_FALLBACK_ORIGIN || 'http://127.0.0.1:3038',
     path: '/catalog/rust',
     catalog: 'rust',
     streamsRegions: true,
@@ -30,7 +31,7 @@ const configurations = [
   {
     key: 'native-only',
     name: 'Node-free native Rust',
-    origin: 'http://127.0.0.1:3039',
+    origin: process.env.CATALOG_NATIVE_ONLY_ORIGIN || 'http://127.0.0.1:3039',
     path: '/catalog/rust',
     catalog: 'rust',
     streamsRegions: true,
@@ -79,6 +80,7 @@ for (const configuration of configurations) {
 
     await page.goto(`${configuration.origin}${configuration.path}`)
     await expect(page.locator('[data-product-id]')).toHaveCount(24)
+    await expect(page.locator('[data-loading-region]')).toHaveCount(0)
     await expect(page.locator('[data-catalog-controls-ready]')).toHaveAttribute(
       'data-catalog-controls-ready',
       'true'
@@ -172,14 +174,14 @@ test('all configurations render identical catalog pixels and data', async ({
 test('selective fallback proxies unsupported routes while native-only refuses them', async ({
   request,
 }) => {
-  const direct = await request.get('http://127.0.0.1:3027/catalog/js')
-  const proxied = await request.get('http://127.0.0.1:3038/catalog/js')
+  const direct = await request.get(`${configurations[0].origin}/catalog/js`)
+  const proxied = await request.get(`${configurations[2].origin}/catalog/js`)
   expect(proxied.status()).toBe(200)
   expect(direct.status()).toBe(200)
   expect(await direct.text()).toContain('data-catalog="js"')
   expect(await proxied.text()).toContain('data-catalog="js"')
 
-  const nativeOnly = await request.get('http://127.0.0.1:3039/catalog/js')
+  const nativeOnly = await request.get(`${configurations[3].origin}/catalog/js`)
   expect(nativeOnly.status()).toBe(404)
   expect(await nativeOnly.text()).toBe('Not found')
 })

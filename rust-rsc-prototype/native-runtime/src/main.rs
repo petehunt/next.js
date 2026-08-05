@@ -17,6 +17,8 @@ use std::{
 use next_rsc::{Node, PropValue, RenderError};
 
 mod catalog;
+#[cfg(feature = "vercel")]
+mod vercel;
 include!("generated_routes.rs");
 
 const MAX_HEADER_BYTES: usize = 32 * 1024;
@@ -45,15 +47,28 @@ impl Drop for ActiveRequest {
     }
 }
 
+#[cfg(not(feature = "vercel"))]
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let host = env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_owned());
     let port = env::var("PORT").unwrap_or_else(|_| "3030".to_owned());
     let listener = TcpListener::bind(format!("{host}:{port}"))?;
-    listener.set_nonblocking(true)?;
     let shutdown = Arc::new(AtomicBool::new(false));
     signal_hook::flag::register(signal_hook::consts::SIGINT, Arc::clone(&shutdown))?;
     signal_hook::flag::register(signal_hook::consts::SIGTERM, Arc::clone(&shutdown))?;
     println!("Rust RSC native runtime listening on http://{host}:{port}");
+    run_listener(listener, shutdown)?;
+    println!("Rust RSC native runtime shut down cleanly");
+    Ok(())
+}
+
+#[cfg(feature = "vercel")]
+#[tokio::main]
+async fn main() -> Result<(), vercel_runtime::Error> {
+    vercel::run().await
+}
+
+fn run_listener(listener: TcpListener, shutdown: Arc<AtomicBool>) -> std::io::Result<()> {
+    listener.set_nonblocking(true)?;
     while !shutdown.load(Ordering::Acquire) {
         match listener.accept() {
             Ok((mut stream, _peer)) => {
@@ -84,7 +99,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     while ACTIVE_REQUESTS.load(Ordering::Acquire) != 0 {
         thread::sleep(Duration::from_millis(5));
     }
-    println!("Rust RSC native runtime shut down cleanly");
     Ok(())
 }
 

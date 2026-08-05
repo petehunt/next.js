@@ -6,7 +6,19 @@ publish = false
 
 [workspace]
 
+[features]
+default = []
+vercel = [
+    "dep:http-body-util",
+    "dep:hyper",
+    "dep:tokio-stream",
+    "dep:vercel_runtime",
+    "reqwest/stream",
+]
+
 [dependencies]
+http-body-util = { version = "0.1", optional = true }
+hyper = { version = "1", optional = true }
 next-rsc = { path = "../../crates/next-rsc", default-features = false, features = ["json"] }
 next-rsc-flight = { path = "../../crates/next-rsc-flight" }
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
@@ -14,3 +26,5 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 signal-hook = "0.3.18"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
+tokio-stream = { version = "0.1", optional = true }
+vercel_runtime = { version = "2.4.0", optional = true }

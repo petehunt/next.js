@@ -107,6 +107,12 @@ const buildId = crypto
   .digest('hex')
   .slice(0, 32)
 
+const routeHandlerPaths = listFiles(appDir)
+  .filter((filename) => filename.endsWith(`${path.sep}route.rs`))
+  .sort()
+const mutationRoutes = routeHandlerPaths.map(
+  (filename) => `/${relative(path.dirname(filename)).replace(/^app\/?/, '')}`
+)
 const manifest = {
   version: 2,
   buildId,
@@ -131,6 +137,7 @@ const manifest = {
       'segment-prefetch',
     ],
     fallbackRequestKinds: ['interception-navigation'],
+    mutationRoutes,
   },
   routes,
 }
@@ -163,9 +170,6 @@ const moduleDeclarations = componentPaths
       `#[path = ${JSON.stringify(`../../${componentPath}`)}]\nmod ${moduleNames.get(componentPath)};`
   )
   .join('\n')
-const routeHandlerPaths = listFiles(appDir)
-  .filter((filename) => filename.endsWith(`${path.sep}route.rs`))
-  .sort()
 const routeHandlerDeclarations = routeHandlerPaths
   .map(
     (filename, index) =>

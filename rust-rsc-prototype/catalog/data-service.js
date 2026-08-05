@@ -1,5 +1,5 @@
 const http = require('node:http')
-const data = require('./catalog-data.json')
+const data = require('./query-data')
 const port = Number(process.env.CATALOG_DATA_PORT || 3041)
 const counters = new Map()
 function send(response, status, value) {
@@ -20,10 +20,10 @@ http
       if (url.searchParams.get('error') === '1')
         return send(response, 503, { error: 'injected' })
       if (url.pathname === '/categories')
-        return send(response, 200, data.categories)
+        return send(response, 200, data.categories())
       if (url.pathname.startsWith('/product/')) {
         const id = decodeURIComponent(url.pathname.slice('/product/'.length))
-        const product = data.products.find((item) => item.id === id)
+        const product = data.product(id)
         return product
           ? send(response, 200, product)
           : send(response, 404, { error: 'not found' })
@@ -35,29 +35,7 @@ http
         return send(response, 200, { ok: true })
       }
       if (url.pathname === '/products') {
-        const category = url.searchParams.get('category') || 'all'
-        const query = (url.searchParams.get('q') || '').toLowerCase()
-        const material = url.searchParams.get('material') || 'all'
-        const sort = url.searchParams.get('sort') || 'name'
-        const page = Math.max(1, Number(url.searchParams.get('page') || 1))
-        const pageSize = 24
-        let products = data.products.filter(
-          (product) =>
-            (category === 'all' || product.category === category) &&
-            (material === 'all' || product.material === material) &&
-            (!query ||
-              `${product.id} ${product.name} ${product.material}`
-                .toLowerCase()
-                .includes(query))
-        )
-        products.sort((a, b) =>
-          sort === 'price'
-            ? a.priceCents - b.priceCents
-            : a.name.localeCompare(b.name) || a.id.localeCompare(b.id)
-        )
-        const total = products.length
-        products = products.slice((page - 1) * pageSize, page * pageSize)
-        return send(response, 200, { products, total, page, pageSize })
+        return send(response, 200, data.products(url.searchParams))
       }
       send(response, 404, { error: 'not found' })
     }

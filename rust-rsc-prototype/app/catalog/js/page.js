@@ -1,23 +1,39 @@
 const dataOrigin = process.env.CATALOG_DATA_ORIGIN || 'http://127.0.0.1:3041'
+const benchmarkMode = process.env.CATALOG_BENCHMARK_MODE === '1'
+const data = require('../../../catalog/query-data')
 import { Suspense } from 'react'
 import CatalogControls from '../controls'
 const warmCache = new Map()
+function wait(delay) {
+  return delay > 0
+    ? new Promise((resolve) => setTimeout(resolve, Math.min(delay, 5000)))
+    : Promise.resolve()
+}
 async function getJson(path, cacheMode, requestCache) {
   const key = `${dataOrigin}${path}`
   if (cacheMode === 'warm' && warmCache.has(key)) return warmCache.get(key)
   if (cacheMode !== 'uncached' && requestCache.has(key))
     return requestCache.get(key)
-  const work = fetch(key, {
-    cache: 'no-store',
-    signal: AbortSignal.timeout(5000),
-  }).then(async (response) => {
-    if (!response.ok)
-      throw new Error(`catalog data returned ${response.status}`)
-    return response.json()
-  })
+  const work = benchmarkMode
+    ? fetch(key, {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(5000),
+      }).then(async (response) => {
+        if (!response.ok)
+          throw new Error(`catalog data returned ${response.status}`)
+        return response.json()
+      })
+    : localJson(path)
   if (cacheMode !== 'uncached') requestCache.set(key, work)
   if (cacheMode === 'warm') warmCache.set(key, work)
   return work
+}
+async function localJson(path) {
+  const url = new URL(path, 'http://catalog.local')
+  await wait(Number(url.searchParams.get('delay') || 0))
+  return url.pathname === '/categories'
+    ? data.categories()
+    : data.products(url.searchParams)
 }
 function value(params, name, fallback) {
   const item = params[name]

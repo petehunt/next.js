@@ -141,8 +141,7 @@ cache response shape.
 
 ### Catalog demo and revalidation
 
-Run any catalog architecture, including its required data service, with one
-command:
+Run any self-contained catalog architecture with one command:
 
 ```bash
 pnpm catalog:dev:next-js
@@ -152,7 +151,8 @@ pnpm catalog:dev:native-only
 ```
 
 Each command prints its catalog URL when ready. Press Ctrl-C to stop the
-services that command started.
+services that command started. Set `CATALOG_BENCHMARK_MODE=1` to route catalog
+reads through the separate data service; the launcher starts it automatically.
 
 Compare `/catalog/js` and `/catalog/rust` on port 3027 with the Node-free Rust
 catalog at `http://localhost:3039/catalog/rust`. Query parameters such as
@@ -222,8 +222,9 @@ For a connected project, `vercel.json` runs the same builder. Set
 `RUST_RSC_VERCEL_MODE` in the build environment to select a different topology.
 Its install command pins the repository's Rust nightly and installs the
 `wasm32-wasip1` target used by the hybrid compiler.
-The catalog demo also needs `CATALOG_DATA_ORIGIN` to point at a reachable data
-service; the localhost default is only for local tests.
+Normal demo deployments embed the deterministic catalog data. Benchmark-mode
+deployments additionally need `CATALOG_DATA_ORIGIN` to point at a reachable
+data service; the localhost default is only for local tests.
 
 Create a preview deployment for one architecture with:
 
@@ -234,7 +235,6 @@ pnpm vercel:deploy:native-fallback
 pnpm vercel:deploy:native-only
 ```
 
-Configure `CATALOG_DATA_ORIGIN` in the linked Vercel project before deploying.
 Append `--prod` to any command to create a production deployment instead.
 
 To generate, structurally validate, and execute all four outputs through the

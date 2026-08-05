@@ -45,6 +45,8 @@ struct Category {
 #[serde(rename_all = "camelCase")]
 struct Product {
     id: String,
+    #[serde(default)]
+    category: String,
     name: String,
     material: String,
     finish: String,
@@ -98,8 +100,6 @@ async fn render_async(
     mut on_region: Option<&mut dyn FnMut(&str, &Node) -> Result<(), RenderError>>,
 ) -> RenderResult {
     let started = Instant::now();
-    let origin =
-        env::var("CATALOG_DATA_ORIGIN").unwrap_or_else(|_| "http://127.0.0.1:3041".to_owned());
     let category = query(search_params, "category", "all");
     let search = query(search_params, "q", "");
     let material = query(search_params, "material", "all");
@@ -113,23 +113,17 @@ async fn render_async(
         return Err(RenderError::new("invalid catalog cache mode"));
     }
     let request_cache = Arc::new(Mutex::new(BTreeMap::new()));
-    let categories_url = url(&origin, "/categories", &[("delay", &category_delay)])?;
-    let products_url = url(
-        &origin,
-        "/products",
-        &[
-            ("category", &category),
-            ("q", &search),
-            ("material", &material),
-            ("sort", &sort),
-            ("page", &page),
-            ("delay", &product_delay),
-        ],
-    )?;
-    let categories_work =
-        fetch_json::<Vec<Category>>(categories_url, &cache_mode, Arc::clone(&request_cache));
-    let products_work =
-        fetch_json::<ProductResult>(products_url, &cache_mode, Arc::clone(&request_cache));
+    let categories_work = load_categories(&category_delay, &cache_mode, Arc::clone(&request_cache));
+    let products_work = load_products(
+        &category,
+        &search,
+        &material,
+        &sort,
+        &page,
+        &product_delay,
+        &cache_mode,
+        Arc::clone(&request_cache),
+    );
     tokio::pin!(categories_work, products_work);
     let mut categories = None;
     let mut products = None;
@@ -171,6 +165,131 @@ async fn render_async(
         )
     });
     Ok(tree)
+}
+
+fn benchmark_mode() -> bool {
+    env::var("CATALOG_BENCHMARK_MODE").as_deref() == Ok("1")
+}
+
+async fn load_categories(
+    delay: &str,
+    cache_mode: &str,
+    request_cache: Arc<Mutex<BTreeMap<String, Vec<u8>>>>,
+) -> Result<Vec<Category>, RenderError> {
+    if benchmark_mode() {
+        let origin =
+            env::var("CATALOG_DATA_ORIGIN").unwrap_or_else(|_| "http://127.0.0.1:3041".to_owned());
+        let categories_url = url(&origin, "/categories", &[("delay", delay)])?;
+        return fetch_json(categories_url, cache_mode, request_cache).await;
+    }
+    local_delay(delay).await;
+    Ok([
+        ("fasteners", "Fasteners"),
+        ("electrical", "Electrical"),
+        ("plumbing", "Plumbing"),
+        ("material-handling", "Material Handling"),
+        ("safety", "Safety"),
+        ("machining", "Machining"),
+    ]
+    .into_iter()
+    .map(|(id, name)| Category {
+        id: id.to_owned(),
+        name: name.to_owned(),
+        count: 120,
+    })
+    .collect())
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn load_products(
+    category: &str,
+    search: &str,
+    material: &str,
+    sort: &str,
+    page: &str,
+    delay: &str,
+    cache_mode: &str,
+    request_cache: Arc<Mutex<BTreeMap<String, Vec<u8>>>>,
+) -> Result<ProductResult, RenderError> {
+    if benchmark_mode() {
+        let origin =
+            env::var("CATALOG_DATA_ORIGIN").unwrap_or_else(|_| "http://127.0.0.1:3041".to_owned());
+        let products_url = url(
+            &origin,
+            "/products",
+            &[
+                ("category", category),
+                ("q", search),
+                ("material", material),
+                ("sort", sort),
+                ("page", page),
+                ("delay", delay),
+            ],
+        )?;
+        return fetch_json(products_url, cache_mode, request_cache).await;
+    }
+    local_delay(delay).await;
+    let categories = [
+        ("fasteners", "Fasteners"),
+        ("electrical", "Electrical"),
+        ("plumbing", "Plumbing"),
+        ("material-handling", "Material Handling"),
+        ("safety", "Safety"),
+        ("machining", "Machining"),
+    ];
+    let materials = ["Zinc Steel", "Stainless Steel", "Aluminum", "Brass"];
+    let finishes = ["Plain", "Black Oxide", "Galvanized", "Anodized"];
+    let normalized_search = search.to_lowercase();
+    let mut products = (0..720)
+        .map(|index| {
+            let (category, category_name) = categories[index % categories.len()];
+            Product {
+                id: format!("RC-{:05}", index + 1),
+                category: category.to_owned(),
+                name: format!("{category_name} {:03}", (index % 120) + 1),
+                material: materials[index % materials.len()].to_owned(),
+                finish: finishes[(index / 3) % finishes.len()].to_owned(),
+                size: format!("{} mm", (index % 24) + 1),
+                price_cents: (175 + ((index * 137) % 18500)) as u64,
+                available: (8 + ((index * 29) % 940)) as u64,
+            }
+        })
+        .filter(|product| {
+            (category == "all" || product.category == category)
+                && (material == "all" || product.material == material)
+                && (normalized_search.is_empty()
+                    || format!("{} {} {}", product.id, product.name, product.material)
+                        .to_lowercase()
+                        .contains(&normalized_search))
+        })
+        .collect::<Vec<_>>();
+    if sort == "price" {
+        products.sort_by_key(|product| product.price_cents);
+    } else {
+        products.sort_by(|left, right| {
+            left.name
+                .cmp(&right.name)
+                .then_with(|| left.id.cmp(&right.id))
+        });
+    }
+    let total = products.len();
+    let page = page.parse::<usize>().unwrap_or(1).max(1);
+    Ok(ProductResult {
+        products: products
+            .into_iter()
+            .skip((page - 1) * 24)
+            .take(24)
+            .collect(),
+        total,
+        page,
+    })
+}
+
+async fn local_delay(delay: &str) {
+    let delay = delay.parse::<u64>().unwrap_or(0).min(5000);
+    if delay > 0 {
+        tokio::time::sleep(Duration::from_millis(delay)).await;
+    }
 }
 
 fn client() -> &'static Client {

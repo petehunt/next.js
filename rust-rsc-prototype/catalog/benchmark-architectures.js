@@ -191,6 +191,7 @@ function launch(name, command, args, extraEnv = {}) {
       NEXT_STATIC_DIR: path.join(root, '.next', 'static'),
       NEXT_PUBLIC_DIR: path.join(root, 'public'),
       RUST_RSC_REVALIDATE_TOKEN: 'local-secret',
+      CATALOG_BENCHMARK_MODE: '1',
       ...extraEnv,
     },
     stdio: ['ignore', log, log],

@@ -90,7 +90,8 @@ process.on('SIGINT', () => shutdown())
 process.on('SIGTERM', () => shutdown())
 
 async function main() {
-  if (!(await reachable('http://127.0.0.1:3041/categories'))) {
+  const benchmarkMode = process.env.CATALOG_BENCHMARK_MODE === '1'
+  if (benchmarkMode && !(await reachable('http://127.0.0.1:3041/categories'))) {
     launch('catalog data service', process.execPath, [
       'catalog/data-service.js',
     ])

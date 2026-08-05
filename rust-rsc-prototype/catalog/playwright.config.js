@@ -22,21 +22,22 @@ module.exports = defineConfig({
       reuseExistingServer: true,
     },
     {
-      command: 'node ../packages/next/dist/bin/next start --port 3027',
+      command:
+        'CATALOG_BENCHMARK_MODE=1 node ../packages/next/dist/bin/next start --port 3027',
       cwd: prototypeRoot,
       port: 3027,
       reuseExistingServer: true,
     },
     {
       command:
-        'RUST_RSC_REVALIDATE_TOKEN=local-secret NEXT_STATIC_DIR=.next/static NEXT_PUBLIC_DIR=public PORT=3038 NEXT_FALLBACK_ADDR=127.0.0.1:3027 cargo run --manifest-path native-runtime/Cargo.toml',
+        'CATALOG_BENCHMARK_MODE=1 RUST_RSC_REVALIDATE_TOKEN=local-secret NEXT_STATIC_DIR=.next/static NEXT_PUBLIC_DIR=public PORT=3038 NEXT_FALLBACK_ADDR=127.0.0.1:3027 cargo run --manifest-path native-runtime/Cargo.toml',
       cwd: prototypeRoot,
       port: 3038,
       reuseExistingServer: true,
     },
     {
       command:
-        'RUST_RSC_REVALIDATE_TOKEN=local-secret NEXT_STATIC_DIR=.next/static NEXT_PUBLIC_DIR=public PORT=3039 cargo run --manifest-path native-runtime/Cargo.toml',
+        'CATALOG_BENCHMARK_MODE=1 RUST_RSC_REVALIDATE_TOKEN=local-secret NEXT_STATIC_DIR=.next/static NEXT_PUBLIC_DIR=public PORT=3039 cargo run --manifest-path native-runtime/Cargo.toml',
       cwd: prototypeRoot,
       port: 3039,
       reuseExistingServer: true,

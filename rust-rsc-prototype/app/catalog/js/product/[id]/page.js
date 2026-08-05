@@ -1,19 +1,22 @@
 const dataOrigin = process.env.CATALOG_DATA_ORIGIN || 'http://127.0.0.1:3041'
+const benchmarkMode = process.env.CATALOG_BENCHMARK_MODE === '1'
+const data = require('../../../../../catalog/query-data')
 import CatalogControls from '../../../controls'
 
 export default async function JavaScriptProduct({ params }) {
   const { id } = await params
-  const response = await fetch(
-    `${dataOrigin}/product/${encodeURIComponent(id)}`,
-    { cache: 'no-store', signal: AbortSignal.timeout(5000) }
-  )
-  if (!response.ok)
+  const product = benchmarkMode
+    ? await fetch(`${dataOrigin}/product/${encodeURIComponent(id)}`, {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(5000),
+      }).then((response) => (response.ok ? response.json() : null))
+    : data.product(id)
+  if (!product)
     return (
       <main data-product-missing={id}>
         <h1>Product not found</h1>
       </main>
     )
-  const product = await response.json()
   return (
     <CatalogControls basePath="/catalog/js">
       <ProductDetail implementation="js" product={product} />

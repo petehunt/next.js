@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "installCommand": "rustup toolchain install nightly-2026-07-29 --profile minimal && rustup target add wasm32-wasip1 wasm32-unknown-unknown --toolchain nightly-2026-07-29 && pnpm install --frozen-lockfile && pnpm --filter=next build",
+  "installCommand": "rustup toolchain install nightly-2026-07-29 --profile minimal && rustup target add wasm32-wasip1 wasm32-unknown-unknown --toolchain nightly-2026-07-29 && pnpm install --frozen-lockfile && pnpm build-all",
   "buildCommand": "pnpm vercel:build"
 }

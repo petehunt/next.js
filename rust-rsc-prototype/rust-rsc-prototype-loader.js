@@ -309,11 +309,12 @@ async function RustComponentImpl(props) {
     ? await props.searchParams
     : {}
   if (${Boolean(catalogControlsRequest)}) {
+    const commonDelay = resolvedSearchParams.delay
     const delay = Math.min(
       5000,
       Math.max(
-        Number(resolvedSearchParams.categoryDelay || resolvedSearchParams.delay || 0),
-        Number(resolvedSearchParams.productDelay || resolvedSearchParams.delay || 0)
+        Number(resolvedSearchParams.categoryDelay ?? commonDelay ?? 350),
+        Number(resolvedSearchParams.productDelay ?? commonDelay ?? 1000)
       ) || 0
     )
     if (delay > 0) {

@@ -28,13 +28,51 @@ pub fn render() -> RenderResult {
             element(
                 "div",
                 [
-                    element("nav", [Node::text("Loading categories...")])
-                        .prop("className", "catalog-sidebar")
-                        .prop("aria-label", "Categories")
-                        .prop("data-loading-region", "categories"),
-                    element("main", [Node::text("Loading products...")])
-                        .prop("aria-label", "Products")
-                        .prop("data-loading-region", "products"),
+                    element(
+                        "nav",
+                        [
+                            element("p", [Node::text("Loading categories…")])
+                                .prop("className", "catalog-pagelet-label"),
+                            element(
+                                "div",
+                                [
+                                    element("i", []),
+                                    element("i", []),
+                                    element("i", []),
+                                    element("i", []),
+                                ],
+                            )
+                            .prop("className", "catalog-skeleton-lines")
+                            .prop("aria-hidden", "true"),
+                        ],
+                    )
+                    .prop("className", "catalog-sidebar catalog-pagelet")
+                    .prop("aria-label", "Categories")
+                    .prop("aria-busy", "true")
+                    .prop("data-loading-region", "categories"),
+                    element(
+                        "main",
+                        [
+                            element("p", [Node::text("Loading product pagelet…")])
+                                .prop("className", "catalog-pagelet-label"),
+                            element(
+                                "div",
+                                [
+                                    element("i", []),
+                                    element("i", []),
+                                    element("i", []),
+                                    element("i", []),
+                                    element("i", []),
+                                ],
+                            )
+                            .prop("className", "catalog-skeleton-table")
+                            .prop("aria-hidden", "true"),
+                        ],
+                    )
+                    .prop("className", "catalog-pagelet")
+                    .prop("aria-label", "Products")
+                    .prop("aria-busy", "true")
+                    .prop("data-loading-region", "products"),
                 ],
             )
             .prop("className", "catalog-grid"),

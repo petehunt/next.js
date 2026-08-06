@@ -46,9 +46,13 @@ export default async function JavaScriptCatalog({ searchParams }) {
     material = value(params, 'material', 'all'),
     sort = value(params, 'sort', 'name'),
     page = value(params, 'page', '1'),
-    delay = value(params, 'delay', '0')
-  const categoryDelay = value(params, 'categoryDelay', delay),
-    productDelay = value(params, 'productDelay', delay)
+    delay = value(params, 'delay', '')
+  const categoryDelay = value(
+      params,
+      'categoryDelay',
+      delay === '' ? '350' : delay
+    ),
+    productDelay = value(params, 'productDelay', delay === '' ? '1000' : delay)
   const cacheMode = value(params, 'cache', 'uncached')
   if (!['uncached', 'request', 'warm'].includes(cacheMode))
     throw new Error('invalid catalog cache mode')
@@ -81,26 +85,10 @@ export default async function JavaScriptCatalog({ searchParams }) {
           </form>
         </header>
         <div className="catalog-grid">
-          <Suspense
-            fallback={
-              <nav
-                className="catalog-sidebar"
-                aria-label="Categories"
-                data-loading-region="categories"
-              >
-                Loading categories...
-              </nav>
-            }
-          >
+          <Suspense fallback={<CategoriesLoading />}>
             <CategoriesRegion categories={categories} />
           </Suspense>
-          <Suspense
-            fallback={
-              <main aria-label="Products" data-loading-region="products">
-                Loading products...
-              </main>
-            }
-          >
+          <Suspense fallback={<ProductsLoading />}>
             <ProductsRegion
               products={products}
               {...{ query, material, sort, page }}
@@ -109,6 +97,43 @@ export default async function JavaScriptCatalog({ searchParams }) {
         </div>
       </div>
     </CatalogControls>
+  )
+}
+function CategoriesLoading() {
+  return (
+    <nav
+      className="catalog-sidebar catalog-pagelet"
+      aria-label="Categories"
+      aria-busy="true"
+      data-loading-region="categories"
+    >
+      <p className="catalog-pagelet-label">Loading categories…</p>
+      <div className="catalog-skeleton-lines" aria-hidden="true">
+        <i />
+        <i />
+        <i />
+        <i />
+      </div>
+    </nav>
+  )
+}
+function ProductsLoading() {
+  return (
+    <main
+      className="catalog-pagelet"
+      aria-label="Products"
+      aria-busy="true"
+      data-loading-region="products"
+    >
+      <p className="catalog-pagelet-label">Loading product pagelet…</p>
+      <div className="catalog-skeleton-table" aria-hidden="true">
+        <i />
+        <i />
+        <i />
+        <i />
+        <i />
+      </div>
+    </main>
   )
 }
 async function CategoriesRegion({ categories }) {
@@ -133,7 +158,7 @@ async function ProductsRegion({ products, query, material, sort, page }) {
     <main>
       <form className="catalog-filters">
         <input type="hidden" name="q" value={query} readOnly />
-        <input type="hidden" name="productDelay" value="150" readOnly />
+        <input type="hidden" name="productDelay" value="1000" readOnly />
         <label>
           Material{' '}
           <select name="material" defaultValue={material}>

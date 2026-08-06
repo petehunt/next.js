@@ -872,10 +872,14 @@ fn write_streaming_catalog_document(
     }
     initial.push_str(
         "\"><button>Search</button></form></header><div class=\"catalog-grid\"><nav \
-         class=\"catalog-sidebar\" aria-label=\"Categories\" \
-         data-loading-region=\"categories\">Loading categories...</nav><section \
-         aria-label=\"Products\" data-loading-region=\"products\">Loading \
-         products...</section></div></div>",
+         class=\"catalog-sidebar catalog-pagelet\" aria-label=\"Categories\" aria-busy=\"true\" \
+         data-loading-region=\"categories\"><p class=\"catalog-pagelet-label\">Loading \
+         categories…</p><div class=\"catalog-skeleton-lines\" \
+         aria-hidden=\"true\"><i></i><i></i><i></i><i></i></div></nav><main \
+         class=\"catalog-pagelet\" aria-label=\"Products\" aria-busy=\"true\" \
+         data-loading-region=\"products\"><p class=\"catalog-pagelet-label\">Loading product \
+         pagelet…</p><div class=\"catalog-skeleton-table\" \
+         aria-hidden=\"true\"><i></i><i></i><i></i><i></i><i></i></div></main></div></div>",
     );
     // PROTOTYPE: this prefix mirrors app/layout.rs so useful catalog shell and
     // two independent loading regions reach the browser before data resolves.

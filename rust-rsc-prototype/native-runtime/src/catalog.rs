@@ -105,9 +105,17 @@ async fn render_async(
     let material = query(search_params, "material", "all");
     let sort = query(search_params, "sort", "name");
     let page = query(search_params, "page", "1");
-    let delay = query(search_params, "delay", "0");
-    let category_delay = query(search_params, "categoryDelay", &delay);
-    let product_delay = query(search_params, "productDelay", &delay);
+    let delay = query(search_params, "delay", "");
+    let category_delay = query(
+        search_params,
+        "categoryDelay",
+        if delay.is_empty() { "350" } else { &delay },
+    );
+    let product_delay = query(
+        search_params,
+        "productDelay",
+        if delay.is_empty() { "1000" } else { &delay },
+    );
     let cache_mode = query(search_params, "cache", "uncached");
     if !matches!(cache_mode.as_str(), "uncached" | "request" | "warm") {
         return Err(RenderError::new("invalid catalog cache mode"));
@@ -545,7 +553,7 @@ fn product_content_with_filters(
             element("input", [])
                 .prop("type", "hidden")
                 .prop("name", "productDelay")
-                .prop("value", "150"),
+                .prop("value", "1000"),
             element("label", [Node::text("Material "), material_select]),
             element("label", [Node::text("Sort "), sort_select]),
             element("button", [Node::text("Apply")]),

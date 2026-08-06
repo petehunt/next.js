@@ -160,6 +160,10 @@ catalog at `http://localhost:3039/catalog/rust`. Query parameters such as
 `productDelay` exercise filtering and loading boundaries. The conventional and
 native renderers stream the category and product regions independently; the
 Wasm hybrid currently resolves both regions through one Next loading boundary.
+Without delay parameters, the demos intentionally simulate pagelet loading:
+categories resolve after 350 ms and products after 1,000 ms. Use `?delay=0` to
+disable the simulation, `?delay=750` to delay both regions equally, or set
+`categoryDelay` and `productDelay` independently.
 
 The prototype has four production architectures:
 

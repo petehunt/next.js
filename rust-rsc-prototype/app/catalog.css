@@ -77,8 +77,25 @@
   .catalog-table small {
     @apply block text-xs text-slate-500;
   }
-  [data-loading-region] {
-    @apply animate-pulse rounded bg-slate-200 p-6 font-semibold text-slate-500;
+  .catalog-pagelet {
+    @apply animate-pulse bg-slate-100 text-slate-500;
+  }
+  .catalog-pagelet-label {
+    @apply m-0 text-xs font-bold uppercase tracking-widest text-slate-500;
+  }
+  .catalog-skeleton-lines,
+  .catalog-skeleton-table {
+    @apply mt-5 flex flex-col gap-3;
+  }
+  .catalog-skeleton-lines i,
+  .catalog-skeleton-table i {
+    @apply block h-4 rounded bg-slate-300;
+  }
+  .catalog-skeleton-lines i:nth-child(2n) {
+    @apply w-3/4;
+  }
+  .catalog-skeleton-table i {
+    @apply h-12 bg-white shadow-sm;
   }
   .catalog-detail {
     @apply mx-auto max-w-3xl p-6;

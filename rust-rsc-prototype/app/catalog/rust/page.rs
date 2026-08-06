@@ -164,7 +164,7 @@ pub fn render(props: PageProps) -> RenderResult {
             element("input", [])
                 .prop("type", "hidden")
                 .prop("name", "productDelay")
-                .prop("defaultValue", "150"),
+                .prop("defaultValue", "1000"),
             element(
                 "label",
                 [

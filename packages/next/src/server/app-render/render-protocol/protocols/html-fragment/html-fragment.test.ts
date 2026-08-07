@@ -289,6 +289,37 @@ describe('html-fragment slot composition', () => {
       'expects app/page.js to default-export a function returning an HTML fragment, but it exported string'
     )
   })
+
+  it('rejects a segment that returns something other than a string', async () => {
+    // A React component is a function too, and returns an object. Coercing it
+    // would put `[object Object]` in the document.
+    await expect(
+      renderToString(
+        tree('', {}, { children: page((() => ({ type: 'h1' })) as any) })
+      )
+    ).rejects.toThrow(
+      'expects app/page.js to return a string of HTML, but it returned object'
+    )
+  })
+
+  it("points at the app's own file when a Next.js built-in is not a fragment", async () => {
+    await expect(
+      renderToString(
+        tree(
+          '',
+          {},
+          {
+            children: page(
+              (() => ({ type: 'div' })) as any,
+              'next/dist/client/components/builtin/not-found.js'
+            ),
+          }
+        )
+      )
+    ).rejects.toThrow(
+      'is the React component Next.js supplies when an app does not define that segment itself; define it in your app as a fragment.'
+    )
+  })
 })
 
 describe('html-fragment capabilities', () => {

@@ -44,6 +44,8 @@ import { normalizeAppPath } from '../../../../shared/lib/router/utils/app-paths'
 
 import { normalizePathSep } from '../../../../shared/lib/page-path/normalize-path-sep'
 import { installBindings } from '../../../swc/install-bindings'
+import { getRenderProtocolFromRootLayout } from '../../../analysis/get-render-protocol'
+import { DEFAULT_RENDER_PROTOCOL_NAME } from '../../../../server/app-render/render-protocol/names'
 
 export type AppLoaderOptions = {
   name: string
@@ -1091,6 +1093,35 @@ const nextAppLoader: AppLoader = async function nextAppLoader() {
 
   const pathname = new AppPathnameNormalizer().normalize(page)
 
+  // Which protocol renders this route is decided here, at build time, so that
+  // the entrypoint can hand a concrete name to the route module instead of the
+  // server having to discover one per request. The root layout is where it is
+  // declared, because a route tree is served by exactly one protocol and the
+  // root layout is the one segment every route in the tree shares.
+  //
+  // `/_global-error` is the exception: `global-error` is required to be a
+  // client component, so that entrypoint is React's by construction and is not
+  // the app's to reassign. Its tree does not include the root layout either, so
+  // nothing of the app's own markup is lost by rendering it with React.
+  const rootLayoutPath =
+    !isAppErrorRoute &&
+    treeCodeResult.rootLayout &&
+    path.isAbsolute(treeCodeResult.rootLayout)
+      ? treeCodeResult.rootLayout
+      : undefined
+
+  if (rootLayoutPath) {
+    // The root layout is already part of this compilation through the loader
+    // tree, but the *entrypoint* is a different module: without this, editing
+    // the layout's `renderProtocol` export in dev would rebuild the layout and
+    // leave the entrypoint holding the previous protocol.
+    this.addDependency(rootLayoutPath)
+  }
+
+  const renderProtocol =
+    (await getRenderProtocolFromRootLayout({ rootLayoutPath, page })) ??
+    DEFAULT_RENDER_PROTOCOL_NAME
+
   // Prefer to modify next/src/server/app-render/entry-base.ts since this is shared with Turbopack.
   // Any changes to this code should be reflected in Turbopack's app_source.rs and/or app-renderer.tsx as well.
   const code = await loadEntrypoint(
@@ -1098,6 +1129,7 @@ const nextAppLoader: AppLoader = async function nextAppLoader() {
     {
       VAR_DEFINITION_PAGE: page,
       VAR_DEFINITION_PATHNAME: pathname,
+      VAR_DEFINITION_RENDER_PROTOCOL: renderProtocol,
     },
     {
       tree: treeCodeResult.treeCode,

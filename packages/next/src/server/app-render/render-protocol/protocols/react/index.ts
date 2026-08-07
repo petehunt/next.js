@@ -19,8 +19,9 @@ import {
 } from '../../../../../client/components/app-router-headers'
 import { HTML_CONTENT_TYPE_HEADER } from '../../../../../lib/constants'
 import { PROTOCOL_SUPPORTED } from '../../types'
+import { REACT_RENDER_PROTOCOL_NAME } from '../../names'
 
-export const REACT_RENDER_PROTOCOL_NAME = 'react'
+export { REACT_RENDER_PROTOCOL_NAME }
 
 /**
  * React's payloads travel as an HTML document on first load and as a Flight

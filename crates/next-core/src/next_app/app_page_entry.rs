@@ -79,6 +79,11 @@ pub async fn get_app_page_entry(
         [
             ("VAR_DEFINITION_PAGE", &*page.to_string()),
             ("VAR_DEFINITION_PATHNAME", &pathname),
+            // TODO: derive this from the root layout's `renderProtocol` export,
+            // the way `next-app-loader` does for webpack. Until then Turbopack
+            // always emits the default protocol, which is what every route
+            // that does not opt in gets anyway.
+            ("VAR_DEFINITION_RENDER_PROTOCOL", "react"),
         ],
         [
             ("tree", &*loader_tree_code),

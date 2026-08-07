@@ -23,6 +23,7 @@ const entrypoint = createAppPageEntrypoint({
   tree,
   page: 'VAR_DEFINITION_PAGE',
   pathname: 'VAR_DEFINITION_PATHNAME',
+  renderProtocol: 'VAR_DEFINITION_RENDER_PROTOCOL',
   require: __next_app_require__,
   loadChunk: __next_app_load_chunk__,
   interopDefault,

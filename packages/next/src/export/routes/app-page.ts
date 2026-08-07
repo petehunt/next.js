@@ -129,6 +129,15 @@ export async function exportAppPage(
       return { cacheControl, fetchMetrics }
     }
 
+    // A render protocol with no client navigation payload
+    // (`navigationContentType: null`) has no second representation of the page
+    // to write beside the HTML — every navigation to one of its routes is a
+    // document load. Demanding page data from such a protocol would make it
+    // impossible to prerender any of its routes.
+    const hasNavigationPayload =
+      renderOpts.ComponentMod.routeModule.getRenderTransport()
+        .navigationContentType !== null
+
     // If page data isn't available, it means that the page couldn't be rendered
     // properly so long as we don't have unknown route params. When a route doesn't
     // have unknown route params, there will not be any flight data.
@@ -136,9 +145,10 @@ export async function exportAppPage(
 
     if (!flightData) {
       if (
-        !fallbackRouteParams ||
-        fallbackRouteParams.size === 0 ||
-        renderOpts.cacheComponents
+        hasNavigationPayload &&
+        (!fallbackRouteParams ||
+          fallbackRouteParams.size === 0 ||
+          renderOpts.cacheComponents)
       ) {
         throw new Error(`Invariant: failed to get page data for ${path}`)
       }

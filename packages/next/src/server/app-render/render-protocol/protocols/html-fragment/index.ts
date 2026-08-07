@@ -6,8 +6,9 @@ import type { AppRenderProtocol, RenderTransport } from '../../types'
 import RenderResult from '../../../../render-result'
 import { HTML_CONTENT_TYPE_HEADER } from '../../../../../lib/constants'
 import { PROTOCOL_SUPPORTED, protocolUnsupported } from '../../types'
+import { HTML_FRAGMENT_RENDER_PROTOCOL_NAME } from '../../names'
 
-export const HTML_FRAGMENT_RENDER_PROTOCOL_NAME = 'html-fragment'
+export { HTML_FRAGMENT_RENDER_PROTOCOL_NAME }
 
 /**
  * What a segment default-exports under this protocol: a function returning a
@@ -51,6 +52,12 @@ class HtmlFragmentError extends Error {}
 const SLOT_MARKER = /<!--\s*next-slot:([A-Za-z0-9_-]+)\s*-->/g
 
 /**
+ * Where the React components Next.js inserts for segments an app did not write
+ * itself — `not-found`, `forbidden`, `layout`, … — live.
+ */
+const NEXT_BUILTIN_SEGMENT_PATH = 'next/dist/client/components/builtin/'
+
+/**
  * This protocol has no client runtime, so every navigation is a document load
  * and nothing about the response varies on a request header.
  */
@@ -74,7 +81,26 @@ async function loadFragment(
     )
   }
 
-  return String(await (fragment as HtmlFragment)(context))
+  const html = await (fragment as HtmlFragment)(context)
+
+  // A React component is also "a function", and returns an object. Coercing
+  // that to a string would put `[object Object]` in the document, which is
+  // exactly the kind of silently-wrong markup this protocol errors on
+  // elsewhere. This is the check that catches a React segment — including the
+  // `not-found` and `global-error` components Next.js supplies by default —
+  // reaching a route tree served by this protocol.
+  if (typeof html !== 'string') {
+    throw new HtmlFragmentError(
+      `The "${HTML_FRAGMENT_RENDER_PROTOCOL_NAME}" render protocol expects ${filePath} to return a string of HTML, but it returned ${typeof html}. Every segment of a route served by this protocol has to be a fragment; a route tree cannot mix renderers.` +
+        // The built-ins are the segments an app never wrote, so naming a path
+        // inside `next/dist` is otherwise a dead end for whoever hits this.
+        (filePath.includes(NEXT_BUILTIN_SEGMENT_PATH)
+          ? ` ${filePath} is the React component Next.js supplies when an app does not define that segment itself; define it in your app as a fragment.`
+          : '')
+    )
+  }
+
+  return html
 }
 
 /**

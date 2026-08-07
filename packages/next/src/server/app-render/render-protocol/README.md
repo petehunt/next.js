@@ -70,6 +70,43 @@ is a **lazy getter** — the React implementation parses the request itself and
 never touches it — and `dispatchAppPageRender` is deliberately not `async`, so
 a renderer's synchronous prologue still runs in the caller's tick.
 
+## Selecting a protocol from an application
+
+A route tree opts in from its **root layout**:
+
+```js
+// app/layout.js
+export const renderProtocol = 'html-fragment'
+```
+
+The root layout is where this lives because a route tree is served by exactly
+one protocol, and the root layout is the one segment every route in the tree
+shares. `export const renderProtocol` anywhere else is not a route segment
+config and has no effect.
+
+The value has to be a literal naming one of the built-in protocols
+(`./names.ts`). Anything else fails the build, rather than surfacing as a
+"no render protocol is registered" crash on the first request.
+
+`next-app-loader` reads it (`../../../build/analysis/get-render-protocol.ts`)
+and passes it through the `app-page` entrypoint template into
+`createAppPageEntrypoint`, which puts it on the route module's `userland`. Two
+consequences of deciding this at build time:
+
+- **`/_global-error` is always React's.** `global-error` is required to be a
+  client component, so that entrypoint is React's by construction and the loader
+  does not reassign it. Its route tree does not include the root layout, so
+  none of the application's own markup is lost.
+- **A protocol with no navigation payload prerenders to HTML alone.** The
+  exporter used to require Flight data from every statically generated app
+  page. It now asks the route module for its transport and skips the `.rsc`
+  file when `navigationContentType` is `null`.
+
+**Turbopack always emits the default protocol.** It builds the app page
+entrypoint in Rust (`crates/next-core/src/next_app/app_page_entry.rs`) and does
+not yet run the equivalent derivation, so selecting a protocol currently
+requires a webpack or Rspack build.
+
 ## Reference implementation 1: `react`
 
 `./protocols/react/` is a thin adapter. The renderer itself is unchanged and
@@ -116,7 +153,14 @@ and a segment with no layout passes `children` straight through.
 
 Both halves of the mapping are enforced, because either one silently drops
 markup: a marker with no matching parallel route is an error, and a parallel
-route with no matching marker is an error.
+route with no matching marker is an error. For the same reason a segment that
+returns something other than a string is an error rather than an
+`[object Object]` in the document — which is how a React segment reaching this
+protocol announces itself.
+
+That last case is what an application meets first: the `not-found` component
+Next.js supplies when an app does not define one is React's, so a route tree
+served by this protocol has to provide its own `app/not-found.js` fragment.
 
 The protocol has no client runtime, so `navigationContentType` is `null`, it
 varies on nothing, and `supports()` refuses `action` intents rather than
@@ -145,7 +189,10 @@ registerRenderProtocol({
 ```
 
 Then point a route at it by setting `renderProtocol: 'my-protocol'` on the
-route module's userland object.
+route module's userland object. Naming it from a root layout's
+`export const renderProtocol` additionally requires adding it to
+`BUILT_IN_RENDER_PROTOCOL_NAMES` in `./names.ts`: the build validates the name
+it reads, and it cannot know about a protocol that registers itself at runtime.
 
 ## Non-goals for v1
 
@@ -155,14 +202,8 @@ route module's userland object.
 - **Replacing the React renderer's internals.** `app-render.tsx` is unchanged
   apart from being registered as a protocol; the goal is to establish the seam,
   not to rewrite what sits behind it.
-- **Build-time protocol selection.** `renderProtocol` is read from the route
-  module's userland at request time, and nothing populates it yet: an
-  application built with `next build` always gets `react`. Serving a real route
-  with another protocol needs `createAppPageEntrypoint`
-  (`../../../build/templates/app-page-runtime.ts`) to pass a `renderProtocol`
-  into `userland`, and `next-app-loader` to derive it. That is deliberately a
-  separate change: it touches the build graph, whereas everything here is
-  contained to the server render path.
+- **Protocol selection in Turbopack.** See above: the derivation lives in
+  `next-app-loader`, so a Turbopack build always produces `react` routes.
 - **A renderer-agnostic description of the route tree.** Protocols get the
   `LoaderTree` the build already produces. Something richer can be added when a
   protocol needs more than the tuple.
@@ -178,4 +219,9 @@ route module's userland object.
   that the React path never forces the derived intent.
 - `protocols/react/react-protocol.test.ts` — the adapter, including the
   positional-argument mapping that keeps the React path compatible.
-- `protocols/html-fragment/html-fragment.test.ts` — slot composition.
+- `protocols/html-fragment/html-fragment.test.ts` — slot composition, and the
+  errors for a non-fragment segment.
+- `../../../build/analysis/get-render-protocol.test.ts` — reading and
+  validating the root layout's `renderProtocol` export.
+- `test/e2e/app-dir/render-protocol-html-fragment` — a real application built
+  and served end to end through the fragment protocol.

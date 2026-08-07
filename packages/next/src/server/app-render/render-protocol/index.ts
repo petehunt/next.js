@@ -21,6 +21,8 @@ export { negotiateRenderIntent } from './intent'
 
 export { buildVaryHeader } from './transport'
 
+export { BUILT_IN_RENDER_PROTOCOL_NAMES } from './names'
+
 export {
   DEFAULT_RENDER_PROTOCOL_NAME,
   getRenderProtocol,

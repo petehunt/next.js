@@ -23,10 +23,15 @@ import type { DeepReadonly } from '../../../shared/lib/deep-readonly'
 import {
   NEXT_ROUTER_PREFETCH_HEADER,
   NEXT_ROUTER_SEGMENT_PREFETCH_HEADER,
-  NEXT_ROUTER_STATE_TREE_HEADER,
   NEXT_URL,
   RSC_HEADER,
 } from '../../../client/components/app-router-headers'
+import {
+  getRenderProtocol,
+  resolveRenderProtocolName,
+} from '../../app-render/render-protocol/registry'
+import { buildVaryHeader } from '../../app-render/render-protocol/transport'
+import { reactRenderTransport } from '../../app-render/render-protocol/protocols/react'
 import { isInterceptionRouteAppPath } from '../../../shared/lib/router/utils/interception-routes'
 import { RSCPathnameNormalizer } from '../../normalizers/request/rsc'
 import { SegmentPrefixRSCPathnameNormalizer } from '../../normalizers/request/segment-prefix-rsc'
@@ -66,6 +71,14 @@ type AppPageUserlandModule = {
    * The tree created in next-app-loader that holds component segments and modules
    */
   loaderTree: LoaderTree
+
+  /**
+   * The render protocol this route is served with. Omitted routes use the
+   * default (React) protocol.
+   *
+   * @see `../../app-render/render-protocol/README.md`
+   */
+  renderProtocol?: string
 }
 
 export interface AppPageRouteHandlerContext extends RouteModuleHandleContext {
@@ -185,19 +198,27 @@ export class AppPageRouteModule extends RouteModule<
     resolvedPathname: string,
     interceptionRoutePatterns: RegExp[]
   ): string {
-    const baseVaryHeader = `${RSC_HEADER}, ${NEXT_ROUTER_STATE_TREE_HEADER}, ${NEXT_ROUTER_PREFETCH_HEADER}, ${NEXT_ROUTER_SEGMENT_PREFETCH_HEADER}`
+    // Which request headers change the response is a property of the render
+    // protocol's transport, not of the App Router. For the React protocol this
+    // is `rsc, next-router-state-tree, next-router-prefetch,
+    // next-router-segment-prefetch`, unchanged from before this indirection.
+    const transport =
+      getRenderProtocol(resolveRenderProtocolName(this.userland))?.transport ??
+      reactRenderTransport
 
-    if (
-      this.pathCouldBeIntercepted(resolvedPathname, interceptionRoutePatterns)
-    ) {
-      // Interception route responses can vary based on the `Next-URL` header.
-      // We use the Vary header to signal this behavior to the client to properly cache the response.
-      return `${baseVaryHeader}, ${NEXT_URL}`
-    } else {
-      // We don't need to include `Next-URL` in the Vary header for non-interception routes since it won't affect the response.
-      // We also set this header for pages to avoid caching issues when navigating between pages and app.
-      return baseVaryHeader
-    }
+    // Interception route responses can vary based on the `Next-URL` header. We
+    // use the Vary header to signal this behavior to the client to properly
+    // cache the response. Non-interception routes don't need it since it won't
+    // affect the response; we still set the base header for pages to avoid
+    // caching issues when navigating between pages and app.
+    const additionalHeaders = this.pathCouldBeIntercepted(
+      resolvedPathname,
+      interceptionRoutePatterns
+    )
+      ? [NEXT_URL]
+      : []
+
+    return buildVaryHeader(transport, additionalHeaders)
   }
 }
 

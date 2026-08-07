@@ -31,6 +31,12 @@ import type { NextParsedUrlQuery } from '../request-meta'
 import { getTurbopackChunkGroupBootstrap } from '../get-page-files'
 import { UNDERSCORE_NOT_FOUND_ROUTE_ENTRY } from '../../shared/lib/entry-constants'
 import type { LoaderTree } from '../lib/app-dir-module'
+import type { AppSharedContext } from './render-protocol/shared-context'
+import {
+  createReactRenderProtocol,
+  dispatchAppPageRender,
+  registerRenderProtocol,
+} from './render-protocol'
 import type { AppPageModule } from '../route-modules/app-page/module'
 import type { BaseNextRequest, BaseNextResponse } from '../base-http'
 import type { IncomingHttpHeaders } from 'http'
@@ -321,11 +327,10 @@ export type DynamicParam = {
 
 export type GenerateFlight = typeof generateDynamicFlightRenderResult
 
-export type AppSharedContext = {
-  buildId: string
-  deploymentId: string
-  clientAssetToken: string
-}
+// `AppSharedContext` is part of the render protocol's input rather than of the
+// React renderer, so it is defined alongside the protocol contract and
+// re-exported here for the existing import sites.
+export type { AppSharedContext }
 
 export type AppRenderContext = {
   sharedContext: AppSharedContext
@@ -3065,7 +3070,15 @@ export type AppPageRender = (
   sharedContext: AppSharedContext
 ) => Promise<RenderResult<AppPageRenderResultMetadata>>
 
-export const renderToHTMLOrFlight: AppPageRender = (
+/**
+ * The React implementation of the App Router render protocol.
+ *
+ * Everything below this function is React-specific. Everything above the
+ * protocol dispatcher (routing, caching, the request/response boundary) is
+ * not, which is what makes it possible to serve a route with a different
+ * renderer.
+ */
+const renderAppPageWithReact: AppPageRender = (
   req,
   res,
   pagePath,
@@ -3164,6 +3177,40 @@ export const renderToHTMLOrFlight: AppPageRender = (
     fallbackRouteParams
   )
 }
+
+// Registering here (rather than having the protocol layer import the renderer)
+// is what keeps the dependency pointing the right way: the abstraction does
+// not know about React, React knows about the abstraction.
+registerRenderProtocol(createReactRenderProtocol(renderAppPageWithReact))
+
+/**
+ * Render an App Router page.
+ *
+ * This is the protocol dispatcher: it picks the renderer the route asked for
+ * and hands it a renderer-agnostic description of the request. Routes that do
+ * not opt into anything else get the React protocol, which is why introducing
+ * this indirection does not change the behaviour of an existing app.
+ */
+export const renderToHTMLOrFlight: AppPageRender = (
+  req,
+  res,
+  pagePath,
+  query,
+  fallbackRouteParams,
+  renderOpts,
+  serverComponentsHmrCache,
+  sharedContext
+) =>
+  dispatchAppPageRender({
+    req,
+    res,
+    pagePath,
+    query,
+    fallbackRouteParams,
+    renderOpts,
+    serverComponentsHmrCache,
+    sharedContext,
+  })
 
 function applyMetadataFromPrerenderResult(
   response: Pick<

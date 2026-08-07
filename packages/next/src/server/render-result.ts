@@ -24,7 +24,7 @@ import type {
 } from '../lib/constants'
 import type { RSC_CONTENT_TYPE_HEADER } from '../client/components/app-router-headers'
 
-type ContentTypeOption =
+export type ContentTypeOption =
   | typeof RSC_CONTENT_TYPE_HEADER // For App Page RSC responses
   | typeof HTML_CONTENT_TYPE_HEADER // For App Page, Pages HTML responses
   | typeof JSON_CONTENT_TYPE_HEADER // For API routes, Next.js data requests

@@ -1456,5 +1456,8 @@
   "1455": "Page \"%s\" returned incomplete params from \"generateStaticParams()\". With \"output: export\", every params object must include all dynamic route parameters. Missing: %s. See more info here: https://nextjs.org/docs/messages/generate-static-params",
   "1456": "Expected an HTML size for prerendered app route \"%s\"",
   "1457": "Expected prerender classification data for PPR route \"%s\"",
-  "1458": "Expected complete prerender classification for route \"%s\""
+  "1458": "Expected complete prerender classification for route \"%s\"",
+  "1459": "A different render protocol is already registered as \"%s\".",
+  "1460": "The \"%s\" render protocol cannot render %s: %s",
+  "1461": "No render protocol is registered as \"%s\". Registered protocols: %s."
 }

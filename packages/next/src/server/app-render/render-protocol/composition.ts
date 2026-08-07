@@ -7,9 +7,18 @@ import type {
   AppRenderProtocol,
   EmbeddedRenderRequest,
   RenderProtocolRequest,
+  RenderTransport,
 } from './types'
+import type {
+  EmbeddedClientRuntime,
+  EmbeddedClientRuntimeScope,
+} from './client-runtime'
 
 import { getRenderProtocol, listRenderProtocolNames } from './registry'
+import {
+  createEmbeddedClientRuntimeScope,
+  renderEmbeddedClientRuntime,
+} from './client-runtime'
 
 /**
  * Cross-protocol composition.
@@ -55,6 +64,15 @@ export interface EmbeddedRender {
   readonly html: string
 
   readonly metadata: EmbeddedRenderMetadata
+
+  /**
+   * What the guest needs in the browser for that markup to become
+   * interactive, or `undefined` when it needs nothing — which is every guest
+   * whose document owner said it cannot carry one.
+   *
+   * @see `./client-runtime.ts`
+   */
+  readonly client?: EmbeddedClientRuntime
 }
 
 /**
@@ -251,7 +269,8 @@ function resolveGuestProtocol(boundary: ProtocolBoundary): AppRenderProtocol {
  */
 export function createEmbeddedRenderRequest(
   request: RenderProtocolRequest,
-  boundary: ProtocolBoundary
+  boundary: ProtocolBoundary,
+  clientRuntime: EmbeddedClientRuntimeScope
 ): EmbeddedRenderRequest {
   return {
     req: request.req,
@@ -264,10 +283,47 @@ export function createEmbeddedRenderRequest(
     sharedContext: request.sharedContext,
     loaderTree: boundary.tree,
     boundary,
+    clientRuntime: clientRuntime.descend(boundary),
     get intent() {
       return request.intent
     },
   }
+}
+
+/**
+ * The client-runtime scope a protocol hands to the guests it is about to
+ * render.
+ *
+ * A protocol calls this the same way whether it is serving a route or is
+ * itself a guest, and gets the right answer either way. Serving a route, it
+ * creates the document's scope from its own transport. As a guest, it narrows
+ * the scope it was given by what *it* can carry — so a chain of hosts has to
+ * agree unanimously before anything below them may run a script, and the
+ * shared claims and the mount ids carry on regardless.
+ */
+export function resolveEmbeddedClientRuntimeScope(
+  request: RenderProtocolRequest,
+  protocol: string,
+  transport: RenderTransport
+): EmbeddedClientRuntimeScope {
+  const inherited = (request as EmbeddedRenderRequest).clientRuntime
+
+  return inherited
+    ? inherited.restrict(transport)
+    : createEmbeddedClientRuntimeScope(protocol, transport)
+}
+
+/**
+ * A guest's markup together with the scripts it asked for.
+ *
+ * Every host places a guest this way. A guest with no client runtime — which
+ * is all of them under a host that cannot carry one — returns its markup
+ * unchanged, so this is free for the case that already worked.
+ */
+export function embeddedMarkupWithClientRuntime(
+  embedded: EmbeddedRender
+): string {
+  return embedded.html + renderEmbeddedClientRuntime(embedded.client)
 }
 
 /**
@@ -280,14 +336,15 @@ export function createEmbeddedRenderRequest(
  */
 export async function renderProtocolBoundaries(
   boundaries: readonly ProtocolBoundary[],
-  request: RenderProtocolRequest
+  request: RenderProtocolRequest,
+  clientRuntime: EmbeddedClientRuntimeScope
 ): Promise<EmbeddedRender[]> {
   const settled = await Promise.allSettled(
     boundaries.map(async (boundary) => {
       const protocol = resolveGuestProtocol(boundary)
 
       return protocol.renderEmbedded!(
-        createEmbeddedRenderRequest(request, boundary)
+        createEmbeddedRenderRequest(request, boundary, clientRuntime)
       )
     })
   )
@@ -298,7 +355,17 @@ export async function renderProtocolBoundaries(
     if (outcome.status === 'rejected') {
       throw asProtocolBoundaryError(outcome.reason, boundaries[i])
     }
-    results.push(outcome.value)
+
+    // Claiming shared assets happens here, in the same ordered pass as the
+    // errors, rather than while a guest renders: guests run concurrently, and
+    // a script appearing under whichever of two slots happened to finish first
+    // is exactly the kind of render-order dependence the rest of this file
+    // goes out of its way not to have.
+    const embedded = outcome.value
+    const client = clientRuntime.claim(embedded.client)
+    results.push(
+      client === embedded.client ? embedded : { ...embedded, client }
+    )
   }
 
   return results
@@ -336,6 +403,23 @@ function asProtocolBoundaryError(
  * into a `<head>` the host may not even have.
  */
 export function toEmbeddableMarkup(html: string): string {
+  const { head, body } = splitEmbeddableMarkup(html)
+  return head + body
+}
+
+/**
+ * The two halves of {@link toEmbeddableMarkup}, kept apart.
+ *
+ * A protocol that only wants to place markup concatenates them and never
+ * thinks about it again. One that mounts a client runtime needs the seam: the
+ * hydration root has to contain the guest's *body* and not its head, because
+ * a renderer hoists stylesheets and metadata out of the tree it hydrates and
+ * would find them already inside it.
+ */
+export function splitEmbeddableMarkup(html: string): {
+  head: string
+  body: string
+} {
   // Only a string that *begins* as a document is taken apart as one. A
   // fragment that happens to contain the text `<body>` — in an attribute, in
   // an error message, in a code sample — is markup, not a document, and
@@ -345,11 +429,11 @@ export function toEmbeddableMarkup(html: string): string {
 
     if (body) {
       const head = /<head[^>]*>([\s\S]*?)<\/head\s*>/i.exec(html)
-      return (head ? head[1] : '') + body[1]
+      return { head: head ? head[1] : '', body: body[1] }
     }
   }
 
-  return dropDocumentTags(html)
+  return { head: '', body: dropDocumentTags(html) }
 }
 
 const DOCUMENT_START = /^\s*(?:<!doctype\s|<html[\s>])/i

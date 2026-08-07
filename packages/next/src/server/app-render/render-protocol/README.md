@@ -224,14 +224,131 @@ the page produced it.
 - **The boundary is visible in the DOM when React is the host.** React cannot
   emit raw HTML without an element to hang it on, so the guest's markup lands in
   a `<div data-next-render-protocol="…">`.
-- **An embedded subtree is server-rendered markup, not a client runtime.**
-  Scripts belong to whoever owns the document, and the App Router client
-  hydrates the *whole* document — two of them cannot both own one. So a React
-  guest's markup is embedded with its bootstrap and Flight payload removed; its
-  stylesheet links, metadata, and preloads are kept, inline at the boundary.
 - **A guest does not stream.** It is awaited in full and spliced in.
 - **A guest cannot read the host's context**, because it renders before the
   host does.
+- **A guest is server-rendered markup unless every host above it can carry a
+  client runtime.** See [The client](#the-client).
+
+## The client
+
+Markup crossing a boundary is only half a page. This is the other half: what a
+guest needs in the *browser* for the markup it produced to become interactive,
+and who is allowed to give it that.
+
+`./client-runtime.ts` is the whole thing, and it is deliberately the same
+*kind* of contract as the server one — not a component model, not a module
+graph, not a hydration API:
+
+```ts
+interface EmbeddedClientRuntime {
+  readonly protocol: string
+  readonly rootId: string // an element inside the guest's own markup
+  readonly scripts: readonly EmbeddedClientScript[] // { src } | { content }
+}
+```
+
+`EmbeddedRender` gains an optional `client`. A host places it by concatenation
+— `embeddedMarkupWithClientRuntime(embedded)` — immediately after the markup,
+so a guest's scripts always run after the DOM they refer to exists.
+
+`rootId` is the only thing a host and a guest have to agree on. The host puts
+the markup somewhere; the guest's scripts find their way back to it by id
+rather than by knowing where they ended up. Everything specific to a guest's
+runtime is inside the scripts it asked for, where no host has to understand it.
+
+### Who may have one
+
+Not the guest's decision, and not only the document owner's. `RenderTransport`
+gains `carriesEmbeddedClientRuntime`, and a guest gets a client runtime only if
+**every protocol between it and the document** answers yes:
+
+| | | |
+| --- | --- | --- |
+| `html-fragment` | yes | it has no client runtime of its own, and every navigation to it is a document load — so a script placed next to a guest's markup arrives with that markup every time it is rendered |
+| `react` | no | the App Router client re-renders a boundary from Flight, and a guest's markup travels as the `dangerouslySetInnerHTML` of the segment that replaced it; scripts set that way never execute |
+
+That React answers no is about *client navigation*, not the first load. A guest
+under a React host would be interactive until the first navigation and then
+silently not, which is worse than not being interactive at all. The rule
+applies at every hop, so it is the same answer whether React owns the document
+or is itself a guest hosting one.
+
+An `EmbeddedClientRuntimeScope` carries the answer down.
+`resolveEmbeddedClientRuntimeScope()` is how a protocol gets one: serving a
+route it creates the document's scope from its own transport, and as a guest it
+narrows the scope it was given by what it can carry. It also carries the two
+things a document has only one of:
+
+- **Mount ids**, derived from a boundary's position in the composed tree rather
+  than from a counter — guests render concurrently, so a counter would depend
+  on which slot finished first.
+- **Claimed script URLs**, so three guests that all need the same bootstrap
+  chunk get it once. A classic script that appears twice *runs* twice, and a
+  client runtime that boots twice is two client runtimes.
+
+### React's client runtime
+
+`./protocols/react/`'s `toHydratableReactMarkup()` takes the same cut as the
+markup-only path, but instead of dropping the renderer's scripts it hands them
+back, repointed at this root:
+
+- the head content stays **outside** the mount element, because React hoists
+  stylesheets and metadata out of the tree it hydrates and finding them already
+  inside it is a mismatch;
+- each inline Flight script is repointed from `self.__next_f` to
+  `self.__next_ef[rootId]`, so several roots in one document do not interleave;
+- the root is registered on `self.__next_er` *before* the bootstrap chunks,
+  which are `async`;
+- the bootstrap `<script src>`s are handed over for the scope to de-duplicate.
+
+`../../../client/app-embedded-index.tsx` is the bootstrap those chunks reach.
+`app-next.ts` (and its dev twin) branches on whether the document declared any
+embedded roots; a document React owns declares none and takes the path it
+always did.
+
+The difference from `app-index` is ownership, not size. `AppRouter` owns a
+document: it patches `history`, listens for `popstate`, renders the head, and
+drives navigation for the whole page. A guest owns one element, there can be
+several in a document, and the document is not theirs. So
+`../../../client/components/embedded-app-root.tsx` renders what is left — the
+segment tree from the guest's own payload, under the contexts the layout router
+and the client hooks read — and `hydrateRoot`s the guest's mount element.
+
+It is also *smaller* than `app-index` for a reason worth stating: a guest does
+not stream. It was awaited in full before its host placed it, so its whole
+Flight payload is on the page before its bootstrap runs, and the runtime reads
+a finished array instead of reproducing the buffering and `DOMContentLoaded`
+handoff a streaming document needs.
+
+### What works inside a guest, and what does not
+
+| | |
+| --- | --- |
+| Client components | **yes** — state, effects, event handlers, refs |
+| `useParams`, `usePathname`, `useSearchParams` | **yes**, answering for the real URL |
+| `useRouter().push` / `replace` / `refresh`, `<Link>` | **a document navigation**, not a client one |
+| `router.prefetch` | a no-op — there is nothing to prefetch into |
+| Server Actions | **refused**, with an error saying why |
+| Streaming into the guest after first paint | no — the guest was awaited in full |
+| Hot reload of the guest in `next dev` | no — the dev hot reloader is part of `AppRouter` |
+
+Client navigation is the load-bearing row. A protocol that can carry a guest's
+client runtime is by construction one whose own navigations are document loads,
+so a navigation from inside a guest is one too — which is also what makes the
+whole arrangement stable. Every navigation re-delivers the composed document,
+every guest is rendered and booted again from scratch, and there is no second
+delivery path that could bring a guest's markup without its scripts. Slot
+updates are therefore not a case that has to be handled: there are none.
+
+Server Actions are the other end of the same fact. An action's response is a
+new tree for the page and applying it is the client router's job; a guest has
+no client router, so calling one would post successfully and have nowhere to
+put the answer. Failing at the call is the version of that which says why.
+
+**Legacy all-React is untouched.** A React document answers `no` to
+`carriesEmbeddedClientRuntime`, so no route React serves emits any of this, and
+the entry points branch on a global that such a document never sets.
 
 ## Reference implementation 1: `react`
 
@@ -308,6 +425,7 @@ registerRenderProtocol({
     documentContentType: 'text/html; charset=utf-8',
     navigationContentType: null,
     varyHeaders: [],
+    carriesEmbeddedClientRuntime: false,
   },
   supports: () => PROTOCOL_SUPPORTED,
   render: async (request) => {
@@ -327,12 +445,26 @@ Add `renderEmbedded` to let it sit *below* a boundary, and call
 to let one sit below *it*. Neither is required: a protocol that does neither
 still serves whole routes.
 
+A protocol that hosts guests also passes them a client-runtime scope from
+`resolveEmbeddedClientRuntimeScope(request, name, transport)` and places their
+markup with `embeddedMarkupWithClientRuntime(embedded)`. Setting
+`carriesEmbeddedClientRuntime: false` is the safe answer and costs nothing —
+guests below it are then server-rendered markup, which is what they were before
+any of this existed.
+
 ## Non-goals
 
-- **A client runtime that crosses a boundary.** Markup crosses; behaviour does
-  not. An embedded React subtree is server-rendered only, because the App
-  Router client hydrates the whole document and a guest does not own it.
-  Anything more needs a story for two client runtimes sharing a page.
+- **Client navigation inside a guest.** A guest is given a router that
+  navigates the document. Making it a client router would mean a second router
+  patching a document it does not own, and the host it is embedded in serves
+  every navigation as a document load anyway. See [The client](#the-client).
+- **An interactive guest under a React host.** Scripts cannot survive
+  `dangerouslySetInnerHTML` across a client navigation, so a guest below React
+  is server-rendered markup. Changing that needs a way for the App Router
+  client to re-activate a boundary it re-rendered, which is a bigger contract
+  than a list of scripts.
+- **Server Actions from inside a guest.** Applying an action's response is the
+  client router's job and a guest has no client router.
 - **Streaming across a boundary.** A guest is awaited in full and spliced in,
   so a slow guest delays the host's output rather than arriving later.
 - **A guest reading the host's context.** Guests render first, so nothing the
@@ -365,9 +497,12 @@ still serves whole routes.
 - `composition.test.ts` — the bridge on its own: finding and replacing
   boundaries, document order under concurrency, the metadata merge rules, and
   every way a boundary can be refused.
+- `client-runtime.test.ts` — the client contract on its own: who is allowed
+  one, where mount ids come from, how shared assets are claimed, and the markup
+  a host emits.
 - `cross-protocol.test.ts` — both reference implementations wired to each
-  other, in both directions and nested, so that neither one's half of the
-  bridge is only ever tested against a stub.
+  other, in both directions, alternating five layouts deep, and with several
+  React roots in one fragment document.
 - `../../../build/analysis/get-render-protocol.test.ts` — reading and
   validating a layout's `renderProtocol` export.
 - `test/e2e/app-dir/render-protocol-html-fragment` — a real application built
@@ -376,3 +511,7 @@ still serves whole routes.
   React route tree contains a fragment subtree and a fragment parallel slot.
 - `test/e2e/app-dir/render-protocol-composition-inverted` — the same, the other
   way round: a fragment route tree containing React subtrees.
+- `test/e2e/app-dir/render-protocol-client-composition` — the client half, in a
+  browser: client components hydrating inside a fragment document, several
+  roots on one page hydrating independently, navigation out of a guest being a
+  document load, and a guest below a React host staying inert.

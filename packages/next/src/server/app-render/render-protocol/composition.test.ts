@@ -5,6 +5,7 @@ import type { EmbeddedRender } from './composition'
 
 import { PAGE_SEGMENT_KEY } from '../../../shared/lib/segment'
 import { registerRenderProtocol, unregisterRenderProtocol } from './registry'
+import { createEmbeddedClientRuntimeScope } from './client-runtime'
 import {
   ProtocolBoundaryError,
   findProtocolBoundaries,
@@ -56,6 +57,20 @@ function embedded(
   metadata: EmbeddedRender['metadata'] = {}
 ): EmbeddedRender {
   return { protocol, html, metadata }
+}
+
+/**
+ * The client-runtime scope a host creates for its guests. Most of this file
+ * predates it and does not care what is in it; the tests that do are in
+ * `./client-runtime.test.ts`.
+ */
+function hostScope(carriesEmbeddedClientRuntime = false) {
+  return createEmbeddedClientRuntimeScope('react', {
+    documentContentType: 'text/html; charset=utf-8',
+    navigationContentType: null,
+    varyHeaders: [],
+    carriesEmbeddedClientRuntime,
+  })
 }
 
 describe('finding protocol boundaries', () => {
@@ -253,6 +268,7 @@ describe('rendering protocol boundaries', () => {
         documentContentType: 'text/html; charset=utf-8',
         navigationContentType: null,
         varyHeaders: [],
+        carriesEmbeddedClientRuntime: false,
       },
       supports: () => ({ supported: true }),
       render: async () => {
@@ -288,7 +304,8 @@ describe('rendering protocol boundaries', () => {
     const boundaries = findProtocolBoundaries(loaderTree, 'react')
     const results = await renderProtocolBoundaries(
       boundaries,
-      createRequest(loaderTree)
+      createRequest(loaderTree),
+      hostScope()
     )
 
     expect(seen).toEqual([first, second])
@@ -319,7 +336,8 @@ describe('rendering protocol boundaries', () => {
 
     const results = await renderProtocolBoundaries(
       findProtocolBoundaries(loaderTree, 'react'),
-      createRequest(loaderTree)
+      createRequest(loaderTree),
+      hostScope()
     )
 
     expect(results.map((result) => result.html)).toEqual(['slow', 'fast'])
@@ -346,7 +364,8 @@ describe('rendering protocol boundaries', () => {
     await expect(
       renderProtocolBoundaries(
         findProtocolBoundaries(loaderTree, 'react'),
-        createRequest(loaderTree)
+        createRequest(loaderTree),
+        hostScope()
       )
     ).rejects.toThrow('slow blew up')
   })
@@ -365,7 +384,8 @@ describe('rendering protocol boundaries', () => {
 
     const error = await renderProtocolBoundaries(
       findProtocolBoundaries(loaderTree, 'react'),
-      createRequest(loaderTree)
+      createRequest(loaderTree),
+      hostScope()
     ).catch((err) => err)
 
     expect(error).toBeInstanceOf(ProtocolBoundaryError)
@@ -386,7 +406,8 @@ describe('rendering protocol boundaries', () => {
     await expect(
       renderProtocolBoundaries(
         findProtocolBoundaries(loaderTree, 'react'),
-        createRequest(loaderTree)
+        createRequest(loaderTree),
+        hostScope()
       )
     ).rejects.toThrow(
       'docs (children) selects the "never-registered" render protocol, but no protocol is registered under that name.'
@@ -408,7 +429,8 @@ describe('rendering protocol boundaries', () => {
     await expect(
       renderProtocolBoundaries(
         findProtocolBoundaries(loaderTree, 'react'),
-        createRequest(loaderTree)
+        createRequest(loaderTree),
+        hostScope()
       )
     ).rejects.toThrow(
       'The "no-embedding" render protocol cannot be embedded in a "react" route: it does not implement `renderEmbedded`.'

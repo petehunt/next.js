@@ -1462,5 +1462,7 @@
   "1461": "No render protocol is registered as \"%s\". Registered protocols: %s.",
   "1462": "Route \"%s\" exports \\`renderProtocol\\` from %s, but its value could not be statically evaluated. It must be one of %s written as a literal.",
   "1463": "Route \"%s\" exports \\`renderProtocol\\` from %s with a value of type %s. It must be one of %s.",
-  "1464": "Route \"%s\" selects the unknown render protocol \"%s\" in %s. Supported protocols are %s."
+  "1464": "Route \"%s\" selects the unknown render protocol \"%s\" in %s. Supported protocols are %s.",
+  "1465": "Server Actions are not supported inside a React subtree embedded in another render protocol. The embedded root has no client router to apply the action's response to. Use a route handler, or move the interaction into a route served by the React protocol.",
+  "1466": "Invalid embedded client runtime root id %s. Root ids are allocated by the composition layer and may only contain letters, digits, \"-\" and \"_\"."
 }

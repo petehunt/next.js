@@ -30,6 +30,7 @@ import {
   getRenderProtocol,
   resolveRenderProtocolName,
 } from '../../app-render/render-protocol/registry'
+import type { RenderTransport } from '../../app-render/render-protocol/types'
 import { buildVaryHeader } from '../../app-render/render-protocol/transport'
 import { reactRenderTransport } from '../../app-render/render-protocol/protocols/react'
 import { isInterceptionRouteAppPath } from '../../../shared/lib/router/utils/interception-routes'
@@ -194,6 +195,25 @@ export class AppPageRouteModule extends RouteModule<
     )
   }
 
+  /**
+   * The transport of the protocol that serves this route: the content types it
+   * emits and the request headers that make its responses vary.
+   *
+   * Resolved through this module rather than through the protocol registry
+   * directly, because the registry that matters is the one in the bundle this
+   * route module was compiled into.
+   *
+   * Falls back to React's transport when the named protocol has not registered
+   * itself, so that a missing registration degrades to the previous behaviour
+   * here and is reported by the dispatcher instead.
+   */
+  public getRenderTransport(): RenderTransport {
+    return (
+      getRenderProtocol(resolveRenderProtocolName(this.userland))?.transport ??
+      reactRenderTransport
+    )
+  }
+
   public getVaryHeader(
     resolvedPathname: string,
     interceptionRoutePatterns: RegExp[]
@@ -202,9 +222,7 @@ export class AppPageRouteModule extends RouteModule<
     // protocol's transport, not of the App Router. For the React protocol this
     // is `rsc, next-router-state-tree, next-router-prefetch,
     // next-router-segment-prefetch`, unchanged from before this indirection.
-    const transport =
-      getRenderProtocol(resolveRenderProtocolName(this.userland))?.transport ??
-      reactRenderTransport
+    const transport = this.getRenderTransport()
 
     // Interception route responses can vary based on the `Next-URL` header. We
     // use the Vary header to signal this behavior to the client to properly

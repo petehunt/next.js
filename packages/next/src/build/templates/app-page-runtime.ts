@@ -154,6 +154,7 @@ export function createAppPageEntrypoint({
   tree,
   page,
   pathname,
+  renderProtocol,
   require: __next_app_require__,
   loadChunk: __next_app_load_chunk__,
   interopDefault,
@@ -161,6 +162,13 @@ export function createAppPageEntrypoint({
   tree: LoaderTree
   page: string
   pathname: string
+  /**
+   * The render protocol that turns this route's tree into a response body,
+   * selected at build time from the root layout's `renderProtocol` export.
+   *
+   * @see `../../server/app-render/render-protocol/README.md`
+   */
+  renderProtocol: string
   require: (id: string | number) => unknown
   loadChunk: (id: string | number) => Promise<unknown>
   interopDefault: typeof import('../../server/app-render/interop-default').interopDefault
@@ -182,6 +190,7 @@ export function createAppPageEntrypoint({
     },
     userland: {
       loaderTree: tree,
+      renderProtocol,
     },
     distDir: process.env.__NEXT_RELATIVE_DIST_DIR || '',
     relativeProjectDir: process.env.__NEXT_RELATIVE_PROJECT_DIR || '',

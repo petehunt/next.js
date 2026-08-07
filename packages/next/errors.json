@@ -1459,5 +1459,8 @@
   "1458": "Expected complete prerender classification for route \"%s\"",
   "1459": "A different render protocol is already registered as \"%s\".",
   "1460": "The \"%s\" render protocol cannot render %s: %s",
-  "1461": "No render protocol is registered as \"%s\". Registered protocols: %s."
+  "1461": "No render protocol is registered as \"%s\". Registered protocols: %s.",
+  "1462": "Route \"%s\" exports \\`renderProtocol\\` from %s, but its value could not be statically evaluated. It must be one of %s written as a literal.",
+  "1463": "Route \"%s\" exports \\`renderProtocol\\` from %s with a value of type %s. It must be one of %s.",
+  "1464": "Route \"%s\" selects the unknown render protocol \"%s\" in %s. Supported protocols are %s."
 }

@@ -1,11 +1,9 @@
 import type { AppRenderProtocol } from './types'
 
 import { InvariantError } from '../../../shared/lib/invariant-error'
+import { DEFAULT_RENDER_PROTOCOL_NAME } from './names'
 
-/**
- * The protocol used by every route that does not opt into something else.
- */
-export const DEFAULT_RENDER_PROTOCOL_NAME = 'react'
+export { DEFAULT_RENDER_PROTOCOL_NAME }
 
 const protocols = new Map<string, AppRenderProtocol>()
 

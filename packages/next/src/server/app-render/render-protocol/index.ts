@@ -23,6 +23,7 @@ export type {
 export {
   ProtocolBoundaryError,
   createEmbeddedRenderRequest,
+  embeddedMarkupWithClientRuntime,
   findProtocolBoundaries,
   getDeclaredRenderProtocol,
   mergeCacheControl,
@@ -30,8 +31,21 @@ export {
   protocolBoundaryKey,
   renderProtocolBoundaries,
   replaceProtocolBoundaries,
+  resolveEmbeddedClientRuntimeScope,
+  splitEmbeddableMarkup,
   toEmbeddableMarkup,
 } from './composition'
+
+export type {
+  EmbeddedClientRuntime,
+  EmbeddedClientRuntimeScope,
+  EmbeddedClientScript,
+} from './client-runtime'
+export {
+  createEmbeddedClientRuntimeScope,
+  renderEmbeddedClientRuntime,
+  wrapEmbeddedClientRoot,
+} from './client-runtime'
 
 export type { AppSharedContext } from './shared-context'
 

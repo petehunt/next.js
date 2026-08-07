@@ -12,6 +12,7 @@ import type { RenderOpts } from '../types'
 import type { AppSharedContext } from './shared-context'
 import type { RenderIntent } from './intent'
 import type { EmbeddedRender, ProtocolBoundary } from './composition'
+import type { EmbeddedClientRuntimeScope } from './client-runtime'
 
 /**
  * The envelope every render protocol produces. `RenderResult` is the
@@ -41,6 +42,20 @@ export interface RenderTransport {
    * that make the response vary, and are used to build the `Vary` header.
    */
   readonly varyHeaders: readonly string[]
+
+  /**
+   * Whether a document produced by this protocol can carry the client runtime
+   * of a guest embedded inside it.
+   *
+   * Scripts belong to whoever owns the document, so this is the document
+   * owner's answer and no one else's — a guest inherits it however deeply it
+   * is nested. Saying `true` is a promise about the *whole life* of the
+   * document, not just its first paint: that the markup a guest produced and
+   * the scripts placed after it arrive together every time that markup does.
+   *
+   * @see `./client-runtime.ts`
+   */
+  readonly carriesEmbeddedClientRuntime: boolean
 }
 
 /**
@@ -92,6 +107,15 @@ export interface RenderProtocolRequest {
  */
 export interface EmbeddedRenderRequest extends RenderProtocolRequest {
   readonly boundary: ProtocolBoundary
+
+  /**
+   * What the protocol that owns the document allows a guest to do on the
+   * client, and the identifiers and assets it may claim there.
+   *
+   * The same object for every boundary in a composed document, at every
+   * depth: it is created once by the document owner and threaded down.
+   */
+  readonly clientRuntime: EmbeddedClientRuntimeScope
 }
 
 /**

@@ -13,10 +13,12 @@ import { HTML_CONTENT_TYPE_HEADER } from '../../../../../lib/constants'
 import { PROTOCOL_SUPPORTED, protocolUnsupported } from '../../types'
 import { HTML_FRAGMENT_RENDER_PROTOCOL_NAME } from '../../names'
 import {
+  embeddedMarkupWithClientRuntime,
   findProtocolBoundaries,
   mergeEmbeddedMetadata,
   protocolBoundaryKey,
   renderProtocolBoundaries,
+  resolveEmbeddedClientRuntimeScope,
 } from '../../composition'
 
 export { HTML_FRAGMENT_RENDER_PROTOCOL_NAME }
@@ -76,6 +78,13 @@ export const htmlFragmentRenderTransport: RenderTransport = {
   documentContentType: HTML_CONTENT_TYPE_HEADER,
   navigationContentType: null,
   varyHeaders: [],
+  // Having no client runtime is exactly what makes this protocol able to
+  // carry someone else's. Every navigation is a document load, so a script
+  // placed next to a guest's markup arrives with that markup every single
+  // time it is rendered — there is no second delivery path that could bring
+  // the markup without it — and there is no hydration of its own for a
+  // guest's to collide with.
+  carriesEmbeddedClientRuntime: true,
 }
 
 async function loadFragment(
@@ -231,11 +240,28 @@ async function renderComposedSegment(
   tree: LoaderTree,
   boundaries: readonly ProtocolBoundary[]
 ): Promise<{ html: string; embedded: EmbeddedRender[] }> {
-  const embedded = await renderProtocolBoundaries(boundaries, request)
+  const embedded = await renderProtocolBoundaries(
+    boundaries,
+    request,
+    resolveEmbeddedClientRuntimeScope(
+      request,
+      HTML_FRAGMENT_RENDER_PROTOCOL_NAME,
+      htmlFragmentRenderTransport
+    )
+  )
 
   const markup = new Map<string, string>()
   for (let i = 0; i < boundaries.length; i++) {
-    markup.set(protocolBoundaryKey(boundaries[i].slotPath), embedded[i].html)
+    // A guest's scripts go where its markup goes. This protocol places a
+    // boundary by filling a slot, so a guest's runtime fills the same slot,
+    // immediately after the DOM it hydrates — including when this protocol is
+    // itself a guest, in which case the markup and the scripts travel up
+    // together as one string and the document owner never has to know that
+    // some of what it is placing came from two boundaries down.
+    markup.set(
+      protocolBoundaryKey(boundaries[i].slotPath),
+      embeddedMarkupWithClientRuntime(embedded[i])
+    )
   }
 
   return {

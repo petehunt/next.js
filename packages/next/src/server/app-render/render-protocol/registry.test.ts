@@ -19,6 +19,7 @@ function createProtocol(name: string): AppRenderProtocol {
       documentContentType: TEXT_PLAIN_CONTENT_TYPE_HEADER,
       navigationContentType: null,
       varyHeaders: [],
+      carriesEmbeddedClientRuntime: false,
     },
     supports: () => PROTOCOL_SUPPORTED,
     render: async () =>

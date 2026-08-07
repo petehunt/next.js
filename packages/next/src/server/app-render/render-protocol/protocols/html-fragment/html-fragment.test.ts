@@ -7,6 +7,7 @@ import type { HtmlFragment } from '.'
 import { PAGE_SEGMENT_KEY } from '../../../../../shared/lib/segment'
 import { HTML_CONTENT_TYPE_HEADER } from '../../../../../lib/constants'
 import { createEmbeddedRenderRequest } from '../../composition'
+import { createEmbeddedClientRuntimeScope } from '../../client-runtime'
 import {
   registerRenderProtocol,
   unregisterRenderProtocol,
@@ -79,6 +80,7 @@ describe('the html-fragment render protocol', () => {
       documentContentType: HTML_CONTENT_TYPE_HEADER,
       navigationContentType: null,
       varyHeaders: [],
+      carriesEmbeddedClientRuntime: true,
     })
   })
 
@@ -370,6 +372,7 @@ describe('html-fragment as a host', () => {
         documentContentType: HTML_CONTENT_TYPE_HEADER,
         navigationContentType: null,
         varyHeaders: [],
+        carriesEmbeddedClientRuntime: false,
       },
       supports: () => ({ supported: true }),
       render: async () => {
@@ -528,13 +531,22 @@ describe('html-fragment as a host', () => {
 describe('html-fragment as a guest', () => {
   function renderEmbedded(loaderTree: LoaderTree) {
     return htmlFragmentRenderProtocol.renderEmbedded!(
-      createEmbeddedRenderRequest(createRequest(loaderTree), {
-        slotPath: ['children'],
-        segment: 'docs',
-        protocol: 'html-fragment',
-        host: 'react',
-        tree: loaderTree,
-      })
+      createEmbeddedRenderRequest(
+        createRequest(loaderTree),
+        {
+          slotPath: ['children'],
+          segment: 'docs',
+          protocol: 'html-fragment',
+          host: 'react',
+          tree: loaderTree,
+        },
+        createEmbeddedClientRuntimeScope('react', {
+          documentContentType: HTML_CONTENT_TYPE_HEADER,
+          navigationContentType: null,
+          varyHeaders: [],
+          carriesEmbeddedClientRuntime: false,
+        })
+      )
     )
   }
 
@@ -563,6 +575,7 @@ describe('html-fragment as a guest', () => {
         documentContentType: HTML_CONTENT_TYPE_HEADER,
         navigationContentType: null,
         varyHeaders: [],
+        carriesEmbeddedClientRuntime: false,
       },
       supports: () => ({ supported: true }),
       render: async () => {

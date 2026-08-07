@@ -9,6 +9,7 @@ import { PAGE_SEGMENT_KEY } from '../../../../../shared/lib/segment'
 import { HTML_CONTENT_TYPE_HEADER } from '../../../../../lib/constants'
 import { RSC_CONTENT_TYPE_HEADER } from '../../../../../client/components/app-router-headers'
 import { createEmbeddedRenderRequest } from '../../composition'
+import { createEmbeddedClientRuntimeScope } from '../../client-runtime'
 import {
   registerRenderProtocol,
   unregisterRenderProtocol,
@@ -17,6 +18,7 @@ import {
   createReactRenderProtocol,
   reactRenderTransport,
   toEmbeddableReactMarkup,
+  toHydratableReactMarkup,
 } from '.'
 
 function tree(
@@ -100,6 +102,7 @@ describe('the react render protocol', () => {
         'next-router-prefetch',
         'next-router-segment-prefetch',
       ],
+      carriesEmbeddedClientRuntime: false,
     })
   })
 
@@ -178,6 +181,7 @@ describe('react as a host', () => {
         documentContentType: HTML_CONTENT_TYPE_HEADER,
         navigationContentType: null,
         varyHeaders: [],
+        carriesEmbeddedClientRuntime: false,
       },
       supports: () => ({ supported: true }),
       render: async () => {
@@ -284,6 +288,20 @@ describe('react as a host', () => {
   })
 })
 
+/**
+ * The scope a host would hand a guest. `carriesEmbeddedClientRuntime` is the
+ * document owner's answer, and it is the only thing that decides whether this
+ * protocol produces a client runtime at all.
+ */
+function hostScope(carriesEmbeddedClientRuntime: boolean) {
+  return createEmbeddedClientRuntimeScope('html-fragment', {
+    documentContentType: HTML_CONTENT_TYPE_HEADER,
+    navigationContentType: null,
+    varyHeaders: [],
+    carriesEmbeddedClientRuntime,
+  })
+}
+
 describe('react as a guest', () => {
   const DOCUMENT =
     '<!DOCTYPE html><html><head>' +
@@ -296,7 +314,8 @@ describe('react as a guest', () => {
 
   function renderEmbedded(
     render: Parameters<typeof createReactRenderProtocol>[0],
-    res: BaseNextResponse = createResponse()
+    res: BaseNextResponse = createResponse(),
+    carriesEmbeddedClientRuntime = false
   ) {
     const subtree = tree(
       'island',
@@ -305,13 +324,17 @@ describe('react as a guest', () => {
     )
 
     return createReactRenderProtocol(render).renderEmbedded!(
-      createEmbeddedRenderRequest(createRequest(subtree, res), {
-        slotPath: ['children'],
-        segment: 'island',
-        protocol: 'react',
-        host: 'html-fragment',
-        tree: subtree,
-      })
+      createEmbeddedRenderRequest(
+        createRequest(subtree, res),
+        {
+          slotPath: ['children'],
+          segment: 'island',
+          protocol: 'react',
+          host: 'html-fragment',
+          tree: subtree,
+        },
+        hostScope(carriesEmbeddedClientRuntime)
+      )
     )
   }
 
@@ -404,6 +427,131 @@ describe('react as a guest', () => {
 
     expect(result.metadata.cacheControl).toEqual({ revalidate: 15, expire: 30 })
     expect(result.metadata.fetchTags).toBe('a,b')
+  })
+
+  it('produces no client runtime when the document owner cannot carry one', async () => {
+    const result = await renderEmbedded(
+      async () =>
+        new RenderResult(DOCUMENT, {
+          contentType: HTML_CONTENT_TYPE_HEADER,
+          metadata: {},
+        })
+    )
+
+    expect(result.client).toBeUndefined()
+    expect(result.html).not.toContain('<script')
+  })
+
+  it('produces one when it can, and mounts at the id the scope allocated', async () => {
+    const result = await renderEmbedded(
+      async () =>
+        new RenderResult(DOCUMENT, {
+          contentType: HTML_CONTENT_TYPE_HEADER,
+          metadata: {},
+        }),
+      createResponse(),
+      true
+    )
+
+    expect(result.client).toMatchObject({
+      protocol: 'react',
+      rootId: 'next-embedded-root-children',
+    })
+    expect(result.html).toContain(
+      '<div id="next-embedded-root-children" data-next-render-protocol="react">' +
+        '<main>island</main>' +
+        '</div>'
+    )
+  })
+})
+
+describe('reducing a React document to hydratable markup', () => {
+  const ROOT = 'next-embedded-root-x'
+
+  const DOCUMENT =
+    '<!DOCTYPE html><html><head>' +
+    '<link rel="stylesheet" href="/_next/static/css/app.css"/>' +
+    '</head><body><main>island</main>' +
+    '<script>(self.__next_f=self.__next_f||[]).push([0])</script>' +
+    '<script src="/_next/static/chunks/webpack.js" async=""></script>' +
+    '<script nonce="n1">self.__next_f.push([1,"payload"])</script>' +
+    '<script src="/_next/static/chunks/main-app.js" async="" nonce="n1"></script>' +
+    '</body></html>'
+
+  it('mounts the body and leaves the head outside it', () => {
+    // React hoists stylesheets and metadata out of the tree it hydrates, so
+    // finding them already inside the hydration root is a mismatch.
+    const { html } = toHydratableReactMarkup(DOCUMENT, ROOT)
+
+    expect(html).toBe(
+      '<link rel="stylesheet" href="/_next/static/css/app.css"/>' +
+        `<div id="${ROOT}" data-next-render-protocol="react">` +
+        '<main>island</main>' +
+        '</div>'
+    )
+  })
+
+  it('repoints the Flight payload at this root instead of the document', () => {
+    // A composed document can hold several React roots. One shared
+    // `self.__next_f` would interleave their payloads into nonsense.
+    const { scripts } = toHydratableReactMarkup(DOCUMENT, ROOT)
+    const inline = scripts
+      .filter((script) => script.content !== undefined)
+      .map((script) => script.content)
+
+    expect(inline).toEqual([
+      'self.__next_ef=self.__next_ef||{}',
+      `(self.__next_ef["${ROOT}"]=self.__next_ef["${ROOT}"]||[]).push([0])`,
+      `self.__next_ef["${ROOT}"].push([1,"payload"])`,
+      `(self.__next_er=self.__next_er||[]).push("${ROOT}")`,
+    ])
+  })
+
+  it('registers the root before the chunks that will look for it', () => {
+    // The bootstrap chunks are `async`: the only ordering the document
+    // guarantees is that an inline script earlier in it has already run.
+    const { scripts } = toHydratableReactMarkup(DOCUMENT, ROOT)
+    const registration = scripts.findIndex((script) =>
+      script.content?.includes('__next_er')
+    )
+    const firstChunk = scripts.findIndex((script) => script.src !== undefined)
+
+    expect(registration).toBeLessThan(firstChunk)
+  })
+
+  it('hands over the bootstrap chunks in order, with their attributes', () => {
+    const { scripts } = toHydratableReactMarkup(DOCUMENT, ROOT)
+
+    expect(scripts.filter((script) => script.src !== undefined)).toEqual([
+      {
+        src: '/_next/static/chunks/webpack.js',
+        attributes: { async: '' },
+      },
+      {
+        src: '/_next/static/chunks/main-app.js',
+        attributes: { async: '', nonce: 'n1' },
+      },
+    ])
+  })
+
+  it('carries the nonce of an inline script it moved', () => {
+    // Without it, a composed page under a CSP loses its guests' runtime and
+    // nothing says why.
+    const { scripts } = toHydratableReactMarkup(DOCUMENT, ROOT)
+
+    expect(
+      scripts.find((script) => script.content?.includes('"payload"'))
+    ).toMatchObject({ attributes: { nonce: 'n1' } })
+  })
+
+  it("leaves an application's own script where it was", () => {
+    const { html, scripts } = toHydratableReactMarkup(
+      '<html><body><p>hi</p><script>window.analytics()</script></body></html>',
+      ROOT
+    )
+
+    expect(html).toContain('<script>window.analytics()</script>')
+    expect(scripts.filter((script) => script.src !== undefined)).toEqual([])
   })
 })
 

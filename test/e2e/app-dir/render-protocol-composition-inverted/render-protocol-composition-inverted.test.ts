@@ -53,13 +53,21 @@ import { nextTestSetup } from 'e2e-utils'
       expect(html.match(/<\/body>/g)).toHaveLength(1)
     })
 
-    it('leaves the React client runtime behind', async () => {
-      // The host owns the document and the App Router client hydrates a whole
-      // document, so an embedded React subtree contributes markup alone.
+    it('brings the React client runtime with it', async () => {
+      // This host has no client runtime of its own and answers every
+      // navigation with a document, so it can carry a guest's: the scripts
+      // arrive with the markup they hydrate, every time it is rendered. That
+      // they make the subtree interactive is
+      // `test/e2e/app-dir/render-protocol-client-composition`.
       const html = await next.render('/dashboard')
 
+      // Repointed at this root rather than at the document-wide
+      // `self.__next_f`, which a composed page may need several of.
       expect(html).not.toContain('self.__next_f')
-      expect(html).not.toContain('/_next/static/chunks')
+      expect(html).toContain(
+        'self.__next_ef["next-embedded-root-children-island"]'
+      )
+      expect(html).toContain('/_next/static/chunks')
     })
 
     it('keeps the transport of the protocol that serves the route', async () => {

@@ -14,6 +14,11 @@ import type {
   RenderTransport,
 } from '../../types'
 import type { EmbeddedRender, ProtocolBoundary } from '../../composition'
+import type {
+  EmbeddedClientRuntime,
+  EmbeddedClientRuntimeScope,
+  EmbeddedClientScript,
+} from '../../client-runtime'
 
 import {
   NEXT_ROUTER_PREFETCH_HEADER,
@@ -33,8 +38,11 @@ import {
   protocolBoundaryKey,
   renderProtocolBoundaries,
   replaceProtocolBoundaries,
+  resolveEmbeddedClientRuntimeScope,
+  splitEmbeddableMarkup,
   toEmbeddableMarkup,
 } from '../../composition'
+import { wrapEmbeddedClientRoot } from '../../client-runtime'
 
 export { REACT_RENDER_PROTOCOL_NAME }
 
@@ -53,6 +61,16 @@ export const reactRenderTransport: RenderTransport = {
     NEXT_ROUTER_PREFETCH_HEADER,
     NEXT_ROUTER_SEGMENT_PREFETCH_HEADER,
   ],
+  // A React *document* cannot carry a guest's client runtime, and the reason
+  // is client navigation rather than the first load. The App Router client
+  // re-renders a boundary from Flight, and a guest's markup travels as the
+  // `dangerouslySetInnerHTML` of the segment that replaced it; scripts set
+  // that way never execute. They would run on the first document and never
+  // again, so a guest under a React document would be interactive until the
+  // first navigation and then silently not. Refusing outright is the honest
+  // version of that, and it is what keeps this protocol's own hydration the
+  // only one in its document.
+  carriesEmbeddedClientRuntime: false,
 }
 
 /**
@@ -111,6 +129,154 @@ export function toEmbeddableReactMarkup(document: string): string {
   return toEmbeddableMarkup(document)
     .replace(CLIENT_RUNTIME_SCRIPT, '')
     .replace(CLIENT_RUNTIME_PRELOAD, '')
+}
+
+/**
+ * The globals the embedded client runtime uses.
+ *
+ * `__next_ef` is the per-root equivalent of `self.__next_f`: a composed
+ * document can contain several React roots, and one shared Flight buffer
+ * would interleave their payloads into nonsense. `__next_er` is the list of
+ * roots waiting to be hydrated, with the same patched-`push` handoff
+ * `__next_f` uses — a root registered after the bootstrap chunk has already
+ * run has to be picked up rather than dropped.
+ */
+const EMBEDDED_FLIGHT_GLOBAL = 'self.__next_ef'
+const EMBEDDED_ROOTS_GLOBAL = 'self.__next_er'
+
+/** A `<script src="…/_next/static/…">` the renderer emitted to boot itself. */
+const BOOTSTRAP_SCRIPT_TAG =
+  /<script\b([^>]*\bsrc="[^"]*\/_next\/static\/[^"]*"[^>]*)><\/script>/gi
+
+/** An inline `<script>` carrying part of the Flight payload. */
+const FLIGHT_SCRIPT_TAG =
+  /<script\b([^>]*)>((?:(?!<\/script>)[\s\S])*?self\.__next_f(?:(?!<\/script>)[\s\S])*?)<\/script>/gi
+
+const ATTRIBUTE = /([A-Za-z_:][-A-Za-z0-9_:.]*)(?:\s*=\s*"([^"]*)")?/g
+
+/**
+ * The attributes of a moved script that still mean something where it lands.
+ *
+ * A script is being lifted out of the markup and re-emitted by the host, so
+ * anything positional is dropped and anything that says how it must be
+ * fetched or whether it is allowed to run at all is kept. `nonce` is the one
+ * that matters: without it a composed page under a CSP loses its guests'
+ * runtime and nothing says why.
+ */
+const PRESERVED_SCRIPT_ATTRIBUTES = new Set([
+  'async',
+  'defer',
+  'crossorigin',
+  'integrity',
+  'nonce',
+  'type',
+])
+
+function parseScriptAttributes(source: string): {
+  src?: string
+  attributes: Record<string, string>
+} {
+  const attributes: Record<string, string> = {}
+  let src: string | undefined
+
+  ATTRIBUTE.lastIndex = 0
+  let match: RegExpExecArray | null
+  while ((match = ATTRIBUTE.exec(source)) !== null) {
+    const name = match[1].toLowerCase()
+    const value = match[2] ?? ''
+
+    if (name === 'src') {
+      src = value
+    } else if (PRESERVED_SCRIPT_ATTRIBUTES.has(name)) {
+      attributes[name] = value
+    }
+  }
+
+  return { src, attributes }
+}
+
+/**
+ * Reduce a React document to markup that can be *hydrated* inside another
+ * protocol's document.
+ *
+ * The same cut as {@link toEmbeddableReactMarkup}, except that instead of
+ * dropping the renderer's scripts it hands them back, rewritten to address
+ * this root instead of the document:
+ *
+ * - the head content stays *outside* the mount element, because React hoists
+ *   stylesheets and metadata out of the tree it hydrates and finding them
+ *   already inside it is a mismatch;
+ * - each inline Flight script is repointed from `self.__next_f` to this root's
+ *   own buffer, so several roots in one document do not interleave;
+ * - the bootstrap `<script src>`s are handed over as-is for the host to
+ *   de-duplicate, because every React root in a document boots from the same
+ *   chunks and a classic script that appears twice runs twice.
+ *
+ * A guest does not stream — it was awaited in full before the host placed it —
+ * so its whole Flight payload is on the page before its bootstrap runs. That
+ * is what lets the runtime read a finished array rather than reproducing the
+ * buffering and `DOMContentLoaded` handoff `app-index` needs for a document.
+ */
+export function toHydratableReactMarkup(
+  document: string,
+  rootId: string
+): { html: string; scripts: EmbeddedClientScript[] } {
+  const { head, body } = splitEmbeddableMarkup(document)
+
+  const bootstrap: EmbeddedClientScript[] = []
+  const flight: EmbeddedClientScript[] = []
+
+  const rootIdLiteral = JSON.stringify(rootId)
+  const buffer = `${EMBEDDED_FLIGHT_GLOBAL}[${rootIdLiteral}]`
+
+  const collect = (markup: string) =>
+    markup
+      .replace(FLIGHT_SCRIPT_TAG, (_tag, attributeSource: string, content) => {
+        const { attributes } = parseScriptAttributes(attributeSource)
+        flight.push({
+          content: (content as string).split('self.__next_f').join(buffer),
+          attributes,
+        })
+        return ''
+      })
+      .replace(BOOTSTRAP_SCRIPT_TAG, (_tag, attributeSource: string) => {
+        const { src, attributes } = parseScriptAttributes(attributeSource)
+        if (src !== undefined) bootstrap.push({ src, attributes })
+        return ''
+      })
+
+  const html =
+    collect(head) +
+    wrapEmbeddedClientRoot(collect(body), REACT_RENDER_PROTOCOL_NAME, rootId)
+
+  return {
+    html,
+    scripts: [
+      // The buffer has to exist before the first `(x = x || []).push(…)` can
+      // read through to it, and the map has to exist before the buffer.
+      { content: `${EMBEDDED_FLIGHT_GLOBAL}=${EMBEDDED_FLIGHT_GLOBAL}||{}` },
+      ...flight,
+      // Registration goes before the bootstrap chunks rather than after: they
+      // are `async`, so the only ordering the document guarantees is that an
+      // inline script earlier in it has already run.
+      {
+        content: `(${EMBEDDED_ROOTS_GLOBAL}=${EMBEDDED_ROOTS_GLOBAL}||[]).push(${rootIdLiteral})`,
+      },
+      ...bootstrap,
+    ],
+  }
+}
+
+function createReactClientRuntime(
+  document: string,
+  rootId: string
+): { html: string; client: EmbeddedClientRuntime } {
+  const { html, scripts } = toHydratableReactMarkup(document, rootId)
+
+  return {
+    html,
+    client: { protocol: REACT_RENDER_PROTOCOL_NAME, rootId, scripts },
+  }
 }
 
 /**
@@ -283,9 +449,14 @@ function createEmbedNode(
  */
 async function embedProtocolBoundaries(
   request: RenderProtocolRequest,
-  boundaries: readonly ProtocolBoundary[]
+  boundaries: readonly ProtocolBoundary[],
+  clientRuntime: EmbeddedClientRuntimeScope
 ): Promise<{ loaderTree: LoaderTree; embedded: EmbeddedRender[] }> {
-  const embedded = await renderProtocolBoundaries(boundaries, request)
+  const embedded = await renderProtocolBoundaries(
+    boundaries,
+    request,
+    clientRuntime
+  )
   const { createElement } = request.renderOpts.ComponentMod
 
   const replacements = new Map<string, LoaderTree>()
@@ -367,7 +538,18 @@ export function createReactRenderProtocol(
       // here before React ever sees the tree.
       const composed =
         boundaries.length > 0
-          ? await embedProtocolBoundaries(request, boundaries)
+          ? await embedProtocolBoundaries(
+              request,
+              boundaries,
+              // Narrowed by this protocol's own transport: a React guest can
+              // host another protocol, but it embeds that markup the same way
+              // a React document does, so the same refusal applies.
+              resolveEmbeddedClientRuntimeScope(
+                request,
+                REACT_RENDER_PROTOCOL_NAME,
+                reactRenderTransport
+              )
+            )
           : { loaderTree: request.loaderTree, embedded: [] }
 
       const res = new EmbeddedRenderResponse(request.res)
@@ -385,11 +567,26 @@ export function createReactRenderProtocol(
         composed.embedded
       )
 
-      return {
-        protocol: REACT_RENDER_PROTOCOL_NAME,
-        html: toEmbeddableReactMarkup(await result.toUnchunkedString(true)),
-        metadata,
+      const document = await result.toUnchunkedString(true)
+
+      // Whether this subtree gets to be interactive is the document owner's
+      // call, not this protocol's and not its host's — so it is asked once,
+      // here, and the answer for a guest three boundaries down is the same
+      // one the top of the document gave.
+      if (!request.clientRuntime.supported) {
+        return {
+          protocol: REACT_RENDER_PROTOCOL_NAME,
+          html: toEmbeddableReactMarkup(document),
+          metadata,
+        }
       }
+
+      const { html, client } = createReactClientRuntime(
+        document,
+        request.clientRuntime.rootId
+      )
+
+      return { protocol: REACT_RENDER_PROTOCOL_NAME, html, metadata, client }
     },
   }
 }
@@ -401,7 +598,12 @@ async function renderComposed(
 ): Promise<RenderProtocolResult> {
   const { loaderTree, embedded } = await embedProtocolBoundaries(
     request,
-    boundaries
+    boundaries,
+    resolveEmbeddedClientRuntimeScope(
+      request,
+      REACT_RENDER_PROTOCOL_NAME,
+      reactRenderTransport
+    )
   )
 
   const result = await callRenderer(

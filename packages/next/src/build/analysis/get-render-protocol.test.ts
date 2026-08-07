@@ -1,6 +1,7 @@
 import {
   RENDER_PROTOCOL_EXPORT_NAME,
-  getRenderProtocolFromRootLayout,
+  createLayoutRenderProtocolReader,
+  getRenderProtocolFromLayout,
   getRenderProtocolFromSource,
 } from './get-render-protocol'
 
@@ -88,7 +89,7 @@ describe('getRenderProtocolFromSource', () => {
   })
 })
 
-describe('getRenderProtocolFromRootLayout', () => {
+describe('getRenderProtocolFromLayout', () => {
   let dir: string
 
   beforeAll(async () => {
@@ -99,33 +100,76 @@ describe('getRenderProtocolFromRootLayout', () => {
     await fs.rm(dir, { recursive: true, force: true })
   })
 
-  it('reads the protocol from the root layout on disk', async () => {
-    const rootLayoutPath = path.join(dir, 'layout.js')
+  it('reads the protocol from a layout on disk', async () => {
+    const layoutPath = path.join(dir, 'layout.js')
     await fs.writeFile(
-      rootLayoutPath,
+      layoutPath,
       `export const renderProtocol = 'html-fragment'\n`
     )
 
     await expect(
-      getRenderProtocolFromRootLayout({ rootLayoutPath, page: PAGE })
+      getRenderProtocolFromLayout({ layoutPath, page: PAGE })
     ).resolves.toBe('html-fragment')
   })
 
-  it('returns undefined for a route tree with no root layout', async () => {
+  it('returns undefined for a segment with no layout', async () => {
     await expect(
-      getRenderProtocolFromRootLayout({
-        rootLayoutPath: undefined,
+      getRenderProtocolFromLayout({
+        layoutPath: undefined,
         page: PAGE,
       })
     ).resolves.toBeUndefined()
   })
 
-  it('returns undefined when the root layout has disappeared', async () => {
+  it('returns undefined when the layout has disappeared', async () => {
     await expect(
-      getRenderProtocolFromRootLayout({
-        rootLayoutPath: path.join(dir, 'does-not-exist.js'),
+      getRenderProtocolFromLayout({
+        layoutPath: path.join(dir, 'does-not-exist.js'),
         page: PAGE,
       })
+    ).resolves.toBeUndefined()
+  })
+})
+
+describe('createLayoutRenderProtocolReader', () => {
+  let dir: string
+
+  beforeAll(async () => {
+    dir = await fs.mkdtemp(path.join(os.tmpdir(), 'render-protocol-reader-'))
+  })
+
+  afterAll(async () => {
+    await fs.rm(dir, { recursive: true, force: true })
+  })
+
+  it('reads each layout once, however many segments ask about it', async () => {
+    const layoutPath = path.join(dir, 'layout.js')
+    await fs.writeFile(
+      layoutPath,
+      `export const renderProtocol = 'html-fragment'\n`
+    )
+
+    const readProtocol = createLayoutRenderProtocolReader(PAGE)
+
+    await expect(readProtocol(layoutPath)).resolves.toBe('html-fragment')
+
+    // The root layout is asked about twice — once as a segment of the tree and
+    // once as the protocol the route module is compiled with — so the second
+    // answer has to come from the cache rather than the file system.
+    await fs.rm(layoutPath)
+    await expect(readProtocol(layoutPath)).resolves.toBe('html-fragment')
+  })
+
+  it('never touches the file system for a segment with no layout', async () => {
+    const readProtocol = createLayoutRenderProtocolReader(PAGE)
+    await expect(readProtocol(undefined)).resolves.toBeUndefined()
+  })
+
+  it('skips the components Next.js supplies, which are not paths on disk', async () => {
+    const readProtocol = createLayoutRenderProtocolReader(PAGE)
+
+    await expect(
+      readProtocol('next/dist/client/components/builtin/layout.js')
     ).resolves.toBeUndefined()
   })
 })

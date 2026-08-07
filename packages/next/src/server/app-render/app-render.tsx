@@ -327,6 +327,22 @@ export type DynamicParam = {
 
 export type GenerateFlight = typeof generateDynamicFlightRenderResult
 
+/**
+ * Whether to run the development-only check that a route rendered `<html>` and
+ * `<body>`.
+ *
+ * A render that produces a fragment of another protocol's document renders a
+ * *subtree*: the root layout that would have rendered those tags is above the
+ * protocol boundary. Holding it to the check would report a missing root
+ * layout for every embedded React subtree, and — because the check replaces
+ * the output with an error template — throw the subtree's markup away.
+ *
+ * @see `./render-protocol/composition.ts`
+ */
+function shouldValidateRootLayout(ctx: AppRenderContext): boolean {
+  return !!process.env.__NEXT_DEV_SERVER && !ctx.renderOpts.isEmbeddedRender
+}
+
 // `AppSharedContext` is part of the render protocol's input rather than of the
 // React renderer, so it is defined alongside the protocol contract and
 // re-exported here for the existing import sites.
@@ -3961,7 +3977,7 @@ async function renderToStream(
           deploymentId: ctx.sharedContext.deploymentId,
           getServerInsertedHTML,
           getServerInsertedMetadata,
-          validateRootLayout: !!process.env.__NEXT_DEV_SERVER,
+          validateRootLayout: shouldValidateRootLayout(ctx),
         })
       } else {
         // MARK: webStreams HTML
@@ -4099,7 +4115,7 @@ async function renderToStream(
           deploymentId: ctx.sharedContext.deploymentId,
           getServerInsertedHTML,
           getServerInsertedMetadata,
-          validateRootLayout: !!process.env.__NEXT_DEV_SERVER,
+          validateRootLayout: shouldValidateRootLayout(ctx),
         })
       }
       // MARK: renderToStream errorRecovery
@@ -4271,7 +4287,7 @@ async function renderToStream(
               tracingMetadata: tracingMetadata,
             }),
             getServerInsertedMetadata,
-            validateRootLayout: !!process.env.__NEXT_DEV_SERVER,
+            validateRootLayout: shouldValidateRootLayout(ctx),
           })
         } catch (finalErr: any) {
           if (
@@ -4369,7 +4385,7 @@ async function renderToStream(
               tracingMetadata: tracingMetadata,
             }),
             getServerInsertedMetadata,
-            validateRootLayout: !!process.env.__NEXT_DEV_SERVER,
+            validateRootLayout: shouldValidateRootLayout(ctx),
           })
         } catch (finalErr: any) {
           if (
@@ -9823,7 +9839,7 @@ async function prerenderToStream(
             tracingMetadata: tracingMetadata,
           }),
           getServerInsertedMetadata,
-          validateRootLayout: !!process.env.__NEXT_DEV_SERVER,
+          validateRootLayout: shouldValidateRootLayout(ctx),
           deploymentId: ctx.sharedContext.deploymentId,
         }),
         dynamicAccess: null,

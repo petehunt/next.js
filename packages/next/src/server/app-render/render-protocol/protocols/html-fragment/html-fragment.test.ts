@@ -1,11 +1,16 @@
 import type { LoaderTree } from '../../../../lib/app-dir-module'
 import type { AppDirModules } from '../../../../../build/webpack/loaders/next-app-loader'
 import type { RenderIntent } from '../../intent'
-import type { RenderProtocolRequest } from '../../types'
+import type { AppRenderProtocol, RenderProtocolRequest } from '../../types'
 import type { HtmlFragment } from '.'
 
 import { PAGE_SEGMENT_KEY } from '../../../../../shared/lib/segment'
 import { HTML_CONTENT_TYPE_HEADER } from '../../../../../lib/constants'
+import { createEmbeddedRenderRequest } from '../../composition'
+import {
+  registerRenderProtocol,
+  unregisterRenderProtocol,
+} from '../../registry'
 import { htmlFragmentRenderProtocol, htmlFragmentRenderTransport } from '.'
 
 function tree(
@@ -350,5 +355,239 @@ describe('html-fragment capabilities', () => {
       reason:
         'this protocol has no client runtime, so it cannot receive server actions',
     })
+  })
+})
+
+describe('html-fragment as a host', () => {
+  const GUEST = 'test-guest'
+
+  function registerGuest(
+    renderEmbedded: NonNullable<AppRenderProtocol['renderEmbedded']>
+  ) {
+    registerRenderProtocol({
+      name: GUEST,
+      transport: {
+        documentContentType: HTML_CONTENT_TYPE_HEADER,
+        navigationContentType: null,
+        varyHeaders: [],
+      },
+      supports: () => ({ supported: true }),
+      render: async () => {
+        throw new Error('the guest is never the host in these tests')
+      },
+      renderEmbedded,
+    })
+  }
+
+  afterEach(() => {
+    unregisterRenderProtocol(GUEST)
+  })
+
+  function guestSegment(
+    segment: string,
+    parallelRoutes: Record<string, LoaderTree> = {}
+  ): LoaderTree {
+    return tree(segment, { renderProtocol: GUEST }, parallelRoutes)
+  }
+
+  it('fills a slot with markup another protocol produced', async () => {
+    registerGuest(async () => ({
+      protocol: GUEST,
+      html: '<article>from the guest</article>',
+      metadata: {},
+    }))
+
+    const html = await renderToString(
+      tree(
+        '',
+        layout(() => '<main><!--next-slot:children--></main>'),
+        { children: guestSegment('docs') }
+      )
+    )
+
+    expect(html).toContain('<main><article>from the guest</article></main>')
+  })
+
+  it('fills a named parallel slot, keeping the siblings in order', async () => {
+    registerGuest(async (request) => ({
+      protocol: GUEST,
+      html: `<dialog>${request.boundary.segment}</dialog>`,
+      metadata: {},
+    }))
+
+    const html = await renderToString(
+      tree(
+        '',
+        layout(
+          () =>
+            '<main><!--next-slot:children--></main><aside><!--next-slot:modal--></aside>'
+        ),
+        {
+          children: page(() => '<h1>Page</h1>'),
+          modal: guestSegment('@modal'),
+        }
+      )
+    )
+
+    expect(html).toContain(
+      '<main><h1>Page</h1></main><aside><dialog>@modal</dialog></aside>'
+    )
+  })
+
+  it('hands the guest only its own subtree', async () => {
+    const seen: LoaderTree[] = []
+    registerGuest(async (request) => {
+      seen.push(request.loaderTree)
+      return { protocol: GUEST, html: '', metadata: {} }
+    })
+
+    const subtree = guestSegment('docs', { children: page(() => '') })
+
+    await renderToString(
+      tree(
+        '',
+        layout(() => '<!--next-slot:children-->'),
+        { children: subtree }
+      )
+    )
+
+    expect(seen).toEqual([subtree])
+  })
+
+  it('still requires the layout to declare a slot for a foreign parallel route', async () => {
+    // A boundary is a child like any other. Forgetting its marker drops the
+    // whole guest's markup, which is exactly what this protocol refuses to do
+    // silently for its own children.
+    registerGuest(async () => ({ protocol: GUEST, html: 'x', metadata: {} }))
+
+    await expect(
+      renderToString(
+        tree(
+          '',
+          layout(() => '<main><!--next-slot:children--></main>'),
+          {
+            children: page(() => '<h1>Page</h1>'),
+            modal: guestSegment('@modal'),
+          }
+        )
+      )
+    ).rejects.toThrow(
+      'app/layout.js does not declare a slot for the parallel route "modal".'
+    )
+  })
+
+  it('folds what the guest reported into the response', async () => {
+    registerGuest(async () => ({
+      protocol: GUEST,
+      html: '<p>gone</p>',
+      metadata: {
+        statusCode: 404,
+        headers: { 'x-guest': 'yes' },
+        cacheControl: { revalidate: 30, expire: 60 },
+        fetchTags: 'guest-tag',
+      },
+    }))
+
+    const result = await htmlFragmentRenderProtocol.render(
+      createRequest(
+        tree(
+          '',
+          layout(() => '<!--next-slot:children-->'),
+          { children: guestSegment('docs') }
+        )
+      )
+    )
+
+    expect(result.metadata).toEqual({
+      statusCode: 404,
+      headers: { 'x-guest': 'yes' },
+      cacheControl: { revalidate: 30, expire: 60 },
+      fetchTags: 'guest-tag',
+    })
+  })
+
+  it('reports which boundary a failing guest belongs to', async () => {
+    registerGuest(async () => {
+      throw new Error('the guest exploded')
+    })
+
+    await expect(
+      renderToString(
+        tree(
+          '',
+          layout(() => '<!--next-slot:children-->'),
+          { children: guestSegment('docs') }
+        )
+      )
+    ).rejects.toThrow(
+      `The "${GUEST}" render protocol failed while rendering docs (children) inside a "html-fragment" route: the guest exploded`
+    )
+  })
+})
+
+describe('html-fragment as a guest', () => {
+  function renderEmbedded(loaderTree: LoaderTree) {
+    return htmlFragmentRenderProtocol.renderEmbedded!(
+      createEmbeddedRenderRequest(createRequest(loaderTree), {
+        slotPath: ['children'],
+        segment: 'docs',
+        protocol: 'html-fragment',
+        host: 'react',
+        tree: loaderTree,
+      })
+    )
+  }
+
+  it('produces a fragment rather than a document', async () => {
+    const result = await renderEmbedded(
+      tree(
+        'docs',
+        layout(() => '<section><!--next-slot:children--></section>'),
+        { children: page(() => '<h1>Docs</h1>') }
+      )
+    )
+
+    expect(result).toEqual({
+      protocol: 'html-fragment',
+      html: '<section><h1>Docs</h1></section>',
+      metadata: {},
+    })
+  })
+
+  it('composes its own boundaries before handing markup up', async () => {
+    // Fragment inside React inside fragment: a guest is a host too, and the
+    // machinery it uses to compose is the same one that composed it.
+    registerRenderProtocol({
+      name: 'test-island',
+      transport: {
+        documentContentType: HTML_CONTENT_TYPE_HEADER,
+        navigationContentType: null,
+        varyHeaders: [],
+      },
+      supports: () => ({ supported: true }),
+      render: async () => {
+        throw new Error('not used')
+      },
+      renderEmbedded: async () => ({
+        protocol: 'test-island',
+        html: '<span>island</span>',
+        metadata: { statusCode: 500 },
+      }),
+    })
+
+    try {
+      const result = await renderEmbedded(
+        tree(
+          'docs',
+          layout(() => '<section><!--next-slot:children--></section>'),
+          { children: tree('island', { renderProtocol: 'test-island' }) }
+        )
+      )
+
+      expect(result.html).toBe('<section><span>island</span></section>')
+      expect(result.metadata).toEqual({ statusCode: 500 })
+    } finally {
+      unregisterRenderProtocol('test-island')
+    }
   })
 })

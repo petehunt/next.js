@@ -115,6 +115,19 @@ export interface RenderOptsPartial {
   staticPageGenerationTimeout: number
   isOnDemandRevalidate?: boolean
   isPossibleServerAction?: boolean
+
+  /**
+   * Set when this render produces a *fragment* of a page that another render
+   * protocol owns, rather than a whole document.
+   *
+   * The loader tree is a subtree in that case, so the root layout — and the
+   * `<html>` and `<body>` it renders — is above the protocol boundary and not
+   * part of what this render was asked to produce.
+   *
+   * @see `./render-protocol/composition.ts`
+   */
+  isEmbeddedRender?: boolean
+
   setCacheStatus?: (status: ServerCacheStatus, htmlRequestId: string) => void
   setIsrStatus?: (key: string, value: boolean | undefined) => void
   setReactDebugChannel?: (

@@ -1,23 +1,28 @@
 import { promises as fs } from 'fs'
+import path from 'path'
 
 import { parseModule } from './parse-module'
 import { extractExportedConstValue } from './extract-const-value'
 import { BUILT_IN_RENDER_PROTOCOL_NAMES } from '../../server/app-render/render-protocol/names'
 
 /**
- * The export a root layout uses to select the render protocol for its route
- * tree:
+ * The export a layout uses to select the render protocol for itself and
+ * everything below it:
  *
  * ```js
  * // app/layout.js
  * export const renderProtocol = 'html-fragment'
  * ```
  *
- * A protocol turns a matched route tree into a response body, and a route tree
- * is served by exactly one of them, so this is declared once — on the root
- * layout, the single segment every route in the tree shares — rather than
- * per segment. `export const renderProtocol` anywhere else is not a route
- * segment config and has no effect.
+ * A protocol turns a matched route tree into a response body. The root layout
+ * selects the protocol that serves the route; any other layout that selects a
+ * *different* one marks a protocol boundary, and its subtree is rendered by
+ * that protocol and embedded in the surrounding output.
+ *
+ * A layout is where this lives — rather than a page, or every segment —
+ * because a layout is the thing that owns a subtree. `export const
+ * renderProtocol` anywhere else is not a route segment config and has no
+ * effect.
  */
 export const RENDER_PROTOCOL_EXPORT_NAME = 'renderProtocol'
 
@@ -86,24 +91,24 @@ export async function getRenderProtocolFromSource(
 }
 
 /**
- * Read the render protocol a route tree's root layout selects.
+ * Read the render protocol a layout selects.
  *
- * `rootLayoutPath` is `undefined` for the route trees that have no root layout
- * of their own — the built-in `global-error` and `global-not-found`
- * entrypoints — and those keep the default protocol.
+ * `layoutPath` is `undefined` for a segment with no layout, and for the route
+ * trees that have no root layout of their own — the built-in `global-error`
+ * and `global-not-found` entrypoints. Those inherit rather than select.
  */
-export async function getRenderProtocolFromRootLayout({
-  rootLayoutPath,
+export async function getRenderProtocolFromLayout({
+  layoutPath,
   page,
 }: {
-  rootLayoutPath: string | undefined
+  layoutPath: string | undefined
   page: string
 }): Promise<string | undefined> {
-  if (!rootLayoutPath) return undefined
+  if (!layoutPath) return undefined
 
   let content: string
   try {
-    content = await fs.readFile(rootLayoutPath, 'utf8')
+    content = await fs.readFile(layoutPath, 'utf8')
   } catch {
     // The loader resolved this path from the file system moments ago. If it is
     // gone now we are mid-edit in dev; the recompile that the removal triggers
@@ -112,7 +117,41 @@ export async function getRenderProtocolFromRootLayout({
   }
 
   return getRenderProtocolFromSource(content, {
-    filePath: rootLayoutPath,
+    filePath: layoutPath,
     page,
   })
+}
+
+/**
+ * A reader for every layout in one route tree.
+ *
+ * A tree walk asks about each of its layouts, and the root layout is asked
+ * about twice — once as the segment that owns the whole tree and once as the
+ * protocol the route module is compiled with. Memoizing by path keeps that to
+ * one `readFile` per layout per entrypoint, which is the same order of work
+ * the loader already does to resolve those files.
+ *
+ * Paths that are not absolute are the components Next.js supplies itself
+ * (`next/dist/client/components/builtin/…`). They never select a protocol, and
+ * they are not files on disk relative to this process, so they are skipped
+ * without touching the file system.
+ */
+export function createLayoutRenderProtocolReader(page: string) {
+  const cache = new Map<string, Promise<string | undefined>>()
+
+  return function readRenderProtocol(
+    layoutPath: string | undefined
+  ): Promise<string | undefined> {
+    if (!layoutPath || !path.isAbsolute(layoutPath)) {
+      return Promise.resolve(undefined)
+    }
+
+    let pending = cache.get(layoutPath)
+    if (!pending) {
+      pending = getRenderProtocolFromLayout({ layoutPath, page })
+      cache.set(layoutPath, pending)
+    }
+
+    return pending
+  }
 }

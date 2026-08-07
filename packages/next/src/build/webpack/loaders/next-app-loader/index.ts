@@ -44,7 +44,7 @@ import { normalizeAppPath } from '../../../../shared/lib/router/utils/app-paths'
 
 import { normalizePathSep } from '../../../../shared/lib/page-path/normalize-path-sep'
 import { installBindings } from '../../../swc/install-bindings'
-import { getRenderProtocolFromRootLayout } from '../../../analysis/get-render-protocol'
+import { createLayoutRenderProtocolReader } from '../../../analysis/get-render-protocol'
 import { DEFAULT_RENDER_PROTOCOL_NAME } from '../../../../server/app-render/render-protocol/names'
 
 export type AppLoaderOptions = {
@@ -122,6 +122,18 @@ export type AppDirModules = {
   readonly metadata?: CollectedMetadata
 } & {
   readonly defaultPage?: ModuleTuple
+} & {
+  /**
+   * The render protocol this segment's layout selected for itself and
+   * everything below it. Absent on every segment that did not select one,
+   * which is every segment of a route that uses a single protocol.
+   *
+   * A segment whose protocol differs from its parent's is a protocol
+   * boundary.
+   *
+   * @see `../../../../server/app-render/render-protocol/composition.ts`
+   */
+  readonly renderProtocol?: string
 }
 
 const normalizeParallelKey = (key: string) =>
@@ -157,6 +169,7 @@ async function createTreeCodeFromPath(
     collectedDeclarations,
     isGlobalNotFoundEnabled,
     isDev,
+    loaderContext,
   }: {
     page: string
     resolveDir: DirResolver
@@ -177,6 +190,7 @@ async function createTreeCodeFromPath(
 ): Promise<{
   treeCode: string
   rootLayout: string | undefined
+  rootRenderProtocol: string | undefined
   globalError: string
   globalNotFound: string
 }> {
@@ -188,8 +202,23 @@ async function createTreeCodeFromPath(
   const appDirPrefix = isDefaultNotFound ? APP_DIR_ALIAS : splittedPath[0]
 
   let rootLayout: string | undefined
+  let rootRenderProtocol: string | undefined
   let globalError: string = defaultGlobalErrorPath
   let globalNotFound: string = defaultNotFoundPath
+
+  // Which protocol renders which part of this route is decided here, at build
+  // time, so that the tree the server receives already says who owns what
+  // rather than the server having to work it out per request. The root
+  // layout's answer becomes the route's protocol; a layout further down that
+  // answers differently is a protocol boundary.
+  //
+  // `/_global-error` is the exception: `global-error` is required to be a
+  // client component, so that entrypoint is React's by construction and is not
+  // the app's to reassign. Its tree does not include the root layout either,
+  // so nothing of the app's own markup is lost by rendering it with React.
+  const readRenderProtocol = isAppErrorRoute
+    ? () => Promise.resolve(undefined)
+    : createLayoutRenderProtocolReader(page)
 
   async function resolveAdjacentParallelSegments(
     segmentPath: string
@@ -421,6 +450,31 @@ async function createTreeCodeFromPath(
         }
       }
 
+      // A layout selects the render protocol for itself and everything below
+      // it. The root layout's answer is the route's protocol; anywhere else, a
+      // different answer is a protocol boundary that the render protocol layer
+      // composes across.
+      //
+      // This reads the layout the application wrote, before the `_not-found`
+      // and `_global-error` rewrites below swap it for one of Next.js's own.
+      const segmentLayoutPath = definedFilePaths.find(
+        ([type]) => type === 'layout'
+      )?.[1]
+
+      if (segmentLayoutPath && path.isAbsolute(segmentLayoutPath)) {
+        // The layout is already part of this compilation through the loader
+        // tree, but the *entrypoint* is a different module: without this,
+        // editing the `renderProtocol` export in dev would rebuild the layout
+        // and leave the entrypoint holding the previous protocol.
+        loaderContext.addDependency(segmentLayoutPath)
+      }
+
+      const segmentRenderProtocol = await readRenderProtocol(segmentLayoutPath)
+
+      if (segmentLayoutPath && segmentLayoutPath === rootLayout) {
+        rootRenderProtocol = segmentRenderProtocol
+      }
+
       let parallelSegmentKey = Array.isArray(parallelSegment)
         ? parallelSegment[0]
         : parallelSegment
@@ -535,6 +589,11 @@ async function createTreeCodeFromPath(
             return `'${file}': [${varName}, ${JSON.stringify(filePath)}],`
           })
           .join('\n')}
+        ${
+          segmentRenderProtocol
+            ? `renderProtocol: ${JSON.stringify(segmentRenderProtocol)},`
+            : ''
+        }
         ${createMetadataExportsCode(metadata)}
       }`
 
@@ -651,6 +710,7 @@ async function createTreeCodeFromPath(
   return {
     treeCode: `${treeCode}.children;`,
     rootLayout,
+    rootRenderProtocol,
     globalError,
     globalNotFound,
   }
@@ -1093,34 +1153,13 @@ const nextAppLoader: AppLoader = async function nextAppLoader() {
 
   const pathname = new AppPathnameNormalizer().normalize(page)
 
-  // Which protocol renders this route is decided here, at build time, so that
-  // the entrypoint can hand a concrete name to the route module instead of the
-  // server having to discover one per request. The root layout is where it is
-  // declared, because a route tree is served by exactly one protocol and the
-  // root layout is the one segment every route in the tree shares.
-  //
-  // `/_global-error` is the exception: `global-error` is required to be a
-  // client component, so that entrypoint is React's by construction and is not
-  // the app's to reassign. Its tree does not include the root layout either, so
-  // nothing of the app's own markup is lost by rendering it with React.
-  const rootLayoutPath =
-    !isAppErrorRoute &&
-    treeCodeResult.rootLayout &&
-    path.isAbsolute(treeCodeResult.rootLayout)
-      ? treeCodeResult.rootLayout
-      : undefined
-
-  if (rootLayoutPath) {
-    // The root layout is already part of this compilation through the loader
-    // tree, but the *entrypoint* is a different module: without this, editing
-    // the layout's `renderProtocol` export in dev would rebuild the layout and
-    // leave the entrypoint holding the previous protocol.
-    this.addDependency(rootLayoutPath)
-  }
-
+  // The protocol that serves the route is the one its root layout selected —
+  // the one segment every route in the tree shares, and the host that any
+  // boundary further down is composed into. The tree walk above already read
+  // it, along with every other layout's, and registered the file dependencies
+  // that make editing the export in dev rebuild this entrypoint.
   const renderProtocol =
-    (await getRenderProtocolFromRootLayout({ rootLayoutPath, page })) ??
-    DEFAULT_RENDER_PROTOCOL_NAME
+    treeCodeResult.rootRenderProtocol ?? DEFAULT_RENDER_PROTOCOL_NAME
 
   // Prefer to modify next/src/server/app-render/entry-base.ts since this is shared with Turbopack.
   // Any changes to this code should be reflected in Turbopack's app_source.rs and/or app-renderer.tsx as well.

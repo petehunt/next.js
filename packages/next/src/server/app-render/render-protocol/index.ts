@@ -7,12 +7,31 @@
 
 export type {
   AppRenderProtocol,
+  EmbeddedRenderRequest,
   RenderProtocolRequest,
   RenderProtocolResult,
   RenderProtocolSupport,
   RenderTransport,
 } from './types'
 export { PROTOCOL_SUPPORTED, protocolUnsupported } from './types'
+
+export type {
+  EmbeddedRender,
+  EmbeddedRenderMetadata,
+  ProtocolBoundary,
+} from './composition'
+export {
+  ProtocolBoundaryError,
+  createEmbeddedRenderRequest,
+  findProtocolBoundaries,
+  getDeclaredRenderProtocol,
+  mergeCacheControl,
+  mergeEmbeddedMetadata,
+  protocolBoundaryKey,
+  renderProtocolBoundaries,
+  replaceProtocolBoundaries,
+  toEmbeddableMarkup,
+} from './composition'
 
 export type { AppSharedContext } from './shared-context'
 

@@ -1,12 +1,23 @@
 import type { LoaderTree } from '../../../../lib/app-dir-module'
 import type { AppPageRenderResultMetadata } from '../../../../render-result'
 import type { ModuleTuple } from '../../../../../build/webpack/loaders/metadata/types'
-import type { AppRenderProtocol, RenderTransport } from '../../types'
+import type {
+  AppRenderProtocol,
+  RenderProtocolRequest,
+  RenderTransport,
+} from '../../types'
+import type { EmbeddedRender, ProtocolBoundary } from '../../composition'
 
 import RenderResult from '../../../../render-result'
 import { HTML_CONTENT_TYPE_HEADER } from '../../../../../lib/constants'
 import { PROTOCOL_SUPPORTED, protocolUnsupported } from '../../types'
 import { HTML_FRAGMENT_RENDER_PROTOCOL_NAME } from '../../names'
+import {
+  findProtocolBoundaries,
+  mergeEmbeddedMetadata,
+  protocolBoundaryKey,
+  renderProtocolBoundaries,
+} from '../../composition'
 
 export { HTML_FRAGMENT_RENDER_PROTOCOL_NAME }
 
@@ -91,7 +102,7 @@ async function loadFragment(
   // reaching a route tree served by this protocol.
   if (typeof html !== 'string') {
     throw new HtmlFragmentError(
-      `The "${HTML_FRAGMENT_RENDER_PROTOCOL_NAME}" render protocol expects ${filePath} to return a string of HTML, but it returned ${typeof html}. Every segment of a route served by this protocol has to be a fragment; a route tree cannot mix renderers.` +
+      `The "${HTML_FRAGMENT_RENDER_PROTOCOL_NAME}" render protocol expects ${filePath} to return a string of HTML, but it returned ${typeof html}. Every segment of a route served by this protocol has to be a fragment unless it sits behind a protocol boundary; see the render protocol README on composing protocols.` +
         // The built-ins are the segments an app never wrote, so naming a path
         // inside `next/dist` is otherwise a dead end for whoever hits this.
         (filePath.includes(NEXT_BUILTIN_SEGMENT_PATH)
@@ -146,12 +157,22 @@ function fillSlots(
  * A page is a leaf. Any other segment renders each of its parallel routes and
  * composes them into its layout's slots; a segment without a layout is
  * transparent and passes its `children` slot straight through.
+ *
+ * `embedded` holds the markup another protocol produced for the boundaries
+ * below this tree, keyed by slot path. A boundary is a leaf as far as this
+ * protocol is concerned: it fills a slot like any other child, so nesting and
+ * sibling ordering are the same whoever rendered the content.
  */
 async function renderSegment(
   tree: LoaderTree,
   params: HtmlFragmentContext['params'],
+  embedded: ReadonlyMap<string, string>,
+  slotPath: string[],
   parentSegment = ''
 ): Promise<string> {
+  const boundaryHtml = embedded.get(protocolBoundaryKey(slotPath))
+  if (boundaryHtml !== undefined) return boundaryHtml
+
   const [segment, parallelRoutes, modules] = tree
 
   const page = modules.page ?? modules.defaultPage
@@ -163,7 +184,15 @@ async function renderSegment(
 
   const slots: Record<string, string> = {}
   for (const key of Object.keys(parallelRoutes)) {
-    slots[key] = await renderSegment(parallelRoutes[key], params, segment)
+    slotPath.push(key)
+    slots[key] = await renderSegment(
+      parallelRoutes[key],
+      params,
+      embedded,
+      slotPath,
+      segment
+    )
+    slotPath.pop()
   }
 
   if (!modules.layout) {
@@ -183,13 +212,48 @@ function toDocument(body: string): string {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"/></head><body>${body}</body></html>`
 }
 
+function getParams(
+  request: RenderProtocolRequest
+): HtmlFragmentContext['params'] {
+  return (request.renderOpts.params ?? {}) as HtmlFragmentContext['params']
+}
+
+/**
+ * Render a tree that may contain segments belonging to other protocols.
+ *
+ * Guests render first and in full: this protocol has no streaming and no
+ * client runtime, so there is nothing to be gained by interleaving, and
+ * finishing them up front means a guest's failure is reported before any
+ * markup has been committed.
+ */
+async function renderComposedSegment(
+  request: RenderProtocolRequest,
+  tree: LoaderTree,
+  boundaries: readonly ProtocolBoundary[]
+): Promise<{ html: string; embedded: EmbeddedRender[] }> {
+  const embedded = await renderProtocolBoundaries(boundaries, request)
+
+  const markup = new Map<string, string>()
+  for (let i = 0; i < boundaries.length; i++) {
+    markup.set(protocolBoundaryKey(boundaries[i].slotPath), embedded[i].html)
+  }
+
+  return {
+    html: await renderSegment(tree, getParams(request), markup, []),
+    embedded,
+  }
+}
+
+const NO_BOUNDARY_MARKUP: ReadonlyMap<string, string> = new Map()
+
 /**
  * A deliberately tiny, non-React reference implementation of the App Router
  * render protocol.
  *
  * It exists to keep the abstraction honest: everything it needs — the route
- * tree, the request intent, the response envelope — it gets from the shared
- * protocol layer, and nothing it does depends on a component model.
+ * tree, the request intent, the response envelope, the markup another
+ * protocol produced for a segment below it — it gets from the shared protocol
+ * layer, and nothing it does depends on a component model.
  */
 export const htmlFragmentRenderProtocol: AppRenderProtocol = {
   name: HTML_FRAGMENT_RENDER_PROTOCOL_NAME,
@@ -202,15 +266,73 @@ export const htmlFragmentRenderProtocol: AppRenderProtocol = {
           'this protocol has no client runtime, so it cannot receive server actions'
         )
       : PROTOCOL_SUPPORTED,
+
   render: async (request) => {
-    const params = (request.renderOpts.params ??
-      {}) as HtmlFragmentContext['params']
+    const boundaries = findProtocolBoundaries(
+      request.loaderTree,
+      HTML_FRAGMENT_RENDER_PROTOCOL_NAME
+    )
 
-    const body = await renderSegment(request.loaderTree, params)
+    if (boundaries.length === 0) {
+      const body = await renderSegment(
+        request.loaderTree,
+        getParams(request),
+        NO_BOUNDARY_MARKUP,
+        []
+      )
 
-    return new RenderResult<AppPageRenderResultMetadata>(toDocument(body), {
+      return new RenderResult<AppPageRenderResultMetadata>(toDocument(body), {
+        contentType: htmlFragmentRenderTransport.documentContentType,
+        metadata: { statusCode: 200 },
+      })
+    }
+
+    const { html, embedded } = await renderComposedSegment(
+      request,
+      request.loaderTree,
+      boundaries
+    )
+
+    return new RenderResult<AppPageRenderResultMetadata>(toDocument(html), {
       contentType: htmlFragmentRenderTransport.documentContentType,
-      metadata: { statusCode: 200 },
+      metadata: mergeEmbeddedMetadata({ statusCode: 200 }, embedded),
     })
+  },
+
+  // Embedding is what this protocol is already good at: its output is a string
+  // of HTML that was never a document in the first place, so a subtree of it
+  // is the same thing as a whole one minus the `toDocument` wrapper. It
+  // reports no status of its own, leaving the composed response's status to
+  // the host and to any guest of its own that had something to say.
+  renderEmbedded: async (request) => {
+    const boundaries = findProtocolBoundaries(
+      request.loaderTree,
+      HTML_FRAGMENT_RENDER_PROTOCOL_NAME
+    )
+
+    if (boundaries.length === 0) {
+      return {
+        protocol: HTML_FRAGMENT_RENDER_PROTOCOL_NAME,
+        html: await renderSegment(
+          request.loaderTree,
+          getParams(request),
+          NO_BOUNDARY_MARKUP,
+          []
+        ),
+        metadata: {},
+      }
+    }
+
+    const { html, embedded } = await renderComposedSegment(
+      request,
+      request.loaderTree,
+      boundaries
+    )
+
+    return {
+      protocol: HTML_FRAGMENT_RENDER_PROTOCOL_NAME,
+      html,
+      metadata: mergeEmbeddedMetadata({}, embedded),
+    }
   },
 }

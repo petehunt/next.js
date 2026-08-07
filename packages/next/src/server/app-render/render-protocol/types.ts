@@ -11,6 +11,7 @@ import type { LoaderTree } from '../../lib/app-dir-module'
 import type { RenderOpts } from '../types'
 import type { AppSharedContext } from './shared-context'
 import type { RenderIntent } from './intent'
+import type { EmbeddedRender, ProtocolBoundary } from './composition'
 
 /**
  * The envelope every render protocol produces. `RenderResult` is the
@@ -81,6 +82,19 @@ export interface RenderProtocolRequest {
 }
 
 /**
+ * The request handed to a protocol asked to render part of someone else's
+ * route: the same request, with `loaderTree` narrowed to the subtree below the
+ * boundary.
+ *
+ * It is deliberately the same shape as a whole-route request. A guest is not a
+ * lesser kind of render — it gets the request, the params, and the intent, and
+ * the only thing it may not assume is that it owns the document.
+ */
+export interface EmbeddedRenderRequest extends RenderProtocolRequest {
+  readonly boundary: ProtocolBoundary
+}
+
+/**
  * The result of asking a protocol whether it can render a route.
  */
 export type RenderProtocolSupport =
@@ -117,4 +131,16 @@ export interface AppRenderProtocol {
 
   /** Turn the matched route into a response. */
   render(request: RenderProtocolRequest): Promise<RenderProtocolResult>
+
+  /**
+   * Turn a subtree of someone else's route into markup that protocol can embed
+   * in its own output.
+   *
+   * Optional: a protocol that can only produce whole documents simply does not
+   * implement it, and the composition layer refuses a boundary that would need
+   * it rather than discovering the gap mid-render.
+   *
+   * @see `./composition.ts`
+   */
+  renderEmbedded?(request: EmbeddedRenderRequest): Promise<EmbeddedRender>
 }

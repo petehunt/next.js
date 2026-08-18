@@ -15,6 +15,7 @@ name = "blog-rs"
 path = "src/bin/serve.rs"
 
 [dependencies]
+blog-rs-exports = { path = "exports" }
 next-rs = { workspace = true }
 next-rs-react-renderer = { workspace = true }
 next-rs-runtime-native = { path = "../../crates/next-rs-runtime-native" }

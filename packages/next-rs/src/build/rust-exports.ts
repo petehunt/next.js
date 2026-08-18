@@ -19,6 +19,59 @@ export interface RustExport {
   returnType?: string
   isAsync: boolean
   target: ExportTarget
+  /**
+   * The Rust module the export lives in, relative to the crate root:
+   * `''` for `src/lib.rs`, `exports` for `src/exports.rs`, `a::b` for
+   * `src/a/b.rs`.
+   *
+   * The generated bridge glue lives in a *different* crate, so it has to name
+   * the full path to each registration. Filled in by the build, which knows
+   * where each source file was read from; `undefined` when that could not be
+   * worked out.
+   */
+  modulePath?: string
+  /** Where it was read from, so a diagnostic can name the file. */
+  sourcePath?: string
+}
+
+/**
+ * The Rust module path for a source file, given the crate's `src` directory.
+ *
+ * Follows Rust's standard layout, which is what an application crate uses:
+ *
+ * ```text
+ *   src/lib.rs        → (crate root)
+ *   src/exports.rs    → exports
+ *   src/a/mod.rs      → a
+ *   src/a/b.rs        → a::b
+ * ```
+ *
+ * Returns `undefined` for a file outside `srcDir`. Those are reachable — a
+ * `route.rs` under `app/` is pulled in with `#[path]` — but where `#[path]` puts
+ * a module is not derivable from its location, so the build says so rather than
+ * guessing and emitting glue that will not compile.
+ */
+export function modulePathFor(
+  filePath: string,
+  srcDir: string
+): string | undefined {
+  const normalize = (value: string) =>
+    value.replace(/\\/g, '/').replace(/\/+$/, '')
+  const file = normalize(filePath)
+  const root = normalize(srcDir)
+
+  if (!file.startsWith(`${root}/`)) {
+    return undefined
+  }
+
+  const relative = file.slice(root.length + 1).replace(/\.rs$/, '')
+  const segments = relative.split('/')
+  const last = segments[segments.length - 1]
+
+  if (last === 'lib' || last === 'main' || last === 'mod') {
+    segments.pop()
+  }
+  return segments.join('::')
 }
 
 export interface RustParameter {

@@ -24,6 +24,10 @@
 
 use std::sync::OnceLock;
 
+/// The `#[export]` functions, in their own crate so they also build for the
+/// browser (§10, §11). Re-exported so server code reads `blog_rs::exports::…`.
+pub use blog_rs_exports as exports;
+
 pub mod content;
 pub mod dates;
 pub mod frontmatter;

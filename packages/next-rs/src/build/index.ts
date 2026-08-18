@@ -41,6 +41,7 @@ import {
   exportManifest,
   findDuplicateExports,
   generateTypeScriptDeclarations,
+  modulePathFor,
   parseRustExports,
   type ExportManifest,
   type RustExport,
@@ -80,8 +81,21 @@ export interface BuildOptions {
   appCrate?: string
   /** Path to the application crate, relative to `.next-rs/generated/`. */
   appCratePath?: string
+  /**
+   * The crate the browser WASM bundle depends on, when it is not the
+   * application crate — which it usually is not, because a server crate does
+   * not compile for `wasm32-unknown-unknown`.
+   */
+  wasmCrate?: string
+  /** Path to that crate, relative to `.next-rs/generated/`. */
+  wasmCratePath?: string
   /** Path to `crates/next-rs`, relative to `.next-rs/generated/`. */
   nextRsPath?: string
+  /**
+   * The application crate's source root, used to work out the Rust module each
+   * `#[export]` lives in. Defaults to `<rustDir>/src`.
+   */
+  crateSrcDir?: string
   /** Module specifier the generated renderer entry imports its runtime from. */
   rendererRuntimeSpecifier?: string
   /** When true, nothing is written to disk. */
@@ -144,7 +158,11 @@ export async function runBuild(options: BuildOptions): Promise<BuildOutput> {
   validateLoaders(loaders, components)
 
   // Step 8: TypeScript bindings for Rust exports (spec §7, §8).
-  const exports = collectExports(rustSources)
+  //
+  // The bridge glue lives in another crate, so each export also carries the
+  // module it was found in.
+  const crateSrcDir = options.crateSrcDir ?? path.join(rustDir, 'src')
+  const exports = collectExports(rustSources, crateSrcDir)
   const duplicateExports = findDuplicateExports(exports)
   if (duplicateExports.length > 0) {
     throw new RustExportError(
@@ -177,6 +195,8 @@ export async function runBuild(options: BuildOptions): Promise<BuildOutput> {
   const glue: GeneratedGlue[] = generateBridgeGlue(exports, {
     appCrate: (options.appCrate ?? 'app').replace(/-/g, '_'),
     appCratePath: options.appCratePath ?? '../../rust',
+    wasmCrate: options.wasmCrate?.replace(/-/g, '_'),
+    wasmCratePath: options.wasmCratePath,
     nextRsPath: options.nextRsPath ?? '../../../next-rs/crates/next-rs',
     buildId: options.buildId,
     wasm: needsBrowserWasm,
@@ -321,12 +341,16 @@ function validateLoaders(
 }
 
 function collectExports(
-  sources: { path: string; source: string }[]
+  sources: { path: string; source: string }[],
+  crateSrcDir: string
 ): RustExport[] {
   const exports: RustExport[] = []
   for (const { path: file, source } of sources) {
     try {
-      exports.push(...parseRustExports(source))
+      const modulePath = modulePathFor(file, crateSrcDir)
+      for (const rustExport of parseRustExports(source)) {
+        exports.push({ ...rustExport, modulePath, sourcePath: file })
+      }
     } catch (error) {
       throw new RustExportError(
         `${file}: ${error instanceof Error ? error.message : String(error)}`

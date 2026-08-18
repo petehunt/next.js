@@ -26,7 +26,13 @@ pub async fn search(input: SearchInput) -> Result<Vec<SearchResult>> { todo!() }
 pub fn fuzzy_search(query: String, candidates: Vec<String>) -> Vec<String> { todo!() }
 `
 
-const exports = parseRustExports(SOURCE)
+// The build fills `modulePath` in from where each file was read; these all come
+// from one module, `exports`.
+const exports = parseRustExports(SOURCE).map((entry) => ({
+  ...entry,
+  modulePath: 'exports',
+  sourcePath: 'rust/src/exports.rs',
+}))
 
 const options = {
   appCrate: 'operations',
@@ -53,10 +59,35 @@ describe('generateNapiGlue', () => {
     expect(glue).toContain('#[napi(js_name = "search")]')
   })
 
-  it('builds the registry from the application crate', () => {
-    expect(glue).toContain('operations::__next_rs_export_normalize_slug()')
-    expect(glue).toContain('operations::__next_rs_export_search()')
-    expect(glue).toContain('operations::__next_rs_export_fuzzy_search()')
+  it('names the module each registration lives in', () => {
+    // `#[export]` generates the registration next to the function, so the glue
+    // — which is a different crate — has to name the whole path.
+    expect(glue).toContain(
+      'operations::exports::__next_rs_export_normalize_slug()'
+    )
+    expect(glue).toContain('operations::exports::__next_rs_export_search()')
+    expect(glue).toContain(
+      'operations::exports::__next_rs_export_fuzzy_search()'
+    )
+  })
+
+  it('omits the module for an export at the crate root', () => {
+    const atRoot = exports.map((entry) => ({ ...entry, modulePath: '' }))
+    expect(generateNapiGlue(atRoot, options)).toContain(
+      'operations::__next_rs_export_search()'
+    )
+  })
+
+  it('refuses an export whose module cannot be worked out', () => {
+    const unplaceable = [
+      { ...exports[0], modulePath: undefined, sourcePath: 'app/route.rs' },
+    ]
+    expect(() => generateNapiGlue(unplaceable, options)).toThrow(
+      BridgeGlueError
+    )
+    expect(() => generateNapiGlue(unplaceable, options)).toThrow(
+      /app\/route\.rs.*source root/s
+    )
   })
 
   it('dispatches through the tested bridge rather than calling exports directly', () => {
@@ -103,6 +134,19 @@ describe('generateWasmGlue', () => {
     expect(glue).not.toContain('normalizeSlug')
     expect(glue).not.toContain('"search"')
     expect(glue).not.toContain('__next_rs_export_normalize_slug')
+  })
+
+  it('can point at a browser-safe crate that is not the application crate', () => {
+    // A server crate does not compile for wasm32, so `#[export(client)]`
+    // functions usually live somewhere else (spec §11 at the crate level).
+    const split = generateWasmGlue(exports, {
+      ...options,
+      wasmCrate: 'operations_exports',
+    })
+    expect(split).toContain(
+      'operations_exports::exports::__next_rs_export_fuzzy_search()'
+    )
+    expect(split).not.toContain('operations::exports::')
   })
 
   it('uses the strict bridge as the runtime backstop for §11', () => {
@@ -188,6 +232,26 @@ describe('generateWasmCargoToml', () => {
     expect(toml).toContain('wasm-bindgen = "0.2"')
     expect(toml).toContain('serde-wasm-bindgen = "0.6"')
   })
+
+  it('enables the getrandom feature wasm32 needs', () => {
+    // Without this the build fails inside a transitive dependency with a
+    // message that says nothing about next-rs.
+    expect(generateWasmCargoToml(options)).toContain(
+      'getrandom = { version = "0.2", features = ["js"] }'
+    )
+  })
+
+  it('depends on the browser-safe crate when one is given', () => {
+    const toml = generateWasmCargoToml({
+      ...options,
+      wasmCrate: 'operations_exports',
+      wasmCratePath: '../../rust/exports',
+    })
+    expect(toml).toContain(
+      'operations-exports = { path = "../../rust/exports" }'
+    )
+    expect(toml).not.toContain('operations = { path = "../../rust" }')
+  })
 })
 
 describe('generateRustAliasModule', () => {
@@ -258,6 +322,7 @@ describe('Rust keyword safety', () => {
         parameters: [{ name: 'match', type: 'String' }],
         isAsync: false,
         target: 'client',
+        modulePath: '',
       },
     ]
     const napi = generateNapiGlue(withKeyword, options)

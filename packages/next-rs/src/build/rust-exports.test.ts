@@ -1,4 +1,5 @@
 import {
+  modulePathFor,
   RustExportError,
   declarationFor,
   exportManifest,
@@ -259,5 +260,32 @@ describe('toCamelCase', () => {
     expect(toCamelCase('normalize_slug')).toBe('normalizeSlug')
     expect(toCamelCase('search')).toBe('search')
     expect(toCamelCase('a_b_c')).toBe('aBC')
+  })
+})
+
+describe('modulePathFor', () => {
+  it('follows the standard crate layout', () => {
+    expect(modulePathFor('/app/rust/src/lib.rs', '/app/rust/src')).toBe('')
+    expect(modulePathFor('/app/rust/src/main.rs', '/app/rust/src')).toBe('')
+    expect(modulePathFor('/app/rust/src/exports.rs', '/app/rust/src')).toBe(
+      'exports'
+    )
+    expect(modulePathFor('/app/rust/src/a/mod.rs', '/app/rust/src')).toBe('a')
+    expect(modulePathFor('/app/rust/src/a/b.rs', '/app/rust/src')).toBe('a::b')
+  })
+
+  it('tolerates a trailing separator on the source root', () => {
+    expect(modulePathFor('/app/rust/src/exports.rs', '/app/rust/src/')).toBe(
+      'exports'
+    )
+  })
+
+  it('gives up on a file outside the source root', () => {
+    // `app/route.rs` is pulled in with `#[path]`, and where that puts a module
+    // is not derivable from where the file lives.
+    expect(modulePathFor('/app/app/route.rs', '/app/rust/src')).toBeUndefined()
+    expect(
+      modulePathFor('/app/rust/srcfoo/x.rs', '/app/rust/src')
+    ).toBeUndefined()
   })
 })

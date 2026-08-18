@@ -93,8 +93,21 @@ describe('runBuild', () => {
 
     expect(Object.keys(output.generated).sort()).toEqual([
       'generated/components.js',
+      // The `#[napi]` addon crate: attributes, manifest, build script and the
+      // addon's own declarations (spec §82 step 10).
+      'generated/napi.Cargo.toml',
+      'generated/napi.build.rs',
+      'generated/napi.d.ts',
+      'generated/napi.rs',
       'generated/react-bindings.rs',
+      // The renderer entry, present because this project has a loader (§79).
+      'generated/react-renderer.mjs',
       'generated/rust.d.ts',
+      // The `@app/rust` alias module that picks N-API or WASM (spec §7).
+      'generated/rust.js',
+      // The browser WASM crate, present because of `#[export(client)]` (§10).
+      'generated/wasm.Cargo.toml',
+      'generated/wasm.rs',
       'manifests/react-components.json',
       'manifests/react-loaders.json',
       'manifests/routes.json',
@@ -163,7 +176,7 @@ describe('runBuild', () => {
     await scaffold()
     const output = await runBuild({ projectRoot: root, buildId: 'build-1' })
 
-    expect(output.written).toHaveLength(8)
+    expect(output.written).toHaveLength(16)
     const routes = JSON.parse(
       await fs.readFile(
         path.join(root, '.next-rs/manifests/routes.json'),

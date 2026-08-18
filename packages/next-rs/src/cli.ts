@@ -7,6 +7,7 @@
  */
 
 import { runBuild, type BuildOptions, type BuildOutput } from './build'
+import { startDevSession, type DevSession } from './dev'
 
 export type Command = 'build' | 'dev' | 'start'
 
@@ -81,17 +82,27 @@ export function planBuild(options: PlanOptions): CommandStep[] {
   return steps
 }
 
-/** The processes `next-rs dev` coordinates (spec §81). */
+/**
+ * The processes `next-rs dev` runs (spec §81).
+ *
+ * `next-rs dev` is a watcher, not a command sequence — see
+ * [`startDevSession`](./dev/session.ts). This describes what that session
+ * supervises, which is what `next-rs dev --dry-run` prints and what the tests
+ * assert against.
+ */
 export function planDev(options: PlanOptions): CommandStep[] {
   const steps: CommandStep[] = [
-    {
-      name: 'watch Rust',
-      command: 'cargo',
-      args: ['watch', '-x', 'build'],
-      optional: true,
-    },
-    { name: 'regenerate manifests on change' },
+    { name: 'scan routes, components and exports' },
+    { name: 'compile native Rust', command: 'cargo', args: ['build'] },
+    { name: 'run the native server', command: 'cargo', args: ['run'] },
   ]
+  if (options.needsReactRenderer) {
+    steps.push({
+      name: 'run the React SSR renderer',
+      command: 'node',
+      args: ['.next-rs/generated/react-renderer.mjs'],
+    })
+  }
   if (options.needsNext) {
     steps.push({ name: 'Next dev server', command: 'next', args: ['dev'] })
   }
@@ -103,7 +114,18 @@ export function planDev(options: PlanOptions): CommandStep[] {
       optional: true,
     })
   }
+  steps.push({ name: 'watch for changes and rebuild' })
   return steps
+}
+
+/** Starts the development watcher (spec §81). */
+export async function runDevCommand(
+  options: BuildOptions & { log?: (message: string) => void }
+): Promise<DevSession> {
+  return startDevSession({
+    ...options,
+    log: options.log ?? ((message: string) => console.log(message)),
+  })
 }
 
 export interface RunOptions extends BuildOptions {
@@ -130,12 +152,8 @@ export async function runBuildCommand(options: RunOptions): Promise<RunResult> {
 
   const steps = planBuild({
     needsReactRenderer: output.needsReactRenderer,
-    needsWasm: output.exports.exports.some(
-      (entry) => entry.target === 'client'
-    ),
-    needsNext: output.routes.routes.some((route) =>
-      route.kind.startsWith('NEXT_')
-    ),
+    needsWasm: output.needsWasm,
+    needsNext: output.needsNext,
   })
 
   const executed: string[] = []
@@ -206,37 +224,30 @@ async function main(): Promise<void> {
     return
   }
 
-  // `dev` and `start` reuse the same scan so the manifests are current, then hand
-  // off to the coordinated processes.
-  const output = await runBuild({
-    projectRoot,
-    buildId: buildId ?? 'dev',
-  })
-  const steps =
-    command === 'dev'
-      ? planDev({
-          needsReactRenderer: output.needsReactRenderer,
-          needsWasm: output.exports.exports.some(
-            (entry) => entry.target === 'client'
-          ),
-          needsNext: output.routes.routes.some((route) =>
-            route.kind.startsWith('NEXT_')
-          ),
-        })
-      : [
-          {
-            name: 'run the native server',
-            command: 'cargo',
-            args: ['run', '--release'],
-          },
-        ]
-
-  for (const step of steps) {
-    if (!step.command) continue
-    await exec(step).catch((error) => {
-      if (!step.optional) throw error
+  if (command === 'dev') {
+    // `dev` owns its own build: the session rescans on every change, so a
+    // separate up-front `runBuild` here would just be the first of those.
+    const session = await runDevCommand({
+      projectRoot,
+      buildId: buildId ?? 'dev',
     })
+    const shutdown = () => {
+      void session.stop().then(() => process.exit(0))
+    }
+    process.on('SIGINT', shutdown)
+    process.on('SIGTERM', shutdown)
+    // The watcher and the supervised children keep the loop alive.
+    return
   }
+
+  // `start` scans once so the manifests are current, then runs the release
+  // binary.
+  await runBuild({ projectRoot, buildId: buildId ?? 'start' })
+  await exec({
+    name: 'run the native server',
+    command: 'cargo',
+    args: ['run', '--release'],
+  })
 }
 
 if (require.main === module) {

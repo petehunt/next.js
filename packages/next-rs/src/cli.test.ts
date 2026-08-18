@@ -93,20 +93,23 @@ describe('planBuild', () => {
 })
 
 describe('planDev', () => {
-  it('coordinates the watchers from spec §81', () => {
+  it('describes what the dev session supervises (spec §81)', () => {
     const steps = planDev({
       needsReactRenderer: true,
       needsWasm: true,
       needsNext: true,
     })
     expect(labels(steps)).toEqual([
-      'cargo watch -x build',
-      'regenerate manifests on change',
+      'scan routes, components and exports',
+      'cargo build',
+      'cargo run',
+      'node .next-rs/generated/react-renderer.mjs',
       'next dev',
       'cargo build --target wasm32-unknown-unknown',
+      'watch for changes and rebuild',
     ])
-    // A missing `cargo watch` must not break dev.
-    expect(steps[0].optional).toBe(true)
+    // A missing WASM toolchain must not break dev.
+    expect(steps[steps.length - 2].optional).toBe(true)
   })
 
   it('skips the Next dev server for a fully Rust-owned application', () => {
@@ -114,6 +117,13 @@ describe('planDev', () => {
       planDev({ needsReactRenderer: false, needsWasm: false, needsNext: false })
     )
     expect(steps).not.toContain('next dev')
+  })
+
+  it('never mentions the renderer for a project with no React slots (spec §80)', () => {
+    const steps = labels(
+      planDev({ needsReactRenderer: false, needsWasm: false, needsNext: true })
+    )
+    expect(steps.join(' ')).not.toContain('react-renderer')
   })
 })
 

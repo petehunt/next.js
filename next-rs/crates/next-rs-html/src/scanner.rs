@@ -240,7 +240,21 @@ impl TailGuard {
         }
     }
 
-    /// Releases everything held back.
+    /// Releases an unresolved partial-tag candidate at end of input.
+    ///
+    /// These bytes are *positional*: they were only held back because they might
+    /// have been the start of `</body`. Once input has ended they cannot be, so
+    /// they must be emitted in document order — before any outstanding frames,
+    /// not after them.
+    pub fn flush_partial(&mut self) -> Option<Bytes> {
+        if self.triggered {
+            return None;
+        }
+        let out = std::mem::take(&mut self.partial);
+        (!out.is_empty()).then(|| out.freeze())
+    }
+
+    /// Releases everything still held back.
     pub fn finish(&mut self) -> Option<Bytes> {
         let mut out = std::mem::take(&mut self.partial);
         out.unsplit(std::mem::take(&mut self.held));
@@ -506,6 +520,25 @@ mod tests {
             b"<html>x".to_vec()
         );
         assert!(guard.is_holding());
+    }
+
+    #[test]
+    fn tail_guard_flushes_an_unresolved_partial_in_document_order() {
+        let mut guard = TailGuard::new();
+        // `</b` could start `</body`, so it is held...
+        assert_eq!(guard.feed(b"x</b").unwrap().to_vec(), b"x".to_vec());
+        // ...but at end of input it is ordinary text.
+        assert_eq!(guard.flush_partial().unwrap().to_vec(), b"</b".to_vec());
+        assert!(guard.finish().is_none());
+    }
+
+    #[test]
+    fn tail_guard_never_flushes_a_confirmed_tail_early() {
+        let mut guard = TailGuard::new();
+        guard.feed(b"x</body></html>");
+        assert!(guard.is_holding());
+        assert!(guard.flush_partial().is_none());
+        assert_eq!(guard.finish().unwrap().to_vec(), b"</body></html>".to_vec());
     }
 
     #[test]

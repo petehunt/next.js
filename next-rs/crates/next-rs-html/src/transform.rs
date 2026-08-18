@@ -246,6 +246,12 @@ impl Stream for SlotTransform {
                         let mut events = Vec::new();
                         this.scanner.finish(&mut events);
                         this.events.extend(events);
+                        // Bytes held back only because they *might* have started
+                        // `</body` are positional: with input ended they cannot
+                        // be, so they go out now rather than after the frames.
+                        if let Some(partial) = this.tail.flush_partial() {
+                            this.out.push_back(partial);
+                        }
                         continue;
                     }
                     // Both the upstream and the pending slots have registered

@@ -121,6 +121,35 @@ async fn a_closing_tag_split_across_chunks_is_reassembled() {
 }
 
 #[tokio::test]
+async fn a_truncated_closing_tag_is_preserved_exactly_once() {
+    // `</b` is held back while it might have started `</body`. Once the stream
+    // ends it is ordinary text and must still appear — exactly once, unaltered.
+    // Its position relative to a frame is unconstrained: frames are not
+    // positional (spec §42), only the confirmed document tail is (spec §51).
+    let output = transform(Body::from(format!("<div>{}</b", slot(4)))).await;
+
+    assert_eq!(output.matches("</b").count(), 1, "output: {output}");
+    assert!(output.starts_with("<div>"));
+    assert!(output.contains(r#"data-nrs-frame="client""#));
+    assert!(!output.contains("~NRS1."));
+}
+
+#[tokio::test]
+async fn frames_always_precede_a_confirmed_document_tail() {
+    // The invariant §51 actually asks for, checked with content after the slot.
+    let output = transform(Body::from(format!(
+        "<html><body>{}<footer>f</footer></body></html>",
+        slot(5)
+    )))
+    .await;
+
+    let frame = output.rfind("data-nrs-frame").unwrap();
+    assert!(frame < output.find("</body>").unwrap(), "output: {output}");
+    assert!(output.contains("<footer>f</footer>"));
+    assert!(output.ends_with("</body></html>"));
+}
+
+#[tokio::test]
 async fn many_slots_all_resolve() {
     let slots: String = (0..50).map(|index| slot(index).to_string()).collect();
     let output = transform(Body::from(format!("<html><body>{slots}</body></html>"))).await;

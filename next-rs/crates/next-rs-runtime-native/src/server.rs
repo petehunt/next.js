@@ -73,10 +73,13 @@ async fn serve_one(
         Err(error) => return to_http_response(error.into_response()),
     };
 
-    let response = match app.handle(request).await {
+    let mut response = match app.handle(request).await {
         Ok(response) => response,
         Err(error) => error.into_response(),
     };
+    // A 204 or 304 must not carry a body; sending one is a protocol violation
+    // rather than something for the client to tolerate.
+    response.normalise_body();
     to_http_response(response)
 }
 
@@ -258,6 +261,31 @@ mod tests {
                 .to_lowercase()
                 .contains("transfer-encoding: chunked")
         );
+    }
+
+    #[tokio::test]
+    async fn a_204_response_carries_no_body() {
+        async fn no_content(_request: Request) -> next_rs_core::Result<Response> {
+            Ok(Response::new(StatusCode::NO_CONTENT).with_body("should be dropped"))
+        }
+
+        let app = NextRsApp::new(
+            RouteManifest::new("b").with_route(RouteEntry::new("/gone", RouteKind::RustExactRoute)),
+        )
+        .route(
+            "/gone",
+            Arc::new(MethodRoute::new().get(Arc::new(no_content))),
+        );
+
+        let address = start(app).await;
+        let response = raw_request(
+            address,
+            "GET /gone HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n",
+        )
+        .await;
+
+        assert!(response.starts_with("HTTP/1.1 204"), "{response}");
+        assert!(!response.contains("should be dropped"), "{response}");
     }
 
     #[test]

@@ -7,6 +7,7 @@ use crate::{
     extensions::Extensions,
     headers::HeaderMap,
     method::Method,
+    session::Session,
     url::{Query, RequestUrl},
 };
 
@@ -110,6 +111,14 @@ impl Request {
     /// The peer address of the connection, when the adapter knows it.
     pub fn ip(&self) -> Option<IpAddr> {
         self.remote_addr
+    }
+
+    /// The session attached by a session middleware, if any.
+    ///
+    /// Spec §95 reads `req.session.user_id()?`; the session lives in request
+    /// extensions so that no core type has to know how sessions are resolved.
+    pub fn session(&self) -> Option<&Session> {
+        self.extensions.get::<Session>()
     }
 
     pub fn extensions(&self) -> &Extensions {

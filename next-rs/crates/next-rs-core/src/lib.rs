@@ -17,6 +17,7 @@ mod method;
 mod proxy;
 mod request;
 mod response;
+mod session;
 mod status;
 mod url;
 
@@ -29,6 +30,7 @@ pub use method::Method;
 pub use proxy::{ProxyResult, Redirect, Rewrite};
 pub use request::{Request, RequestBuilder, RequestParts};
 pub use response::{Html, IntoResponse, Json, Response, ResponseBuilder, Text};
+pub use session::Session;
 pub use status::StatusCode;
 pub use url::{Query, RequestUrl};
 

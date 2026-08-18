@@ -1,0 +1,19 @@
+[package]
+name = "next-rs-crypto"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Authenticated encryption for next-rs React slot invocation tokens"
+
+[dependencies]
+base64 = { workspace = true }
+chacha20poly1305 = { workspace = true, features = ["std"] }
+next-rs-core = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+subtle = "2"
+zeroize = { version = "1", features = ["zeroize_derive"] }
+
+[lints]
+workspace = true

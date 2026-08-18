@@ -11,6 +11,7 @@
 mod body;
 mod cookies;
 mod error;
+mod exports;
 mod extensions;
 mod headers;
 mod method;
@@ -24,6 +25,10 @@ mod url;
 pub use body::{Body, BodyStream, SizeHint};
 pub use cookies::{Cookie, CookieJar, SameSite};
 pub use error::{Error, ErrorKind, Result};
+pub use exports::{
+    ExportManifest, ExportManifestEntry, ExportRegistration, ExportRegistry, ExportTarget,
+    decode_arg, encode_result,
+};
 pub use extensions::Extensions;
 pub use headers::{HeaderMap, HeaderName, HeaderValues};
 pub use method::Method;

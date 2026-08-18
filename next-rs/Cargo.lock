@@ -167,6 +167,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
+name = "next-rs"
+version = "0.1.0"
+dependencies = [
+ "futures-util",
+ "next-rs-core",
+ "next-rs-crypto",
+ "next-rs-html",
+ "next-rs-http",
+ "next-rs-macros",
+ "next-rs-react",
+ "next-rs-router",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "next-rs-core"
 version = "0.1.0"
 dependencies = [
@@ -219,6 +236,15 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+]
+
+[[package]]
+name = "next-rs-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
 ]
 
 [[package]]

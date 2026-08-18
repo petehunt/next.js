@@ -194,6 +194,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "next-rs-html"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "futures-util",
+ "memchr",
+ "next-rs-core",
+ "next-rs-crypto",
+ "next-rs-react",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "next-rs-react"
 version = "0.1.0"
 dependencies = [

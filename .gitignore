@@ -88,3 +88,7 @@ evals/.tarballs/
 evals/experiments/
 evals/results/
 evals/agent-results.json
+
+# next-rs (progressive Rust runtime) build output
+next-rs/target
+.next-rs/

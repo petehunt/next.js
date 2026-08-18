@@ -19,7 +19,10 @@ members = [
 
 exclude = [
   "crates/next-error-code-swc-plugin",
-  "rspack/crates/binding"
+  "rspack/crates/binding",
+  # `next-rs` is its own workspace so the progressive Rust runtime can be built
+  # and tested without compiling Turbopack. See `next-rs/README.md`.
+  "next-rs"
 ]
 
 [workspace.lints.clippy]

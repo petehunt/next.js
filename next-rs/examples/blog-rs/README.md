@@ -6,8 +6,8 @@ front matter with `gray-matter`, converts Markdown with `remark`, and renders
 seventeen React components.
 
 This is that application with the server side moved to Rust. It is a working
-port, not a sketch: `cargo run -p blog-rs` serves it, `cargo test -p blog-rs`
-covers it, and `benchmarks/` measures it against the original.
+port, not a sketch: `cargo run -p blog-rs` serves it, 78 tests cover it, and
+`benchmarks/` measures it against the original.
 
 ## What moved, and what did not
 
@@ -58,14 +58,15 @@ There is no Node in the request path. The whole deployment is one binary.
 ## Testing it
 
 ```bash
-cargo test -p blog-rs
+cargo test -p blog-rs -p blog-rs-exports
 ```
 
-72 tests: the front-matter subset parser, the date formatter, the Markdown
-pipeline, the content cache, every view, the loaders, and
-[`tests/serves_the_blog.rs`](tests/serves_the_blog.rs), which drives the real
+78 tests: the front-matter subset parser, the date formatter, the Markdown
+pipeline, the content cache, every view, the loaders, the `#[export]` functions,
+and [`tests/serves_the_blog.rs`](tests/serves_the_blog.rs), which drives the real
 `NextRsApp` pipeline — routing, slot transform, frame emission, the refresh
-endpoint, and the 404 path.
+endpoint, the 404 path, and §80 with a renderer that panics if it is ever
+called.
 
 ## Layout
 
@@ -77,7 +78,8 @@ blog-rs/
 │   └── styles.css/route.rs       GET /styles.css
 ├── components/
 │   ├── ThemeSwitcher.tsx         ported from blog-starter, still React
-│   └── SubscribeForm.tsx         new, for .ssr() + .swr() coverage
+│   └── SubscribeForm.tsx         new, for .swr() coverage
+├── exports/                      #[export] functions, in a wasm32-buildable crate
 ├── _posts/                       the same three Markdown files
 ├── next-rs.components.ts         the component registry (§24)
 └── src/

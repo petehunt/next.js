@@ -4,8 +4,9 @@ use std::fmt;
 ///
 /// `route.rs` exports one function per method (`GET`, `POST`, ...) per spec §17,
 /// so the router needs a cheap, case-normalising method type.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub enum Method {
+    #[default]
     Get,
     Head,
     Post,
@@ -60,12 +61,6 @@ impl Method {
     /// True for methods defined as safe by RFC 9110.
     pub fn is_safe(&self) -> bool {
         matches!(self, Self::Get | Self::Head | Self::Options | Self::Trace)
-    }
-}
-
-impl Default for Method {
-    fn default() -> Self {
-        Self::Get
     }
 }
 

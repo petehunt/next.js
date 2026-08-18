@@ -415,6 +415,17 @@ mod tests {
     }
 
     #[test]
+    fn a_payload_exactly_at_the_bound_is_still_accepted() {
+        let mut scanner = MarkerScanner::with_max_payload_len(16);
+        let mut events = Vec::new();
+        scanner.feed(b"~NRS1.", &mut events);
+        scanner.feed(&[b'A'; 16], &mut events);
+        scanner.feed(b"~", &mut events);
+        scanner.finish(&mut events);
+        assert_eq!(markers(&events), vec!["A".repeat(16)]);
+    }
+
+    #[test]
     fn carry_stays_bounded_for_ordinary_html() {
         let mut scanner = MarkerScanner::new();
         let mut events = Vec::new();

@@ -341,6 +341,25 @@ describe('startRuntime', () => {
     runtime.stop()
   })
 
+  it('ignores a duplicate frame for a slot it already mounted', async () => {
+    document.body.innerHTML =
+      placeholder('dup') +
+      clientFrame('dup', 'Dashboard') +
+      clientFrame('dup', 'Other')
+
+    const { adapter, rendered } = fakeReact()
+    const runtime = startRuntime({
+      react: adapter,
+      loadComponent,
+      observe: false,
+    })
+    await runtime.flush()
+
+    expect(rendered).toHaveLength(1)
+    expect(runtime.mountedCount).toBe(1)
+    runtime.stop()
+  })
+
   it('unmounts everything when stopped', async () => {
     document.body.innerHTML = placeholder('u') + clientFrame('u', 'Dashboard')
     const { adapter } = fakeReact()

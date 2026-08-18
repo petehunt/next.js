@@ -358,6 +358,42 @@ mod tests {
     }
 
     #[test]
+    fn a_mount_at_the_root_owns_every_path() {
+        let manifest =
+            RouteManifest::new("b").with_route(RouteEntry::new("/", RouteKind::RustMount));
+
+        let matched = manifest.resolve("/anything/at/all").unwrap();
+        assert_eq!(matched.kind(), RouteKind::RustMount);
+        assert_eq!(matched.remainder.as_deref(), Some("/anything/at/all"));
+        assert_eq!(
+            manifest.resolve("/").unwrap().remainder.as_deref(),
+            Some("/")
+        );
+    }
+
+    #[test]
+    fn an_exact_next_route_still_wins_against_a_root_mount() {
+        let manifest = RouteManifest::new("b")
+            .with_route(RouteEntry::new("/", RouteKind::RustMount))
+            .with_route(RouteEntry::new("/dashboard", RouteKind::NextPage));
+        assert_eq!(
+            manifest.resolve("/dashboard").unwrap().kind(),
+            RouteKind::NextPage
+        );
+        assert_eq!(
+            manifest.resolve("/dashboard/settings").unwrap().kind(),
+            RouteKind::RustMount
+        );
+    }
+
+    #[test]
+    fn a_trailing_slash_resolves_the_same_route() {
+        let manifest = RouteManifest::new("b")
+            .with_route(RouteEntry::new("/api/users", RouteKind::RustExactRoute));
+        assert!(manifest.resolve("/api/users/").is_some());
+    }
+
+    #[test]
     fn captures_params_from_the_resolved_route() {
         let manifest = RouteManifest::new("b").with_route(RouteEntry::new(
             "/api/users/[id]",

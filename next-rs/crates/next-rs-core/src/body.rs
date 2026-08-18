@@ -12,8 +12,10 @@ use crate::error::{Error, Result};
 pub type BodyStream = Pin<Box<dyn Stream<Item = Result<Bytes>> + Send + 'static>>;
 
 /// A request or response body.
+#[derive(Default)]
 pub enum Body {
     /// No body at all.
+    #[default]
     Empty,
     /// A fully buffered body.
     Bytes(Bytes),
@@ -151,12 +153,6 @@ impl Body {
 
 fn too_large(max_bytes: usize) -> Error {
     Error::payload_too_large(format!("body exceeds the {max_bytes} byte limit"))
-}
-
-impl Default for Body {
-    fn default() -> Self {
-        Self::Empty
-    }
 }
 
 impl fmt::Debug for Body {

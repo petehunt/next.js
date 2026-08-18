@@ -170,9 +170,7 @@ pub fn plan_routes(build_id: impl Into<String>, files: &[RouteFile]) -> Result<R
     }
 
     // Stable order keeps generated manifests diffable.
-    manifest
-        .routes
-        .sort_by(|left, right| left.path.to_string().cmp(&right.path.to_string()));
+    manifest.routes.sort_by_key(|left| left.path.to_string());
     Ok(manifest)
 }
 

@@ -238,10 +238,7 @@ impl SlotFrame {
             inner.push_str("</div>");
         }
 
-        let use_template = !self
-            .html
-            .as_deref()
-            .is_some_and(|html| contains_template_close(html));
+        let use_template = !self.html.as_deref().is_some_and(contains_template_close);
 
         if use_template {
             format!(
@@ -377,6 +374,23 @@ mod tests {
         assert!(html.contains("\\u0026"));
         // The only real closing script tag is the one we wrote.
         assert_eq!(html.matches("</script>").count(), 1);
+    }
+
+    #[test]
+    fn a_props_value_that_looks_like_a_closing_template_stays_inert() {
+        // The markup fallback is only for server-rendered markup; props are JSON
+        // and are escaped, so a `</template>` inside them must not switch the
+        // wrapper or truncate the frame.
+        let frame = SlotFrame::client(
+            slot_id(),
+            "Dashboard",
+            json!({ "note": "</template><img onerror=alert(1)>" }),
+        );
+        let html = frame.to_html();
+        assert!(html.starts_with("<template "));
+        assert_eq!(html.matches("</template>").count(), 1);
+        assert!(!html.contains("<img"));
+        assert!(html.contains("\\u003c/template\\u003e"));
     }
 
     #[test]

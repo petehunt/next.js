@@ -393,12 +393,12 @@ mod tests {
 
     #[test]
     fn specificity_orders_literals_first() {
-        let mut patterns = vec![
+        let mut patterns = [
             RoutePath::parse("/a/[...rest]"),
             RoutePath::parse("/a/[id]"),
             RoutePath::parse("/a/b"),
         ];
-        patterns.sort_by(|left, right| right.specificity_key().cmp(&left.specificity_key()));
+        patterns.sort_by_key(|path| std::cmp::Reverse(path.specificity_key()));
         assert_eq!(
             patterns
                 .iter()

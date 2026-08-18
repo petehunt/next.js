@@ -64,6 +64,13 @@ describe('routePathForFile', () => {
     expect(routePathForFile('api/_lib/route.ts')).toBeNull()
   })
 
+  it('handles catch-all and optional catch-all segments', () => {
+    expect(routePathForFile('blog/[...slug]/page.tsx')).toBe('/blog/[...slug]')
+    expect(routePathForFile('docs/[[...slug]]/page.tsx')).toBe(
+      '/docs/[[...slug]]'
+    )
+  })
+
   it('returns null for non-routing files', () => {
     expect(routePathForFile('api/helpers.rs')).toBeNull()
   })

@@ -315,6 +315,27 @@ mod tests {
     }
 
     #[test]
+    fn handles_degenerate_query_strings() {
+        assert!(Query::parse("").is_empty());
+        assert!(Query::parse("?").is_empty());
+        // A key with no `=` is present with an empty value.
+        let query = Query::parse("flag&a=&=b");
+        assert_eq!(query.get("flag"), Some(""));
+        assert_eq!(query.get("a"), Some(""));
+        assert_eq!(query.get(""), Some("b"));
+        // An empty value is not a boolean error; it reads as false.
+        assert!(!query.get_bool("a").unwrap());
+    }
+
+    #[test]
+    fn re_encodes_a_query_string() {
+        let query = Query::parse("a=hello world&b=%2F");
+        let encoded = query.to_encoded_string();
+        assert_eq!(Query::parse(&encoded), query);
+        assert!(!encoded.contains(' '));
+    }
+
+    #[test]
     fn with_path_preserves_query() {
         let url = RequestUrl::parse("/old?keep=1").unwrap();
         let rewritten = url.with_path("new");

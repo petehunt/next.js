@@ -263,7 +263,7 @@ mod tests {
     #[test]
     fn exposes_its_app() {
         let server = NativeServer::new(Arc::new(app()));
-        assert!(server.app().manifest().routes.len() >= 1);
+        assert!(!server.app().manifest().routes.is_empty());
         assert_eq!(
             StatusCode::OK.as_u16(),
             200,

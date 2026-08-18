@@ -470,6 +470,21 @@ mod tests {
     }
 
     #[test]
+    fn a_huge_ttl_saturates_instead_of_overflowing() {
+        // `issued_at + ttl` must not wrap around and produce a token that is
+        // already expired.
+        let clock = FixedClock::at(u64::MAX - 10);
+        let codec = codec()
+            .with_ttl_seconds(u64::MAX)
+            .unwrap()
+            .with_clock(clock.clone());
+        let token = codec.issue("l", "C", vec![], None).unwrap();
+        let decoded = codec.decode(&token, None).unwrap();
+        assert_eq!(decoded.expires_at, u64::MAX);
+        assert!(!decoded.is_expired(clock.now_unix_seconds()));
+    }
+
+    #[test]
     fn rejects_a_zero_ttl() {
         assert!(codec().with_ttl_seconds(0).is_err());
     }

@@ -89,6 +89,12 @@ export interface BuildOptions {
   /**
    * The Cargo crate holding the application's `#[export]` functions, as the
    * generated bridge glue must name it. Defaults to `app`.
+   *
+   * This and `crateSrcDir` are a pair: the module path in the generated glue is
+   * derived from where each source file sits relative to `crateSrcDir`, so
+   * `appCrate` has to be the crate whose source root that is. Naming a crate
+   * that merely *re-exports* the functions produces glue that does not compile,
+   * because the registration lives in the crate that declared it.
    */
   appCrate?: string
   /** Path to the application crate, relative to `.next-rs/generated/`. */
@@ -104,8 +110,8 @@ export interface BuildOptions {
   /** Path to `crates/next-rs`, relative to `.next-rs/generated/`. */
   nextRsPath?: string
   /**
-   * The application crate's source root, used to work out the Rust module each
-   * `#[export]` lives in. Defaults to `<rustDir>/src`.
+   * The source root of `appCrate`, used to work out the Rust module each
+   * `#[export]` lives in. Defaults to `<rustDir>/src`. See `appCrate`.
    */
   crateSrcDir?: string
   /** Module specifier the generated renderer entry imports its runtime from. */

@@ -13,6 +13,12 @@ import {
   checkClientBoundary,
 } from './client-boundary'
 import {
+  ClientComponentError,
+  checkRegisteredComponents,
+  readTsconfigAliases,
+  type ComponentProblem,
+} from './client-components'
+import {
   componentManifest,
   generateComponentMap,
   generateRustBindings,
@@ -49,6 +55,7 @@ import {
 
 export * from './bridge-glue'
 export * from './client-boundary'
+export * from './client-components'
 export * from './component-registry'
 export * from './react-loaders'
 export * from './renderer-entry'
@@ -72,6 +79,11 @@ export interface BuildOptions {
   registryPath?: string
   /** Module specifier applications import Rust through (spec §7). */
   rustAlias?: string
+  /**
+   * Prefix aliases for resolving registered component modules. Read from
+   * `tsconfig.json` when not given.
+   */
+  componentAliases?: Record<string, string[]>
   /** Directories scanned for Client Components, relative to the project root. */
   clientDirs?: string[]
   /**
@@ -117,6 +129,11 @@ export interface BuildOutput {
   needsWasm: boolean
   /** Whether Next still owns any route, i.e. whether §78 is needed. */
   needsNext: boolean
+  /**
+   * Non-fatal findings about registered components — currently only `next/image`,
+   * which needs an endpoint a Rust-owned route does not serve.
+   */
+  componentWarnings: ComponentProblem[]
 }
 
 /** `.next-rs/manifests/token-protocol.json` (spec §82 step 17). */
@@ -151,6 +168,20 @@ export async function runBuild(options: BuildOptions): Promise<BuildOutput> {
 
   // Step 5: discover registered Client Components (spec §24).
   const components = await readComponentRegistry(registryPath)
+
+  // Step 6: check that each one can actually be bundled and mounted. A slot has
+  // no Next component tree above it, so a component that reaches for one fails
+  // in the browser — and a build error naming the component is much easier to
+  // act on than `invariant expected app router to be mounted`.
+  const componentProblems = await checkRegisteredComponents(components, {
+    projectRoot,
+    aliases:
+      options.componentAliases ?? (await readTsconfigAliases(projectRoot)),
+  })
+  const fatal = componentProblems.filter((problem) => problem.fatal)
+  if (fatal.length > 0) {
+    throw new ClientComponentError(fatal)
+  }
 
   // Steps 7 and 16: read and validate `#[react_component]` loaders.
   const rustSources = await readRustSources([rustDir, appDir])
@@ -270,6 +301,7 @@ export async function runBuild(options: BuildOptions): Promise<BuildOutput> {
     needsReactRenderer: loaders.length > 0,
     needsWasm: needsBrowserWasm,
     needsNext,
+    componentWarnings: componentProblems.filter((problem) => !problem.fatal),
   }
 }
 

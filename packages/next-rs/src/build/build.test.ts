@@ -76,6 +76,12 @@ async function scaffold(): Promise<void> {
       '\n'
     )
   )
+  await write(
+    'components/Metrics.tsx',
+    ['"use client"', 'export default function Metrics() { return null }'].join(
+      '\n'
+    )
+  )
 }
 
 beforeEach(async () => {

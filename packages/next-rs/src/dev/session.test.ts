@@ -79,6 +79,13 @@ describe('startDevSession', () => {
         path.join(root, 'next-rs.components.ts'),
         options.registry
       )
+      // The build checks that every registered component resolves to a real
+      // Client Component, so the fixture has to have one.
+      await fs.mkdir(path.join(root, 'components'), { recursive: true })
+      await fs.writeFile(
+        path.join(root, 'components', 'Metrics.tsx'),
+        '"use client"\nexport default function Metrics() { return null }\n'
+      )
     }
     return root
   }
@@ -314,6 +321,11 @@ describe('startDevSession', () => {
     expect(events).not.toContain(`start ${RENDERER_PROCESS}`)
 
     await fs.writeFile(path.join(root, 'rust', 'src', 'lib.rs'), RUST_WITH_SLOT)
+    await fs.mkdir(path.join(root, 'components'), { recursive: true })
+    await fs.writeFile(
+      path.join(root, 'components', 'Metrics.tsx'),
+      '"use client"\nexport default function Metrics() { return null }\n'
+    )
     await fs.writeFile(
       path.join(root, 'next-rs.components.ts'),
       `import Metrics from '@/components/Metrics'\nexport default { Metrics }\n`

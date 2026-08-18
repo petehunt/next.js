@@ -1,0 +1,32 @@
+{
+  "name": "@next/rs",
+  "version": "16.3.1-canary.22",
+  "keywords": [
+    "react",
+    "next",
+    "next.js",
+    "rust",
+    "next-rs"
+  ],
+  "description": "Build tooling and browser runtime for next-rs, the progressive Rust runtime for Next.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vercel/next.js",
+    "directory": "packages/next-rs"
+  },
+  "author": "Next.js Team <support@vercel.com>",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "next-rs": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "prebuild": "node ../../scripts/rm.mjs dist",
+    "build": "tsc",
+    "types": "tsc --noEmit"
+  }
+}

@@ -17,6 +17,7 @@ const customJestConfig = {
     '<rootDir>/../packages/eslint-plugin-internal/',
     '<rootDir>/../packages/font/src/',
     '<rootDir>/../packages/next-routing/',
+    '<rootDir>/../packages/next-rs/src/',
   ],
   haste: {
     // Throwing to avoid warnings creeping up over time polluting log output.

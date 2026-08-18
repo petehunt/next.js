@@ -1,0 +1,17 @@
+[package]
+name = "next-rs-runtime-wasm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "The browser WASM bridge for next-rs client exports"
+
+[dependencies]
+next-rs-core = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt", "macros"] }
+
+[lints]
+workspace = true

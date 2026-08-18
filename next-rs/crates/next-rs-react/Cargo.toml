@@ -1,0 +1,21 @@
+[package]
+name = "next-rs-react"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "React Client Component slots backed by typed Rust loaders"
+
+[dependencies]
+futures-util = { workspace = true }
+next-rs-core = { workspace = true }
+next-rs-crypto = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt", "macros", "rt-multi-thread"] }
+
+[lints]
+workspace = true

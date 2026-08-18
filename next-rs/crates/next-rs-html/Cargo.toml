@@ -1,0 +1,26 @@
+[package]
+name = "next-rs-html"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Rust-owned HTML with byte-stream React slot transformation"
+
+[dependencies]
+bytes = { workspace = true }
+futures-util = { workspace = true }
+memchr = "2"
+next-rs-core = { workspace = true }
+next-rs-crypto = { workspace = true }
+next-rs-react = { workspace = true }
+serde_json = { workspace = true }
+# `task_local!` only: the per-request HTML runtime rides the same mechanism the
+# render context already uses.
+tokio = { workspace = true, features = ["rt"] }
+
+[dev-dependencies]
+serde = { workspace = true }
+tokio = { workspace = true, features = ["rt", "macros", "rt-multi-thread", "time"] }
+
+[lints]
+workspace = true

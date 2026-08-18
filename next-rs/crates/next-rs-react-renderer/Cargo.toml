@@ -1,0 +1,35 @@
+[package]
+name = "next-rs-react-renderer"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "The React SSR renderer client and supervisor for next-rs .ssr() slots"
+
+[dependencies]
+futures-util = { workspace = true }
+http = "1"
+http-body-util = "0.1"
+hyper = { version = "1", features = ["client", "http1"] }
+hyper-util = { version = "0.1", features = ["tokio"] }
+next-rs-core = { workspace = true }
+next-rs-html = { workspace = true }
+next-rs-react = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true, features = ["net", "process", "rt", "io-util", "time", "sync"] }
+
+[dev-dependencies]
+tokio = { workspace = true, features = [
+  "net",
+  "process",
+  "rt",
+  "rt-multi-thread",
+  "io-util",
+  "time",
+  "sync",
+  "macros",
+] }
+
+[lints]
+workspace = true

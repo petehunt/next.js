@@ -1,0 +1,17 @@
+[package]
+name = "blog-rs-exports"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+description = "The blog's #[export] functions, in a crate that also builds for wasm32"
+
+[dependencies]
+next-rs = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt", "macros"] }
+
+[lints]
+workspace = true

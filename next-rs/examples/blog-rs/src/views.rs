@@ -131,15 +131,7 @@ pub fn post(post: &Post, body_html: &str, theme: ReactSlot) -> String {
     let _ = writeln!(out, "    {theme}");
     out.push_str("    <div class=\"min-h-screen\">\n      <main>\n");
 
-    if post.preview {
-        out.push_str(
-            r#"        <div class="border-b bg-accent-7 border-accent-7 text-white">
-          <div class="container mx-auto px-5"><div class="py-2 text-center text-sm">This page is a preview.</div></div>
-        </div>
-"#,
-        );
-    }
-
+    out.push_str(&alert(post.preview));
     out.push_str("        <div class=\"container mx-auto px-5\">\n");
     out.push_str(&header());
     out.push_str("          <article class=\"mb-32\">\n");
@@ -185,6 +177,35 @@ pub fn not_found() -> String {
     );
     out.push_str(&document_tail());
     out
+}
+
+/// `src/app/_components/alert.tsx`, which renders on *every* post page.
+///
+/// Easy to miss when porting, because the name suggests it only appears in
+/// preview mode; the non-preview branch is the GitHub link. The benchmark's
+/// parity check is what caught its absence.
+fn alert(preview: bool) -> String {
+    let (classes, message) = if preview {
+        (
+            "border-b bg-neutral-800 border-neutral-800 text-white dark:bg-slate-800",
+            r#"This page is a preview. <a href="/api/exit-preview" class="underline hover:text-teal-300 duration-200 transition-colors">Click here</a> to exit preview mode."#,
+        )
+    } else {
+        (
+            "border-b bg-neutral-50 border-neutral-200 dark:bg-slate-800",
+            concat!(
+                r#"The source code for this blog is <a href="https://github.com/vercel/next.js/tree/canary/examples/"#,
+                "blog-starter",
+                r#"" class="underline hover:text-blue-600 duration-200 transition-colors">available on GitHub</a>."#,
+            ),
+        )
+    };
+    format!(
+        r#"        <div class="{classes}">
+          <div class="container mx-auto px-5"><div class="py-2 text-center text-sm">{message}</div></div>
+        </div>
+"#
+    )
 }
 
 fn intro() -> String {
@@ -407,11 +428,19 @@ mod tests {
     }
 
     #[test]
-    fn a_preview_post_shows_the_banner() {
+    fn every_post_page_carries_the_alert_banner() {
+        // `alert.tsx` renders on every post page, not only previews: the
+        // non-preview branch is the GitHub link.
         let mut entry = (*sample("a", "First")).clone();
-        assert!(!post_page(&entry).contains("This page is a preview."));
+        let plain = post_page(&entry);
+        assert!(!plain.contains("This page is a preview."));
+        assert!(plain.contains("available on GitHub"), "{plain}");
+
         entry.preview = true;
-        assert!(post_page(&entry).contains("This page is a preview."));
+        let preview = post_page(&entry);
+        assert!(preview.contains("This page is a preview."));
+        assert!(preview.contains("to exit preview mode."));
+        assert!(!preview.contains("available on GitHub"));
     }
 
     #[test]

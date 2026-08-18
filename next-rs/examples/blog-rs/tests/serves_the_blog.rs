@@ -67,6 +67,8 @@ async fn no_post_in_this_repository_is_flagged_as_a_preview() {
     for slug in ["hello-world", "dynamic-routing", "preview"] {
         let (_, body) = get(&app, &format!("/posts/{slug}")).await.unwrap();
         assert!(!body.contains("This page is a preview."), "{slug}");
+        // The non-preview branch of `alert.tsx` is what they do show.
+        assert!(body.contains("available on GitHub"), "{slug}");
     }
 }
 

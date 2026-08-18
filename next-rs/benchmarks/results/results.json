@@ -1,0 +1,1116 @@
+{
+  "startedAt": "2026-08-18T07:29:17.395Z",
+  "environment": {
+    "platform": "linux 6.12.76",
+    "cpuModel": "Intel(R) Xeon(R) Processor @ 2.90GHz",
+    "cpuCount": 4,
+    "totalMemoryBytes": 8811573248,
+    "node": "v22.22.2",
+    "rustc": "rustc 1.99.0-nightly (26ae60a9e 2026-07-28)",
+    "next": "next 16.3.1",
+    "summary": "4 × Intel(R) Xeon(R) Processor @ 2.90GHz, 8403.4 MiB, v22.22.2, rustc 1.99.0-nightly (26ae60a9e 2026-07-28), next 16.3.1"
+  },
+  "options": {
+    "runs": 10,
+    "concurrency": 16,
+    "durationMs": 5000,
+    "parallel": false
+  },
+  "parity": [
+    {
+      "path": "/",
+      "matches": true,
+      "expected": false,
+      "differences": [],
+      "rust": {
+        "title": "Next.js Blog Example with Markdown",
+        "headings": [
+          "h1: Blog.",
+          "h4: A statically generated blog example using Next.js and Markdown.",
+          "h3: Dynamic Routing and Static Generation",
+          "h2: More Stories",
+          "h3: Learn How to Pre-render Pages Using Static Generation with Next.js",
+          "h3: Preview Mode for Static Generation",
+          "h3: Statically Generated with Next.js."
+        ],
+        "links": [
+          "/posts/dynamic-routing",
+          "/posts/hello-world",
+          "/posts/preview"
+        ],
+        "dates": ["March 16, 2020"],
+        "text": "Blog. A statically generated blog example using Next.js and Markdown. Dynamic Routing and Static Generation March 16, 2020 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Praesent elementum facilisis leo vel fringilla est ullamcorper eget. At imperdiet dui accumsan sit amet nulla facilities morbi tempus. JJ Kasper More Stories Learn How to Pre-render Pages Using Static Generation with Next.js March 16, 2020 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Praesent elementum facilisis leo vel fringilla est ullamcorper eget. At imperdiet dui accumsan sit amet nulla facilities morbi tempus. Tim Neutkens Preview Mode for Static Generation March 16, 2020 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Praesent elementum facilisis leo vel fringilla est ullamcorper eget. At imperdiet dui accumsan sit amet nulla facilities morbi tempus. Joe Haddad Statically Generated with Next.js. Read Documentation View on GitHub"
+      },
+      "next": {
+        "title": "Next.js Blog Example with Markdown",
+        "headings": [
+          "h1: Blog.",
+          "h4: A statically generated blog example using Next.js and Markdown.",
+          "h3: Dynamic Routing and Static Generation",
+          "h2: More Stories",
+          "h3: Learn How to Pre-render Pages Using Static Generation with Next.js",
+          "h3: Preview Mode for Static Generation",
+          "h3: Statically Generated with Next.js."
+        ],
+        "links": [
+          "/posts/dynamic-routing",
+          "/posts/hello-world",
+          "/posts/preview"
+        ],
+        "dates": ["March 16, 2020"],
+        "text": "Blog. A statically generated blog example using Next.js and Markdown. Dynamic Routing and Static Generation March 16, 2020 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Praesent elementum facilisis leo vel fringilla est ullamcorper eget. At imperdiet dui accumsan sit amet nulla facilities morbi tempus. JJ Kasper More Stories Learn How to Pre-render Pages Using Static Generation with Next.js March 16, 2020 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Praesent elementum facilisis leo vel fringilla est ullamcorper eget. At imperdiet dui accumsan sit amet nulla facilities morbi tempus. Tim Neutkens Preview Mode for Static Generation March 16, 2020 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Praesent elementum facilisis leo vel fringilla est ullamcorper eget. At imperdiet dui accumsan sit amet nulla facilities morbi tempus. Joe Haddad Statically Generated with Next.js. Read Documentation View on GitHub"
+      }
+    },
+    {
+      "path": "/posts/hello-world",
+      "matches": true,
+      "expected": false,
+      "differences": [],
+      "rust": {
+        "title": "Learn How to Pre-render Pages Using Static Generation with Next.js | Next.js Blog Example with Markdown",
+        "headings": [
+          "h2: Blog .",
+          "h1: Learn How to Pre-render Pages Using Static Generation with Next.js",
+          "h2: Lorem Ipsum",
+          "h3: Statically Generated with Next.js."
+        ],
+        "links": ["/"],
+        "dates": ["March 16, 2020"],
+        "text": "The source code for this blog is available on GitHub . Blog . Learn How to Pre-render Pages Using Static Generation with Next.js Tim Neutkens Tim Neutkens March 16, 2020 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Praesent elementum facilisis leo vel fringilla est ullamcorper eget. At imperdiet dui accumsan sit amet nulla facilities morbi tempus. Praesent elementum facilisis leo vel fringilla. Congue mauris rhoncus aenean vel. Egestas sed tempus urna et pharetra pharetra massa massa ultricies. Venenatis cras sed felis eget velit. Consectetur libero id faucibus nisl tincidunt. Gravida in fermentum et sollicitudin ac orci phasellus egestas tellus. Volutpat consequat mauris nunc congue nisi vitae. Id aliquet risus feugiat in ante metus dictum at tempor. Sed blandit libero volutpat sed cras. Sed odio morbi quis commodo odio aenean sed adipiscing. Velit euismod in pellentesque massa placerat. Mi bibendum neque egestas congue quisque egestas diam in arcu. Nisi lacus sed viverra tellus in. Nibh cras pulvinar mattis nunc sed. Luctus accumsan tortor posuere ac ut consequat semper viverra. Fringilla ut morbi tincidunt augue interdum velit euismod. Lorem Ipsum Tristique senectus et netus et malesuada fames ac turpis. Ridiculous mus mauris vitae ultricies leo integer malesuada nunc vel. In mollis nunc sed id semper. Egestas tellus rutrum tellus pellentesque. Phasellus vestibulum lorem sed risus ultricies tristique nulla. Quis blandit turpis cursus in hac habitasse platea dictumst quisque. Eros donec ac odio tempor orci dapibus ultrices. Aliquam sem et tortor consequat id porta nibh. Adipiscing elit duis tristique sollicitudin nibh sit amet commodo nulla. Diam vulputate ut pharetra sit amet. Ut tellus elementum sagittis vitae et leo. Arcu non odio euismod lacinia at quis risus sed vulputate. Statically Generated with Next.js. Read Documentation View on GitHub"
+      },
+      "next": {
+        "title": "Learn How to Pre-render Pages Using Static Generation with Next.js | Next.js Blog Example with Markdown",
+        "headings": [
+          "h2: Blog .",
+          "h1: Learn How to Pre-render Pages Using Static Generation with Next.js",
+          "h2: Lorem Ipsum",
+          "h3: Statically Generated with Next.js."
+        ],
+        "links": ["/"],
+        "dates": ["March 16, 2020"],
+        "text": "The source code for this blog is available on GitHub . Blog . Learn How to Pre-render Pages Using Static Generation with Next.js Tim Neutkens Tim Neutkens March 16, 2020 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Praesent elementum facilisis leo vel fringilla est ullamcorper eget. At imperdiet dui accumsan sit amet nulla facilities morbi tempus. Praesent elementum facilisis leo vel fringilla. Congue mauris rhoncus aenean vel. Egestas sed tempus urna et pharetra pharetra massa massa ultricies. Venenatis cras sed felis eget velit. Consectetur libero id faucibus nisl tincidunt. Gravida in fermentum et sollicitudin ac orci phasellus egestas tellus. Volutpat consequat mauris nunc congue nisi vitae. Id aliquet risus feugiat in ante metus dictum at tempor. Sed blandit libero volutpat sed cras. Sed odio morbi quis commodo odio aenean sed adipiscing. Velit euismod in pellentesque massa placerat. Mi bibendum neque egestas congue quisque egestas diam in arcu. Nisi lacus sed viverra tellus in. Nibh cras pulvinar mattis nunc sed. Luctus accumsan tortor posuere ac ut consequat semper viverra. Fringilla ut morbi tincidunt augue interdum velit euismod. Lorem Ipsum Tristique senectus et netus et malesuada fames ac turpis. Ridiculous mus mauris vitae ultricies leo integer malesuada nunc vel. In mollis nunc sed id semper. Egestas tellus rutrum tellus pellentesque. Phasellus vestibulum lorem sed risus ultricies tristique nulla. Quis blandit turpis cursus in hac habitasse platea dictumst quisque. Eros donec ac odio tempor orci dapibus ultrices. Aliquam sem et tortor consequat id porta nibh. Adipiscing elit duis tristique sollicitudin nibh sit amet commodo nulla. Diam vulputate ut pharetra sit amet. Ut tellus elementum sagittis vitae et leo. Arcu non odio euismod lacinia at quis risus sed vulputate. Statically Generated with Next.js. Read Documentation View on GitHub"
+      }
+    },
+    {
+      "path": "/posts/dynamic-routing",
+      "matches": true,
+      "expected": false,
+      "differences": [],
+      "rust": {
+        "title": "Dynamic Routing and Static Generation | Next.js Blog Example with Markdown",
+        "headings": [
+          "h2: Blog .",
+          "h1: Dynamic Routing and Static Generation",
+          "h2: Lorem Ipsum",
+          "h3: Statically Generated with Next.js."
+        ],
+        "links": ["/"],
+        "dates": ["March 16, 2020"],
+        "text": "The source code for this blog is available on GitHub . Blog . Dynamic Routing and Static Generation JJ Kasper JJ Kasper March 16, 2020 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Praesent elementum facilisis leo vel fringilla est ullamcorper eget. At imperdiet dui accumsan sit amet nulla facilities morbi tempus. Praesent elementum facilisis leo vel fringilla. Congue mauris rhoncus aenean vel. Egestas sed tempus urna et pharetra pharetra massa massa ultricies. Venenatis cras sed felis eget velit. Consectetur libero id faucibus nisl tincidunt. Gravida in fermentum et sollicitudin ac orci phasellus egestas tellus. Volutpat consequat mauris nunc congue nisi vitae. Id aliquet risus feugiat in ante metus dictum at tempor. Sed blandit libero volutpat sed cras. Sed odio morbi quis commodo odio aenean sed adipiscing. Velit euismod in pellentesque massa placerat. Mi bibendum neque egestas congue quisque egestas diam in arcu. Nisi lacus sed viverra tellus in. Nibh cras pulvinar mattis nunc sed. Luctus accumsan tortor posuere ac ut consequat semper viverra. Fringilla ut morbi tincidunt augue interdum velit euismod. Lorem Ipsum Tristique senectus et netus et malesuada fames ac turpis. Ridiculous mus mauris vitae ultricies leo integer malesuada nunc vel. In mollis nunc sed id semper. Egestas tellus rutrum tellus pellentesque. Phasellus vestibulum lorem sed risus ultricies tristique nulla. Quis blandit turpis cursus in hac habitasse platea dictumst quisque. Eros donec ac odio tempor orci dapibus ultrices. Aliquam sem et tortor consequat id porta nibh. Adipiscing elit duis tristique sollicitudin nibh sit amet commodo nulla. Diam vulputate ut pharetra sit amet. Ut tellus elementum sagittis vitae et leo. Arcu non odio euismod lacinia at quis risus sed vulputate. Statically Generated with Next.js. Read Documentation View on GitHub"
+      },
+      "next": {
+        "title": "Dynamic Routing and Static Generation | Next.js Blog Example with Markdown",
+        "headings": [
+          "h2: Blog .",
+          "h1: Dynamic Routing and Static Generation",
+          "h2: Lorem Ipsum",
+          "h3: Statically Generated with Next.js."
+        ],
+        "links": ["/"],
+        "dates": ["March 16, 2020"],
+        "text": "The source code for this blog is available on GitHub . Blog . Dynamic Routing and Static Generation JJ Kasper JJ Kasper March 16, 2020 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Praesent elementum facilisis leo vel fringilla est ullamcorper eget. At imperdiet dui accumsan sit amet nulla facilities morbi tempus. Praesent elementum facilisis leo vel fringilla. Congue mauris rhoncus aenean vel. Egestas sed tempus urna et pharetra pharetra massa massa ultricies. Venenatis cras sed felis eget velit. Consectetur libero id faucibus nisl tincidunt. Gravida in fermentum et sollicitudin ac orci phasellus egestas tellus. Volutpat consequat mauris nunc congue nisi vitae. Id aliquet risus feugiat in ante metus dictum at tempor. Sed blandit libero volutpat sed cras. Sed odio morbi quis commodo odio aenean sed adipiscing. Velit euismod in pellentesque massa placerat. Mi bibendum neque egestas congue quisque egestas diam in arcu. Nisi lacus sed viverra tellus in. Nibh cras pulvinar mattis nunc sed. Luctus accumsan tortor posuere ac ut consequat semper viverra. Fringilla ut morbi tincidunt augue interdum velit euismod. Lorem Ipsum Tristique senectus et netus et malesuada fames ac turpis. Ridiculous mus mauris vitae ultricies leo integer malesuada nunc vel. In mollis nunc sed id semper. Egestas tellus rutrum tellus pellentesque. Phasellus vestibulum lorem sed risus ultricies tristique nulla. Quis blandit turpis cursus in hac habitasse platea dictumst quisque. Eros donec ac odio tempor orci dapibus ultrices. Aliquam sem et tortor consequat id porta nibh. Adipiscing elit duis tristique sollicitudin nibh sit amet commodo nulla. Diam vulputate ut pharetra sit amet. Ut tellus elementum sagittis vitae et leo. Arcu non odio euismod lacinia at quis risus sed vulputate. Statically Generated with Next.js. Read Documentation View on GitHub"
+      }
+    },
+    {
+      "path": "/posts/preview",
+      "matches": true,
+      "expected": false,
+      "differences": [],
+      "rust": {
+        "title": "Preview Mode for Static Generation | Next.js Blog Example with Markdown",
+        "headings": [
+          "h2: Blog .",
+          "h1: Preview Mode for Static Generation",
+          "h2: Lorem Ipsum",
+          "h3: Statically Generated with Next.js."
+        ],
+        "links": ["/"],
+        "dates": ["March 16, 2020"],
+        "text": "The source code for this blog is available on GitHub . Blog . Preview Mode for Static Generation Joe Haddad Joe Haddad March 16, 2020 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Praesent elementum facilisis leo vel fringilla est ullamcorper eget. At imperdiet dui accumsan sit amet nulla facilities morbi tempus. Praesent elementum facilisis leo vel fringilla. Congue mauris rhoncus aenean vel. Egestas sed tempus urna et pharetra pharetra massa massa ultricies. Venenatis cras sed felis eget velit. Consectetur libero id faucibus nisl tincidunt. Gravida in fermentum et sollicitudin ac orci phasellus egestas tellus. Volutpat consequat mauris nunc congue nisi vitae. Id aliquet risus feugiat in ante metus dictum at tempor. Sed blandit libero volutpat sed cras. Sed odio morbi quis commodo odio aenean sed adipiscing. Velit euismod in pellentesque massa placerat. Mi bibendum neque egestas congue quisque egestas diam in arcu. Nisi lacus sed viverra tellus in. Nibh cras pulvinar mattis nunc sed. Luctus accumsan tortor posuere ac ut consequat semper viverra. Fringilla ut morbi tincidunt augue interdum velit euismod. Lorem Ipsum Tristique senectus et netus et malesuada fames ac turpis. Ridiculous mus mauris vitae ultricies leo integer malesuada nunc vel. In mollis nunc sed id semper. Egestas tellus rutrum tellus pellentesque. Phasellus vestibulum lorem sed risus ultricies tristique nulla. Quis blandit turpis cursus in hac habitasse platea dictumst quisque. Eros donec ac odio tempor orci dapibus ultrices. Aliquam sem et tortor consequat id porta nibh. Adipiscing elit duis tristique sollicitudin nibh sit amet commodo nulla. Diam vulputate ut pharetra sit amet. Ut tellus elementum sagittis vitae et leo. Arcu non odio euismod lacinia at quis risus sed vulputate. Statically Generated with Next.js. Read Documentation View on GitHub"
+      },
+      "next": {
+        "title": "Preview Mode for Static Generation | Next.js Blog Example with Markdown",
+        "headings": [
+          "h2: Blog .",
+          "h1: Preview Mode for Static Generation",
+          "h2: Lorem Ipsum",
+          "h3: Statically Generated with Next.js."
+        ],
+        "links": ["/"],
+        "dates": ["March 16, 2020"],
+        "text": "The source code for this blog is available on GitHub . Blog . Preview Mode for Static Generation Joe Haddad Joe Haddad March 16, 2020 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Praesent elementum facilisis leo vel fringilla est ullamcorper eget. At imperdiet dui accumsan sit amet nulla facilities morbi tempus. Praesent elementum facilisis leo vel fringilla. Congue mauris rhoncus aenean vel. Egestas sed tempus urna et pharetra pharetra massa massa ultricies. Venenatis cras sed felis eget velit. Consectetur libero id faucibus nisl tincidunt. Gravida in fermentum et sollicitudin ac orci phasellus egestas tellus. Volutpat consequat mauris nunc congue nisi vitae. Id aliquet risus feugiat in ante metus dictum at tempor. Sed blandit libero volutpat sed cras. Sed odio morbi quis commodo odio aenean sed adipiscing. Velit euismod in pellentesque massa placerat. Mi bibendum neque egestas congue quisque egestas diam in arcu. Nisi lacus sed viverra tellus in. Nibh cras pulvinar mattis nunc sed. Luctus accumsan tortor posuere ac ut consequat semper viverra. Fringilla ut morbi tincidunt augue interdum velit euismod. Lorem Ipsum Tristique senectus et netus et malesuada fames ac turpis. Ridiculous mus mauris vitae ultricies leo integer malesuada nunc vel. In mollis nunc sed id semper. Egestas tellus rutrum tellus pellentesque. Phasellus vestibulum lorem sed risus ultricies tristique nulla. Quis blandit turpis cursus in hac habitasse platea dictumst quisque. Eros donec ac odio tempor orci dapibus ultrices. Aliquam sem et tortor consequat id porta nibh. Adipiscing elit duis tristique sollicitudin nibh sit amet commodo nulla. Diam vulputate ut pharetra sit amet. Ut tellus elementum sagittis vitae et leo. Arcu non odio euismod lacinia at quis risus sed vulputate. Statically Generated with Next.js. Read Documentation View on GitHub"
+      }
+    },
+    {
+      "path": "/posts/does-not-exist",
+      "matches": false,
+      "expected": true,
+      "expectedReason": "`blog-starter`'s `getPostBySlug` calls `fs.readFileSync` and lets ENOENT propagate, so `if (!post) notFound()` is unreachable and an unknown slug is a 500. The Rust port returns `None` and renders a 404 page, which is what the original was trying to do.",
+      "differences": [
+        {
+          "what": "status",
+          "rust": 404,
+          "next": 500
+        },
+        {
+          "what": "title",
+          "rust": "404 | Not Found",
+          "next": ""
+        },
+        {
+          "what": "headings",
+          "rust": ["h1: 404", "h3: Statically Generated with Next.js."],
+          "next": []
+        },
+        {
+          "what": "links",
+          "rust": ["/"],
+          "next": []
+        },
+        {
+          "what": "text",
+          "rust": "404 This post does not exist. Back to the blog . Statically Generated with Next.js. Read Documentation View on GitHub",
+          "next": "Internal Server Error"
+        }
+      ],
+      "rust": {
+        "title": "404 | Not Found",
+        "headings": ["h1: 404", "h3: Statically Generated with Next.js."],
+        "links": ["/"],
+        "dates": [],
+        "text": "404 This post does not exist. Back to the blog . Statically Generated with Next.js. Read Documentation View on GitHub"
+      },
+      "next": {
+        "title": "",
+        "headings": [],
+        "links": [],
+        "dates": [],
+        "text": "Internal Server Error"
+      }
+    }
+  ],
+  "throughput": {
+    "rust": {
+      "/": [
+        {
+          "requests": 93898,
+          "failed": 0,
+          "elapsedMs": 4999.812395,
+          "requestsPerSecond": 18780.30465581099,
+          "bytesPerResponse": 7348,
+          "latencyMs": {
+            "p50": 0.687911,
+            "p90": 1.360663,
+            "p99": 2.443863,
+            "max": 6.881228
+          }
+        },
+        {
+          "requests": 87389,
+          "failed": 0,
+          "elapsedMs": 4999.898679,
+          "requestsPerSecond": 17478.15418081195,
+          "bytesPerResponse": 7348,
+          "latencyMs": {
+            "p50": 0.711586,
+            "p90": 1.413733,
+            "p99": 3.92907,
+            "max": 10.555546
+          }
+        },
+        {
+          "requests": 89351,
+          "failed": 0,
+          "elapsedMs": 5000.236585,
+          "requestsPerSecond": 17869.35447575427,
+          "bytesPerResponse": 7348,
+          "latencyMs": {
+            "p50": 0.710121,
+            "p90": 1.408735,
+            "p99": 3.613781,
+            "max": 6.167076
+          }
+        },
+        {
+          "requests": 90788,
+          "failed": 0,
+          "elapsedMs": 5000.375033,
+          "requestsPerSecond": 18156.238162306654,
+          "bytesPerResponse": 7348,
+          "latencyMs": {
+            "p50": 0.70272,
+            "p90": 1.393243,
+            "p99": 3.527643,
+            "max": 6.097325
+          }
+        },
+        {
+          "requests": 90575,
+          "failed": 0,
+          "elapsedMs": 4999.769697,
+          "requestsPerSecond": 18115.83442620317,
+          "bytesPerResponse": 7348,
+          "latencyMs": {
+            "p50": 0.702785,
+            "p90": 1.395978,
+            "p99": 3.459408,
+            "max": 4.853227
+          }
+        },
+        {
+          "requests": 88443,
+          "failed": 0,
+          "elapsedMs": 5000.338797,
+          "requestsPerSecond": 17687.401512285967,
+          "bytesPerResponse": 7348,
+          "latencyMs": {
+            "p50": 0.709919,
+            "p90": 1.410337,
+            "p99": 3.733545,
+            "max": 5.439449
+          }
+        },
+        {
+          "requests": 89466,
+          "failed": 0,
+          "elapsedMs": 4999.387372,
+          "requestsPerSecond": 17895.39264372091,
+          "bytesPerResponse": 7348,
+          "latencyMs": {
+            "p50": 0.700401,
+            "p90": 1.392271,
+            "p99": 3.700916,
+            "max": 6.400878
+          }
+        },
+        {
+          "requests": 90368,
+          "failed": 0,
+          "elapsedMs": 5000.316847,
+          "requestsPerSecond": 18072.454759385368,
+          "bytesPerResponse": 7348,
+          "latencyMs": {
+            "p50": 0.703034,
+            "p90": 1.395254,
+            "p99": 3.599762,
+            "max": 7.792115
+          }
+        },
+        {
+          "requests": 89032,
+          "failed": 0,
+          "elapsedMs": 5003.242584,
+          "requestsPerSecond": 17794.85973450853,
+          "bytesPerResponse": 7348,
+          "latencyMs": {
+            "p50": 0.705034,
+            "p90": 1.402869,
+            "p99": 3.710106,
+            "max": 8.211597
+          }
+        },
+        {
+          "requests": 90479,
+          "failed": 0,
+          "elapsedMs": 4999.470776,
+          "requestsPerSecond": 18097.71554908275,
+          "bytesPerResponse": 7348,
+          "latencyMs": {
+            "p50": 0.702426,
+            "p90": 1.395836,
+            "p99": 3.518337,
+            "max": 8.065622
+          }
+        }
+      ],
+      "/posts/hello-world": [
+        {
+          "requests": 89068,
+          "failed": 0,
+          "elapsedMs": 5000.322707,
+          "requestsPerSecond": 17812.450359516366,
+          "bytesPerResponse": 6554,
+          "latencyMs": {
+            "p50": 0.707968,
+            "p90": 1.404566,
+            "p99": 3.664321,
+            "max": 7.37893
+          }
+        },
+        {
+          "requests": 89091,
+          "failed": 0,
+          "elapsedMs": 5000.325939,
+          "requestsPerSecond": 17817.03854645464,
+          "bytesPerResponse": 6554,
+          "latencyMs": {
+            "p50": 0.71105,
+            "p90": 1.406913,
+            "p99": 3.692213,
+            "max": 8.60581
+          }
+        },
+        {
+          "requests": 88671,
+          "failed": 0,
+          "elapsedMs": 5000.000317,
+          "requestsPerSecond": 17734.198875651793,
+          "bytesPerResponse": 6554,
+          "latencyMs": {
+            "p50": 0.71401,
+            "p90": 1.415236,
+            "p99": 3.736022,
+            "max": 9.637604
+          }
+        },
+        {
+          "requests": 89145,
+          "failed": 0,
+          "elapsedMs": 4999.740854,
+          "requestsPerSecond": 17829.92411070272,
+          "bytesPerResponse": 6554,
+          "latencyMs": {
+            "p50": 0.714705,
+            "p90": 1.412921,
+            "p99": 3.642481,
+            "max": 6.647245
+          }
+        },
+        {
+          "requests": 87859,
+          "failed": 0,
+          "elapsedMs": 4999.626359,
+          "requestsPerSecond": 17573.113207118364,
+          "bytesPerResponse": 6554,
+          "latencyMs": {
+            "p50": 0.718815,
+            "p90": 1.416461,
+            "p99": 3.770744,
+            "max": 6.476177
+          }
+        },
+        {
+          "requests": 88160,
+          "failed": 0,
+          "elapsedMs": 4999.76437,
+          "requestsPerSecond": 17632.830964792047,
+          "bytesPerResponse": 6554,
+          "latencyMs": {
+            "p50": 0.710444,
+            "p90": 1.409507,
+            "p99": 3.892099,
+            "max": 6.012073
+          }
+        },
+        {
+          "requests": 89584,
+          "failed": 0,
+          "elapsedMs": 5000.351988,
+          "requestsPerSecond": 17915.53878906654,
+          "bytesPerResponse": 6554,
+          "latencyMs": {
+            "p50": 0.707413,
+            "p90": 1.403606,
+            "p99": 3.717482,
+            "max": 5.969214
+          }
+        },
+        {
+          "requests": 88378,
+          "failed": 0,
+          "elapsedMs": 4999.660607,
+          "requestsPerSecond": 17676.799876428093,
+          "bytesPerResponse": 6554,
+          "latencyMs": {
+            "p50": 0.708262,
+            "p90": 1.402546,
+            "p99": 3.726763,
+            "max": 5.778831
+          }
+        },
+        {
+          "requests": 89264,
+          "failed": 0,
+          "elapsedMs": 4999.586534,
+          "requestsPerSecond": 17854.276427251454,
+          "bytesPerResponse": 6554,
+          "latencyMs": {
+            "p50": 0.708339,
+            "p90": 1.404127,
+            "p99": 3.674679,
+            "max": 7.933827
+          }
+        },
+        {
+          "requests": 88568,
+          "failed": 0,
+          "elapsedMs": 4999.982585,
+          "requestsPerSecond": 17713.661696683692,
+          "bytesPerResponse": 6554,
+          "latencyMs": {
+            "p50": 0.709903,
+            "p90": 1.407875,
+            "p99": 3.786303,
+            "max": 6.328892
+          }
+        }
+      ]
+    },
+    "next": {
+      "/": [
+        {
+          "requests": 12336,
+          "failed": 0,
+          "elapsedMs": 5005.220357,
+          "requestsPerSecond": 2464.626753694792,
+          "bytesPerResponse": 24316,
+          "latencyMs": {
+            "p50": 5.803374,
+            "p90": 9.27213,
+            "p99": 14.428394,
+            "max": 20.735721
+          }
+        },
+        {
+          "requests": 12879,
+          "failed": 0,
+          "elapsedMs": 5004.433846,
+          "requestsPerSecond": 2573.5178836051696,
+          "bytesPerResponse": 24316,
+          "latencyMs": {
+            "p50": 5.490788,
+            "p90": 8.178865,
+            "p99": 13.054688,
+            "max": 22.624787
+          }
+        },
+        {
+          "requests": 13040,
+          "failed": 0,
+          "elapsedMs": 5004.238453,
+          "requestsPerSecond": 2605.79109538288,
+          "bytesPerResponse": 24316,
+          "latencyMs": {
+            "p50": 5.586184,
+            "p90": 8.110224,
+            "p99": 12.957611,
+            "max": 24.965322
+          }
+        },
+        {
+          "requests": 12933,
+          "failed": 0,
+          "elapsedMs": 5004.436556,
+          "requestsPerSecond": 2584.3069155296134,
+          "bytesPerResponse": 24316,
+          "latencyMs": {
+            "p50": 5.614565,
+            "p90": 8.039531,
+            "p99": 12.5018,
+            "max": 19.41013
+          }
+        },
+        {
+          "requests": 12952,
+          "failed": 0,
+          "elapsedMs": 5004.699203,
+          "requestsPerSecond": 2587.9677228625637,
+          "bytesPerResponse": 24316,
+          "latencyMs": {
+            "p50": 5.497285,
+            "p90": 8.147187,
+            "p99": 12.755706,
+            "max": 24.773606
+          }
+        },
+        {
+          "requests": 12530,
+          "failed": 0,
+          "elapsedMs": 5004.417491,
+          "requestsPerSecond": 2503.7879078901974,
+          "bytesPerResponse": 24316,
+          "latencyMs": {
+            "p50": 5.758672,
+            "p90": 8.544988,
+            "p99": 13.541095,
+            "max": 23.75955
+          }
+        },
+        {
+          "requests": 13163,
+          "failed": 0,
+          "elapsedMs": 5006.166472,
+          "requestsPerSecond": 2629.3572284545476,
+          "bytesPerResponse": 24316,
+          "latencyMs": {
+            "p50": 5.445458,
+            "p90": 7.937069,
+            "p99": 12.519403,
+            "max": 22.843362
+          }
+        },
+        {
+          "requests": 13090,
+          "failed": 0,
+          "elapsedMs": 5004.713932,
+          "requestsPerSecond": 2615.534110012344,
+          "bytesPerResponse": 24316,
+          "latencyMs": {
+            "p50": 5.50633,
+            "p90": 8.16109,
+            "p99": 12.672714,
+            "max": 21.231244
+          }
+        },
+        {
+          "requests": 12539,
+          "failed": 0,
+          "elapsedMs": 5004.81597,
+          "requestsPerSecond": 2505.386826441093,
+          "bytesPerResponse": 24316,
+          "latencyMs": {
+            "p50": 5.774755,
+            "p90": 8.402449,
+            "p99": 13.316345,
+            "max": 20.592779
+          }
+        },
+        {
+          "requests": 12904,
+          "failed": 0,
+          "elapsedMs": 5005.444205,
+          "requestsPerSecond": 2577.992975550509,
+          "bytesPerResponse": 24316,
+          "latencyMs": {
+            "p50": 5.595346,
+            "p90": 8.084108,
+            "p99": 12.730445,
+            "max": 24.987881
+          }
+        }
+      ],
+      "/posts/hello-world": [
+        {
+          "requests": 11473,
+          "failed": 0,
+          "elapsedMs": 5005.133104,
+          "requestsPerSecond": 2292.2467318263753,
+          "bytesPerResponse": 22529,
+          "latencyMs": {
+            "p50": 6.334677,
+            "p90": 8.880529,
+            "p99": 14.491754,
+            "max": 21.867058
+          }
+        },
+        {
+          "requests": 11154,
+          "failed": 0,
+          "elapsedMs": 5004.986726,
+          "requestsPerSecond": 2228.5773390880317,
+          "bytesPerResponse": 22529,
+          "latencyMs": {
+            "p50": 6.47532,
+            "p90": 9.162895,
+            "p99": 15.026374,
+            "max": 27.275976
+          }
+        },
+        {
+          "requests": 11346,
+          "failed": 0,
+          "elapsedMs": 5005.874056,
+          "requestsPerSecond": 2266.53724665741,
+          "bytesPerResponse": 22529,
+          "latencyMs": {
+            "p50": 6.440558,
+            "p90": 9.047443,
+            "p99": 14.623296,
+            "max": 23.501052
+          }
+        },
+        {
+          "requests": 11408,
+          "failed": 0,
+          "elapsedMs": 5005.314998,
+          "requestsPerSecond": 2279.1772355103235,
+          "bytesPerResponse": 22529,
+          "latencyMs": {
+            "p50": 6.349943,
+            "p90": 9.195979,
+            "p99": 14.950473,
+            "max": 25.716212
+          }
+        },
+        {
+          "requests": 11346,
+          "failed": 0,
+          "elapsedMs": 5005.661182,
+          "requestsPerSecond": 2266.63363489311,
+          "bytesPerResponse": 22529,
+          "latencyMs": {
+            "p50": 6.407602,
+            "p90": 9.262587,
+            "p99": 15.039754,
+            "max": 25.152974
+          }
+        },
+        {
+          "requests": 11480,
+          "failed": 0,
+          "elapsedMs": 5005.548941,
+          "requestsPerSecond": 2293.454750980128,
+          "bytesPerResponse": 22529,
+          "latencyMs": {
+            "p50": 6.244145,
+            "p90": 9.258725,
+            "p99": 14.794829,
+            "max": 21.874372
+          }
+        },
+        {
+          "requests": 11187,
+          "failed": 0,
+          "elapsedMs": 5005.122459,
+          "requestsPerSecond": 2235.1101479812964,
+          "bytesPerResponse": 22529,
+          "latencyMs": {
+            "p50": 6.530112,
+            "p90": 9.562787,
+            "p99": 15.363103,
+            "max": 25.045559
+          }
+        },
+        {
+          "requests": 11433,
+          "failed": 0,
+          "elapsedMs": 5005.731675,
+          "requestsPerSecond": 2283.9817917327737,
+          "bytesPerResponse": 22529,
+          "latencyMs": {
+            "p50": 6.334357,
+            "p90": 9.081644,
+            "p99": 14.719843,
+            "max": 28.3769
+          }
+        },
+        {
+          "requests": 11227,
+          "failed": 0,
+          "elapsedMs": 5006.685641,
+          "requestsPerSecond": 2242.4016215560914,
+          "bytesPerResponse": 22529,
+          "latencyMs": {
+            "p50": 6.439478,
+            "p90": 9.48685,
+            "p99": 15.320223,
+            "max": 27.647446
+          }
+        },
+        {
+          "requests": 11020,
+          "failed": 0,
+          "elapsedMs": 5005.607397,
+          "requestsPerSecond": 2201.5310283032973,
+          "bytesPerResponse": 22529,
+          "latencyMs": {
+            "p50": 6.577066,
+            "p90": 9.426511,
+            "p99": 16.07756,
+            "max": 25.998687
+          }
+        }
+      ]
+    }
+  },
+  "memory": {
+    "rust": {
+      "/": [
+        {
+          "samples": 59,
+          "peakBytes": 5836800,
+          "meanBytes": 5798895
+        },
+        {
+          "samples": 60,
+          "peakBytes": 5898240,
+          "meanBytes": 5868681
+        },
+        {
+          "samples": 60,
+          "peakBytes": 5746688,
+          "meanBytes": 5726822
+        },
+        {
+          "samples": 60,
+          "peakBytes": 5771264,
+          "meanBytes": 5758293
+        },
+        {
+          "samples": 60,
+          "peakBytes": 5742592,
+          "meanBytes": 5713306
+        },
+        {
+          "samples": 60,
+          "peakBytes": 5685248,
+          "meanBytes": 5666953
+        },
+        {
+          "samples": 60,
+          "peakBytes": 5722112,
+          "meanBytes": 5687023
+        },
+        {
+          "samples": 60,
+          "peakBytes": 5742592,
+          "meanBytes": 5725184
+        },
+        {
+          "samples": 60,
+          "peakBytes": 5730304,
+          "meanBytes": 5694601
+        },
+        {
+          "samples": 60,
+          "peakBytes": 5754880,
+          "meanBytes": 5723750
+        }
+      ],
+      "/posts/hello-world": [
+        {
+          "samples": 60,
+          "peakBytes": 5652480,
+          "meanBytes": 5622579
+        },
+        {
+          "samples": 60,
+          "peakBytes": 5672960,
+          "meanBytes": 5649271
+        },
+        {
+          "samples": 60,
+          "peakBytes": 5611520,
+          "meanBytes": 5588036
+        },
+        {
+          "samples": 60,
+          "peakBytes": 5787648,
+          "meanBytes": 5764983
+        },
+        {
+          "samples": 60,
+          "peakBytes": 5730304,
+          "meanBytes": 5697604
+        },
+        {
+          "samples": 60,
+          "peakBytes": 5734400,
+          "meanBytes": 5701700
+        },
+        {
+          "samples": 60,
+          "peakBytes": 5656576,
+          "meanBytes": 5639168
+        },
+        {
+          "samples": 60,
+          "peakBytes": 5713920,
+          "meanBytes": 5684565
+        },
+        {
+          "samples": 60,
+          "peakBytes": 5607424,
+          "meanBytes": 5592201
+        },
+        {
+          "samples": 60,
+          "peakBytes": 5640192,
+          "meanBytes": 5621828
+        }
+      ]
+    },
+    "next": {
+      "/": [
+        {
+          "samples": 66,
+          "peakBytes": 234303488,
+          "meanBytes": 182226510
+        },
+        {
+          "samples": 66,
+          "peakBytes": 220971008,
+          "meanBytes": 176776285
+        },
+        {
+          "samples": 66,
+          "peakBytes": 224632832,
+          "meanBytes": 181069886
+        },
+        {
+          "samples": 65,
+          "peakBytes": 226791424,
+          "meanBytes": 180786034
+        },
+        {
+          "samples": 65,
+          "peakBytes": 222547968,
+          "meanBytes": 177307711
+        },
+        {
+          "samples": 65,
+          "peakBytes": 222531584,
+          "meanBytes": 178110653
+        },
+        {
+          "samples": 66,
+          "peakBytes": 221556736,
+          "meanBytes": 176761204
+        },
+        {
+          "samples": 65,
+          "peakBytes": 221884416,
+          "meanBytes": 178154638
+        },
+        {
+          "samples": 66,
+          "peakBytes": 227147776,
+          "meanBytes": 180242308
+        },
+        {
+          "samples": 65,
+          "peakBytes": 228950016,
+          "meanBytes": 182443591
+        }
+      ],
+      "/posts/hello-world": [
+        {
+          "samples": 65,
+          "peakBytes": 227807232,
+          "meanBytes": 177485792
+        },
+        {
+          "samples": 65,
+          "peakBytes": 223113216,
+          "meanBytes": 175320836
+        },
+        {
+          "samples": 66,
+          "peakBytes": 209596416,
+          "meanBytes": 173460573
+        },
+        {
+          "samples": 65,
+          "peakBytes": 222695424,
+          "meanBytes": 175570503
+        },
+        {
+          "samples": 66,
+          "peakBytes": 222945280,
+          "meanBytes": 175867966
+        },
+        {
+          "samples": 66,
+          "peakBytes": 222699520,
+          "meanBytes": 176334972
+        },
+        {
+          "samples": 66,
+          "peakBytes": 231628800,
+          "meanBytes": 178245260
+        },
+        {
+          "samples": 65,
+          "peakBytes": 222339072,
+          "meanBytes": 174851812
+        },
+        {
+          "samples": 66,
+          "peakBytes": 222490624,
+          "meanBytes": 175875537
+        },
+        {
+          "samples": 66,
+          "peakBytes": 226893824,
+          "meanBytes": 177597347
+        }
+      ]
+    }
+  },
+  "compile": {
+    "rust": [
+      {
+        "ms": 2598.039913
+      },
+      {
+        "ms": 2483.932853
+      },
+      {
+        "ms": 2489.977841
+      },
+      {
+        "ms": 2520.483256
+      },
+      {
+        "ms": 2520.551789
+      },
+      {
+        "ms": 2509.444706
+      },
+      {
+        "ms": 2484.37568
+      },
+      {
+        "ms": 2503.569175
+      },
+      {
+        "ms": 2640.793655
+      },
+      {
+        "ms": 2647.851541
+      }
+    ],
+    "next": [
+      {
+        "ms": 8083.893265
+      },
+      {
+        "ms": 7852.39415
+      },
+      {
+        "ms": 7769.156957
+      },
+      {
+        "ms": 8059.673294
+      },
+      {
+        "ms": 7996.154233
+      },
+      {
+        "ms": 8023.097786
+      },
+      {
+        "ms": 7937.824418
+      },
+      {
+        "ms": 7692.851537
+      },
+      {
+        "ms": 8285.585856
+      },
+      {
+        "ms": 8058.890033
+      }
+    ]
+  },
+  "finishedAt": "2026-08-18T07:36:02.487Z",
+  "summary": {
+    "throughput": {
+      "/": {
+        "rust": {
+          "runs": 10,
+          "min": 17478.15418081195,
+          "max": 18780.30465581099,
+          "mean": 17994.771009987056,
+          "median": 17983.92370155314,
+          "rsdPercent": 1.8442456838261865
+        },
+        "next": {
+          "runs": 10,
+          "min": 2464.626753694792,
+          "max": 2629.3572284545476,
+          "mean": 2564.8269419423705,
+          "median": 2581.1499455400613,
+          "rsdPercent": 2.021278925823859
+        },
+        "ratio": 6.967407582278337
+      },
+      "/posts/hello-world": {
+        "rust": {
+          "runs": 10,
+          "min": 17573.113207118364,
+          "max": 17915.53878906654,
+          "mean": 17755.983285366576,
+          "median": 17773.32461758408,
+          "rsdPercent": 0.5761266706678992
+        },
+        "next": {
+          "runs": 10,
+          "min": 2201.5310283032973,
+          "max": 2293.454750980128,
+          "mean": 2258.965152852884,
+          "median": 2266.58544077526,
+          "rsdPercent": 1.2916269525681652
+        },
+        "ratio": 7.841453623519665
+      }
+    },
+    "memory": {
+      "/": {
+        "rust": {
+          "runs": 10,
+          "min": 5685248,
+          "max": 5898240,
+          "mean": 5763072,
+          "median": 5744640,
+          "rsdPercent": 1.0081377811796528
+        },
+        "next": {
+          "runs": 10,
+          "min": 220971008,
+          "max": 234303488,
+          "mean": 225131724.8,
+          "median": 223590400,
+          "rsdPercent": 1.77586123289545
+        }
+      },
+      "/posts/hello-world": {
+        "rust": {
+          "runs": 10,
+          "min": 5607424,
+          "max": 5787648,
+          "mean": 5680742.4,
+          "median": 5664768,
+          "rsdPercent": 0.9820081732914703
+        },
+        "next": {
+          "runs": 10,
+          "min": 209596416,
+          "max": 231628800,
+          "mean": 223220940.8,
+          "median": 222822400,
+          "rsdPercent": 2.4240615086518327
+        }
+      }
+    },
+    "compile": {
+      "rust": {
+        "runs": 10,
+        "min": 2483.932853,
+        "max": 2647.851541,
+        "mean": 2539.9020409,
+        "median": 2514.963981,
+        "rsdPercent": 2.3922781453338087
+      },
+      "next": {
+        "runs": 10,
+        "min": 7692.851537,
+        "max": 8285.585856,
+        "mean": 7975.9521529,
+        "median": 8009.6260095,
+        "rsdPercent": 2.035873422269581
+      },
+      "ratio": 0.3139926855532417
+    }
+  }
+}

@@ -52,6 +52,7 @@ pnpm jest packages/next-rs/
 | `next-rs-runtime-native` | The hyper HTTP server and the Next compatibility hop |
 | `next-rs-runtime-napi` | The Node bridge: dispatch, JSON marshalling, promise and stream bridging |
 | `next-rs-runtime-wasm` | The browser bridge for `#[export(client)]` functions |
+| `next-rs-react-renderer` | The supervised React SSR renderer process and its HTTP client |
 
 ## The model
 
@@ -152,13 +153,46 @@ no server-side JavaScript at all.
 * **Accessors are methods.** §14 lists `req.query()`; §95 writes `req.query.get_int`.
   This implementation uses methods throughout.
 
+## The React SSR renderer
+
+`.ssr()` call sites are served by a separate Node process running React's Fizz
+renderer — `react-dom/server`'s `renderToReadableStream`, the same entry point
+Next uses for app-router SSR. `next-rs-react-renderer` supervises it and batches
+slots across the boundary; `@next/rs/renderer` is the process itself.
+
+It starts **lazily**, on the first batch. That is what makes §80 structural rather
+than aspirational: a deployment whose pages are all client-only never starts Node
+at all, and `RendererProcess::spawns()` reports zero for the life of the process.
+
+## `next-rs dev`
+
+A watcher, not a command sequence. Each kind of change implies different work:
+
+| Change | Rescan | `cargo build` | Restart server | Restart React |
+|---|:-:|:-:|:-:|:-:|
+| `*.rs` | ✓ | ✓ | ✓ | |
+| `next-rs.components.ts` | ✓ | ✓ | ✓ | ✓ |
+| `*.tsx`, `*.jsx` | | | | ✓ |
+| anything else | | | | |
+
+A `.rs` change cannot change which components exist, so the renderer keeps its
+warm React. A component change cannot change the Rust binary, so the server keeps
+serving. Saving ten files during a 30-second `cargo build` queues exactly one
+follow-up rebuild.
+
+## Benchmarks
+
+[`benchmarks/`](benchmarks) compares [`examples/blog-rs`](examples/blog-rs) — a
+full port of `examples/blog-starter` — against the original on requests per
+second, resident memory and cold build time, with ten isolated runs per variant
+and a functional parity check. Methodology, individual runs and environment
+caveats are all recorded there.
+
 ## Scope not yet covered
 
-* `next-rs dev` orchestration is planned as a command sequence and is not yet a
-  running watcher.
-* The `#[napi]` and `wasm-bindgen` attribute glue is described but not generated;
-  the crates that the glue calls into are implemented and tested.
 * Actix Web, Poem and Salvo adapters are not written. They are a thin layer over
   `next-rs-adapter-api`, as `next-rs-axum` demonstrates.
-* The React SSR renderer service is defined by the `ReactRenderer` trait and
-  exercised with test doubles; no renderer process ships here.
+* A component that needs Next's runtime tree — `next/link`, `next/navigation` —
+  cannot be mounted from Rust, because a slot has no router context above it. The
+  build reports this rather than letting it fail in the browser, but nothing
+  bridges it.

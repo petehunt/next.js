@@ -145,11 +145,17 @@ export async function renderOne(
 /**
  * Runs Fizz to completion and returns the markup.
  *
- * `allReady` rather than the first flush: a slot's frame is a single unit that
- * the browser installs and hydrates in one go (spec §43), so a partially
- * suspended shell would hydrate against markup React never finished. Streaming
- * happens at the *document* level in Rust instead — the slot is what streams, not
- * its internals.
+ * The whole render, not just the shell: a slot's frame is a single unit that the
+ * browser installs and hydrates in one go (spec §43), so a partially suspended
+ * shell would hydrate against markup React never finished. Streaming happens at
+ * the *document* level in Rust instead — the slot is what streams, not its
+ * internals.
+ *
+ * Draining the stream is what waits for that, deliberately in preference to
+ * awaiting `allReady` first: Fizz applies backpressure, so a slot large enough to
+ * fill the queue would never finish if nothing were reading. Reading to the end
+ * yields the complete render regardless, and `allReady` is awaited afterwards only
+ * so a fatal render rejection is not an unhandled one.
  */
 async function renderToMarkup(
   react: ServerReactAdapter,
@@ -176,8 +182,8 @@ async function renderToMarkup(
         },
       }
     )
-    await stream.allReady
     const markup = await streamToString(stream)
+    await stream.allReady.catch(() => {})
     if (firstError) {
       throw firstError
     }

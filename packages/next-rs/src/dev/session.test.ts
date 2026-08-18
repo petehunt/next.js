@@ -279,6 +279,41 @@ describe('startDevSession', () => {
     expect(builds).toBe(3)
   })
 
+  it('picks up a change that lands as a rebuild is finishing', async () => {
+    // The narrow window: `inFlight` is cleared in the same tick as the loop's
+    // last read of the queued kind, so a save that arrives while the rebuild is
+    // resolving is either queued or starts a fresh rebuild — never dropped.
+    await project({ rust: RUST_WITHOUT_SLOT })
+    const { spawn } = recordingSpawner()
+    let builds = 0
+    let session2: DevSession | undefined
+
+    session2 = await startDevSession({
+      projectRoot: root,
+      buildId: 'dev',
+      spawn,
+      watch: false,
+      exec: async () => {
+        builds += 1
+      },
+    })
+    session = session2
+
+    const first = session2.rebuild([change('a.rs', 'rust')])
+    // Land a save on every microtask boundary the first rebuild passes through.
+    const chased: Promise<void>[] = []
+    for (let tick = 0; tick < 6; tick++) {
+      await Promise.resolve()
+      chased.push(session2.rebuild([change(`b${tick}.rs`, 'rust')]))
+    }
+    await Promise.all([first, ...chased])
+
+    // One initial build plus at least the first rebuild; every chased save was
+    // either coalesced into a rebuild or ran its own, and none was lost.
+    expect(builds).toBeGreaterThanOrEqual(3)
+    expect(session2.rebuilds).toBeGreaterThanOrEqual(2)
+  })
+
   it('survives a failing compile and rebuilds again afterwards', async () => {
     await project({ rust: RUST_WITHOUT_SLOT })
     const { spawn } = recordingSpawner()

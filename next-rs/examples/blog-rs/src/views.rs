@@ -188,15 +188,14 @@ fn alert(preview: bool) -> String {
     let (classes, message) = if preview {
         (
             "border-b bg-neutral-800 border-neutral-800 text-white dark:bg-slate-800",
-            r#"This page is a preview. <a href="/api/exit-preview" class="underline hover:text-teal-300 duration-200 transition-colors">Click here</a> to exit preview mode."#,
+            r#"This page is a preview. <a href="/api/exit-preview" class="underline hover:text-teal-300 duration-200 transition-colors">Click here</a> to exit preview mode."#
+                .to_owned(),
         )
     } else {
         (
             "border-b bg-neutral-50 border-neutral-200 dark:bg-slate-800",
-            concat!(
-                r#"The source code for this blog is <a href="https://github.com/vercel/next.js/tree/canary/examples/"#,
-                "blog-starter",
-                r#"" class="underline hover:text-blue-600 duration-200 transition-colors">available on GitHub</a>."#,
+            format!(
+                r#"The source code for this blog is <a href="https://github.com/vercel/next.js/tree/canary/examples/{EXAMPLE_PATH}" class="underline hover:text-blue-600 duration-200 transition-colors">available on GitHub</a>."#
             ),
         )
     };

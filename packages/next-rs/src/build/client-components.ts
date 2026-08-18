@@ -15,6 +15,13 @@
  * `throw new Error('invariant expected app router to be mounted')`, so a
  * component importing it fails on mount, every time, with a message that says
  * nothing about slots.
+ *
+ * The check follows the *local* module graph, because a component is usually made
+ * of components: a registered `<Card>` importing a local `<Nav>` that imports
+ * `next/link` fails exactly as hard as importing it directly. It stops at package
+ * boundaries — a package's internals are the bundler's business, and reading them
+ * would be a lot of work to answer a question the package can answer for itself
+ * by not using the router.
  */
 
 import { promises as fs } from 'node:fs'
@@ -173,18 +180,57 @@ export function analyzeComponentModule(source: string): ModuleFacts {
   // named export has to be assumed present.
   const hasStarExport = /export\s+\*\s+from/.test(withoutComments)
 
+  return {
+    isClient: hasUseClient(withoutComments),
+    exports: hasStarExport ? ['*'] : [...exports],
+    imports: valueImports(withoutComments),
+  }
+}
+
+/**
+ * The modules a source file imports *for their values*.
+ *
+ * Type-only imports are excluded, and that matters: `import type { Route } from
+ * 'next/navigation'` is erased before the bundler sees it, so failing a build
+ * over one would be a false positive on entirely correct code.
+ */
+export function valueImports(source: string): string[] {
   const imports: string[] = []
-  for (const match of withoutComments.matchAll(
-    /(?:import|from)\s*['"]([^'"]+)['"]/g
+
+  // `import ... from '…'` and bare `import '…'`, skipping `import type`.
+  for (const match of source.matchAll(
+    /import\s+(?!type\s)([\s\S]*?)\s*from\s*['"]([^'"]+)['"]|import\s*['"]([^'"]+)['"]/g
+  )) {
+    const specifier = match[2] ?? match[3]
+    if (!specifier) continue
+    // `import { type A, type B } from 'x'` imports no values either.
+    const clause = match[1]?.trim()
+    if (clause?.startsWith('{') && clause.endsWith('}')) {
+      const names = clause
+        .slice(1, -1)
+        .split(',')
+        .map((name) => name.trim())
+        .filter(Boolean)
+      if (names.length > 0 && names.every((name) => name.startsWith('type '))) {
+        continue
+      }
+    }
+    imports.push(specifier)
+  }
+
+  // `export { x } from '…'` re-exports a value.
+  for (const match of source.matchAll(
+    /export\s+(?:\*|\{[\s\S]*?\})\s*from\s*['"]([^'"]+)['"]/g
   )) {
     imports.push(match[1])
   }
 
-  return {
-    isClient: hasUseClient(withoutComments),
-    exports: hasStarExport ? ['*'] : [...exports],
-    imports,
+  // `await import('…')`, which is how a component lazily loads another.
+  for (const match of source.matchAll(/import\s*\(\s*['"]([^'"]+)['"]\s*\)/g)) {
+    imports.push(match[1])
   }
+
+  return imports
 }
 
 /** True when `source` begins with a `"use client"` directive. */
@@ -232,6 +278,17 @@ export async function checkRegisteredComponents(
       .join('/')
     const facts = analyzeComponentModule(await fs.readFile(file, 'utf8'))
 
+    // A component is usually made of components, so the Next imports that
+    // matter are rarely in the registered module itself — a registered `<Card>`
+    // importing a local `<Nav>` that imports `next/link` fails just as hard.
+    for (const problem of await reachableNextProblems(
+      component.id,
+      file,
+      options
+    )) {
+      problems.push(problem)
+    }
+
     if (!facts.isClient) {
       problems.push({
         component: component.id,
@@ -263,9 +320,70 @@ export async function checkRegisteredComponents(
           }`,
       })
     }
+  }
 
-    for (const problem of nextFeatureProblems(component.id, relative, facts)) {
+  return problems
+}
+
+/**
+ * Walks the local module graph beneath a registered component, reporting the
+ * Next imports it can reach.
+ *
+ * Only local modules are followed — relative or aliased. A package's internals
+ * are the bundler's business, and following them would mean resolving
+ * `node_modules` and reading a great deal of code to answer a question that a
+ * package can answer for itself by not using the router.
+ */
+async function reachableNextProblems(
+  id: string,
+  entry: string,
+  options: ResolveOptions
+): Promise<ComponentProblem[]> {
+  const problems: ComponentProblem[] = []
+  const seen = new Set<string>()
+  const reported = new Set<string>()
+  const queue: string[] = [entry]
+
+  while (queue.length > 0) {
+    const file = queue.shift() as string
+    if (seen.has(file)) continue
+    seen.add(file)
+
+    const source = await fs.readFile(file, 'utf8').catch(() => null)
+    if (source === null) continue
+    const facts = analyzeComponentModule(source)
+    const relative = path
+      .relative(options.projectRoot, file)
+      .split(path.sep)
+      .join('/')
+
+    for (const problem of nextFeatureProblems(id, relative, facts)) {
+      // One report per Next module per component: a `next/link` reached through
+      // four components is one thing to fix.
+      const key = `${problem.kind}:${problem.message.split('`')[3] ?? ''}`
+      if (reported.has(key)) continue
+      reported.add(key)
       problems.push(problem)
+    }
+
+    for (const specifier of facts.imports) {
+      if (!isRelativeOrAliased(specifier, options)) continue
+      const resolved = await resolveComponentModule(
+        specifier.startsWith('.')
+          ? // A relative specifier is relative to *its own* file.
+            `./${path
+              .relative(
+                options.projectRoot,
+                path.resolve(path.dirname(file), specifier)
+              )
+              .split(path.sep)
+              .join('/')}`
+          : specifier,
+        options
+      )
+      if (resolved && !seen.has(resolved)) {
+        queue.push(resolved)
+      }
     }
   }
 

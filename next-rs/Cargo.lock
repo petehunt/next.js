@@ -95,6 +95,7 @@ name = "blog-rs"
 version = "0.1.0"
 dependencies = [
  "blog-rs-exports",
+ "futures-util",
  "next-rs",
  "next-rs-react-renderer",
  "next-rs-runtime-native",

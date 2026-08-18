@@ -286,3 +286,36 @@ async fn a_token_from_another_build_is_refused_as_stale() {
     assert_eq!(error.code(), "STALE_BUILD");
     assert_eq!(error.status().as_u16(), 409);
 }
+
+/// Spec §80, asserted against the application rather than a unit: serving either
+/// page must not reach the server-side React renderer at all.
+///
+/// The renderer installed here panics if it is ever called, so this is not a
+/// counter that could be read wrongly — the test would fail loudly.
+#[tokio::test]
+async fn serving_the_blog_never_crosses_into_server_javascript() {
+    use futures_util::future::BoxFuture;
+    use next_rs::html::{ReactRenderer, SsrRequest, SsrResult};
+
+    #[derive(Debug)]
+    struct Forbidden;
+
+    impl ReactRenderer for Forbidden {
+        fn render(&self, _requests: Vec<SsrRequest>) -> BoxFuture<'static, Result<Vec<SsrResult>>> {
+            panic!("spec §80: the blog must never call the React renderer");
+        }
+    }
+
+    let app = Arc::new(
+        blog_rs::app("test-build", [7u8; 32])
+            .unwrap()
+            .with_react_renderer(Arc::new(Forbidden)),
+    );
+
+    for path in ["/", "/posts/hello-world", "/posts/missing"] {
+        let (_, body) = get(&app, path).await.unwrap();
+        // Client-only frames, never a patch frame — a patch is the only thing
+        // that could have come from the renderer.
+        assert!(!body.contains(r#"data-nrs-frame="patch""#), "{path}");
+    }
+}

@@ -18,6 +18,7 @@
  * handler that never attaches would all pass every other test in this package.
  */
 
+import { MessageChannel as NodeMessageChannel } from 'node:worker_threads'
 import { TextDecoder, TextEncoder } from 'node:util'
 
 import React from 'react'
@@ -41,12 +42,29 @@ globals.TextDecoder ??= TextDecoder
 // that React's work is flushed before the DOM is asserted on.
 globals.IS_REACT_ACT_ENVIRONMENT = true
 
-// `react-dom/server.node` explicitly, not `react-dom/server`: under jsdom the
-// latter resolves to the browser build, which opens a `MessageChannel` at module
-// scope and then keeps the test process alive.
- 
+// Under jsdom, `react-dom/server` resolves to the browser build, which opens a
+// `MessageChannel` at module scope. Node's implementation holds the event loop
+// open, so every channel is tracked and closed in `afterAll` — otherwise the test
+// process never exits.
+const openChannels: NodeMessageChannel[] = []
+class TrackedMessageChannel extends NodeMessageChannel {
+  constructor() {
+    super()
+    openChannels.push(this)
+  }
+}
+globals.MessageChannel ??= TrackedMessageChannel
+
+afterAll(() => {
+  for (const channel of openChannels) {
+    channel.port1.close()
+    channel.port2.close()
+  }
+})
+
+// Loaded after the polyfills above, because the module reads them on load.
 const ReactDOMServer =
-  (require('react-dom/server') as typeof import('react-dom/server'))
+  require('react-dom/server') as typeof import('react-dom/server')
 
 /**
  * Server markup, the way the renderer produces it.

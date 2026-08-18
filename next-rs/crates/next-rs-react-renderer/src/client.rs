@@ -78,6 +78,13 @@ impl HttpReactRenderer {
     }
 
     async fn render_batch(&self, requests: Vec<SsrRequest>) -> Result<Vec<SsrResult>> {
+        // An empty batch has nothing to render, and asking for the address would
+        // start the process. §80 is a hard requirement, so the cheapest way to
+        // hold it is to never let a no-op reach the boundary.
+        if requests.is_empty() {
+            return Ok(Vec::new());
+        }
+
         let address = self.address().await?;
         let payload = serde_json::to_vec(&RenderRequest {
             build_id: self.build_id.as_ref().map(|id| id.to_string()),
@@ -334,6 +341,21 @@ mod tests {
         );
         assert_eq!(paired.len(), 1);
         assert_eq!(paired[0].outcome.as_ref().unwrap(), "<div>ours</div>");
+    }
+
+    #[tokio::test]
+    async fn an_empty_batch_never_reaches_the_process() {
+        use crate::{RendererCommand, RendererProcessOptions};
+
+        // The command does not exist, so starting it would fail loudly.
+        let process = Arc::new(RendererProcess::new(RendererProcessOptions::new(
+            RendererCommand::node("does-not-exist.mjs"),
+        )));
+        let renderer = HttpReactRenderer::new(RendererEndpoint::Process(Arc::clone(&process)));
+
+        assert!(renderer.render_batch(vec![]).await.unwrap().is_empty());
+        // Spec §80: nothing was started.
+        assert_eq!(process.spawns(), 0);
     }
 
     #[tokio::test]

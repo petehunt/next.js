@@ -12,6 +12,7 @@ import {
   formatComponentProblems,
   readTsconfigAliases,
   resolveComponentModule,
+  valueImports,
 } from './client-components'
 import type { RegisteredComponent } from './component-registry'
 
@@ -376,5 +377,123 @@ describe('ClientComponentError', () => {
     expect(error.message).toContain('A is not a Client Component')
     expect(error.message).toContain('B imports next/link')
     expect(formatComponentProblems(error.problems)).toContain('•')
+  })
+})
+
+describe('the local module graph', () => {
+  it('finds a Next import reached through a local component', async () => {
+    // A registered component is usually made of components; the import that
+    // breaks it is rarely in the registered module itself.
+    await write(
+      'components/Nav.tsx',
+      '"use client"\nimport Link from "next/link"\nexport default function Nav() { return null }\n'
+    )
+    await write(
+      'components/Card.tsx',
+      [
+        '"use client"',
+        "import Nav from './Nav'",
+        'export default function Card() { return null }',
+      ].join('\n')
+    )
+
+    const [problem] = await check([registered('Card', '@/components/Card')])
+    expect(problem.kind).toBe('needs-next-tree')
+    // Reported against the file that actually imports it.
+    expect(problem.module).toBe('components/Nav.tsx')
+  })
+
+  it('follows an aliased import as well as a relative one', async () => {
+    await write(
+      'components/deep/Router.tsx',
+      '"use client"\nimport { useRouter } from "next/navigation"\nexport default function R() { return null }\n'
+    )
+    await write(
+      'components/Outer.tsx',
+      [
+        '"use client"',
+        "import R from '@/components/deep/Router'",
+        'export default function Outer() { return null }',
+      ].join('\n')
+    )
+    const [problem] = await check([registered('Outer', '@/components/Outer')])
+    expect(problem.kind).toBe('needs-next-tree')
+    expect(problem.module).toBe('components/deep/Router.tsx')
+  })
+
+  it('reports one problem per Next module, not one per file that reaches it', async () => {
+    await write(
+      'components/Leaf.tsx',
+      '"use client"\nimport Link from "next/link"\nexport default function Leaf() { return null }\n'
+    )
+    for (const name of ['A', 'B']) {
+      await write(
+        `components/${name}.tsx`,
+        `"use client"\nimport Leaf from './Leaf'\nexport default function ${name}() { return null }\n`
+      )
+    }
+    await write(
+      'components/Root.tsx',
+      [
+        '"use client"',
+        "import A from './A'",
+        "import B from './B'",
+        'export default function Root() { return null }',
+      ].join('\n')
+    )
+    const problems = await check([registered('Root', '@/components/Root')])
+    expect(problems).toHaveLength(1)
+  })
+
+  it('terminates on a cycle', async () => {
+    await write(
+      'components/Ping.tsx',
+      '"use client"\nimport Pong from "./Pong"\nexport default function Ping() { return null }\n'
+    )
+    await write(
+      'components/Pong.tsx',
+      '"use client"\nimport Ping from "./Ping"\nexport default function Pong() { return null }\n'
+    )
+    expect(await check([registered('Ping', '@/components/Ping')])).toEqual([])
+  })
+
+  it('does not follow packages', async () => {
+    await write(
+      'components/Uses.tsx',
+      [
+        '"use client"',
+        "import { Button } from '@acme/ui'",
+        'export default function Uses() { return null }',
+      ].join('\n')
+    )
+    expect(await check([registered('Uses', '@/components/Uses')])).toEqual([])
+  })
+})
+
+describe('valueImports', () => {
+  it('ignores type-only imports', () => {
+    // Erased before the bundler sees them, so failing a build over one would be
+    // a false positive on correct code.
+    expect(
+      valueImports("import type { Route } from 'next/navigation'")
+    ).toEqual([])
+    expect(
+      valueImports("import { type A, type B } from 'next/navigation'")
+    ).toEqual([])
+  })
+
+  it('keeps a value import that sits alongside a type one', () => {
+    expect(
+      valueImports("import { useRouter, type Route } from 'next/navigation'")
+    ).toEqual(['next/navigation'])
+  })
+
+  it('finds side-effect, re-export and dynamic imports', () => {
+    expect(valueImports("import './styles.css'")).toEqual(['./styles.css'])
+    expect(valueImports("export { x } from './x'")).toEqual(['./x'])
+    expect(valueImports("export * from './all'")).toEqual(['./all'])
+    expect(valueImports("const m = await import('next/link')")).toEqual([
+      'next/link',
+    ])
   })
 })

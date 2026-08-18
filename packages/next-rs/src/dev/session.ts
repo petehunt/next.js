@@ -146,7 +146,7 @@ export async function startDevSession(
       return inFlight
     }
 
-    inFlight = (async () => {
+    const running = (async () => {
       let next: ChangeKind | undefined = kind
       while (next) {
         const current: ChangeKind = next
@@ -161,13 +161,15 @@ export async function startDevSession(
         }
         next = queued
       }
+      // Cleared here, not in a `finally` around the await below: the loop's last
+      // read of `queued` and this assignment have to happen in the same tick.
+      // Clearing it a microtask later leaves a window where a save sees
+      // `inFlight` still set, parks its kind in `queued`, and is never picked up.
+      inFlight = undefined
     })()
 
-    try {
-      await inFlight
-    } finally {
-      inFlight = undefined
-    }
+    inFlight = running
+    await running
   }
 
   let watcher: Watcher | undefined

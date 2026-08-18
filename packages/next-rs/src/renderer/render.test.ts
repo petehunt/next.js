@@ -167,10 +167,30 @@ describe('renderOne', () => {
       { slotId: 's9', componentId: 'Slow', props: {} },
       { react, loadComponent: async () => Wrapper, timeoutMs: 2000 }
     )
-    // `allReady` is awaited, so the resolved content is present, not the
-    // fallback alone.
+    // The stream is drained to the end, so the resolved content is present, not
+    // the fallback alone.
     expect(result.error).toBeUndefined()
     expect(result.html).toContain('arrived')
+  })
+
+  it('renders a slot large enough to apply stream backpressure', async () => {
+    // Awaiting `allReady` before draining would deadlock here: Fizz stops
+    // producing once its queue is full, and nothing would be reading it.
+    const rows = Array.from({ length: 20_000 }, (_, index) => index)
+    const Big = () =>
+      React.createElement(
+        'ul',
+        null,
+        rows.map((value) => React.createElement('li', { key: value }, value))
+      )
+
+    const result = await renderOne(
+      { slotId: 's10', componentId: 'Big', props: {} },
+      { react, loadComponent: async () => Big, timeoutMs: 20_000 }
+    )
+    expect(result.error).toBeUndefined()
+    expect(result.html).toContain('<li>0</li>')
+    expect(result.html).toContain('<li>19999</li>')
   })
 })
 

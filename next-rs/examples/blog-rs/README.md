@@ -36,9 +36,14 @@ whatsoever (§37, §38, §80).
 
 [`components/SubscribeForm.tsx`](components/SubscribeForm.tsx) is new. The
 original has exactly one Client Component, so a straight port would only ever
-exercise one of the four call-site policies; this one is available for
-`.ssr().swr(...)` so the example can cover server rendering and
-refresh-from-Rust against the same runtime.
+exercise one of the four call-site policies; this one covers `.swr(...)`.
+
+It is deliberately *not* on the served pages. Adding it would change the document
+and break parity with the original, and an `.ssr()` call site would need the React
+renderer process — which this deployment does not run, and which the benchmark's
+"no Node in the request path" claim depends on.
+[`tests/serves_the_blog.rs`](tests/serves_the_blog.rs) drives the real refresh
+endpoint against it instead.
 
 ## Running it
 

@@ -1,0 +1,20 @@
+[package]
+name = "next-rs-adapter-api"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "The adapter boundary between next-rs and the Rust HTTP ecosystem"
+
+[dependencies]
+bytes = { workspace = true }
+futures-util = { workspace = true }
+http = "1"
+http-body = "1"
+next-rs-core = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt", "macros"] }
+
+[lints]
+workspace = true

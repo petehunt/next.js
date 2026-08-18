@@ -209,6 +209,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "next-rs-http"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "futures-util",
+ "next-rs-core",
+ "next-rs-crypto",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "next-rs-react"
 version = "0.1.0"
 dependencies = [
@@ -218,6 +231,15 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+]
+
+[[package]]
+name = "next-rs-router"
+version = "0.1.0"
+dependencies = [
+ "next-rs-core",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

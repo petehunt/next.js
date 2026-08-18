@@ -55,8 +55,9 @@ pub use next_rs_router as router;
 mod app;
 
 pub use app::{
-    DefaultRenderContextFactory, MatchedRoute, MethodRoute, NextRsApp, ProxyHandler,
-    RefreshRequest, RefreshResponse, RenderContextFactory, RouteHandler, with_session,
+    DefaultRenderContextFactory, MatchedRoute, MethodRoute, MountRemainder, NextRsApp,
+    ProxyHandler, RefreshRequest, RefreshResponse, RenderContextFactory, RouteHandler,
+    RouteParamsExt, with_session,
 };
 
 /// Everything an application file normally needs.
@@ -76,6 +77,8 @@ pub mod prelude {
     pub use next_rs_react::{
         AuthPolicy, ComponentRef, ReactSlot, RenderContext, SWROptions, SlotError,
     };
+
+    pub use crate::app::RouteParamsExt;
 }
 
 /// Paths the macros expand to. Not a public API.

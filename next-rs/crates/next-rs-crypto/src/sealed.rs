@@ -113,6 +113,17 @@ pub fn random_id(len: usize) -> String {
     encode_base64(&bytes)
 }
 
+/// Generates a fresh AEAD key from OS entropy.
+///
+/// Every deployment needs one, and the alternatives an application would
+/// otherwise reach for — a hard-coded array, or truncating [`random_id`] — are
+/// both worse than a function that does the obvious thing.
+pub fn random_key() -> [u8; crate::KEY_LEN] {
+    let mut key = [0u8; crate::KEY_LEN];
+    OsRng.fill_bytes(&mut key);
+    key
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

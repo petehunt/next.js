@@ -96,8 +96,14 @@ impl HTML {
     }
 
     /// Builds the scheduler for the current request.
+    ///
+    /// The per-request runtime wins over the process-wide one. A runtime that
+    /// assembles an application — `NextRsApp` does — already knows the loader
+    /// registry and the token codec, and scoping them to the request is both
+    /// more accurate than a global and testable without one.
     fn ambient_scheduler() -> SlotScheduler {
-        match HtmlRuntime::global() {
+        let runtime = crate::current_html_runtime();
+        match runtime.as_deref().or_else(|| HtmlRuntime::global()) {
             Some(runtime) => runtime.scheduler(current_render_context()),
             None => {
                 let mut scheduler = SlotScheduler::unconfigured();

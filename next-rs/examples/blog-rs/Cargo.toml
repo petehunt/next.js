@@ -1,0 +1,38 @@
+[package]
+name = "blog-rs"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+description = "examples/blog-starter, ported to next-rs"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "blog-rs"
+path = "src/bin/serve.rs"
+
+[dependencies]
+next-rs = { workspace = true }
+next-rs-react-renderer = { workspace = true }
+next-rs-runtime-native = { path = "../../crates/next-rs-runtime-native" }
+# The Rust equivalent of the `remark` + `remark-html` pipeline the original uses.
+pulldown-cmark = { version = "0.12", default-features = false, features = ["html"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true, features = ["fs", "rt", "rt-multi-thread", "sync", "macros", "signal"] }
+
+[dev-dependencies]
+tokio = { workspace = true, features = [
+  "fs",
+  "rt",
+  "rt-multi-thread",
+  "sync",
+  "macros",
+  "time",
+] }
+
+[lints]
+workspace = true

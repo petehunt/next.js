@@ -1,4 +1,8 @@
-use std::{collections::BTreeMap, fmt, sync::Arc};
+use std::{
+    collections::BTreeMap,
+    fmt,
+    sync::{Arc, OnceLock},
+};
 
 use futures_util::future::BoxFuture;
 use next_rs_core::{
@@ -6,7 +10,7 @@ use next_rs_core::{
     Session, StatusCode,
 };
 use next_rs_crypto::SlotTokenCodec;
-use next_rs_html::HtmlRuntime;
+use next_rs_html::{HtmlRuntime, ReactRenderer, WithHtmlRuntime};
 use next_rs_http::{Handler, Stack};
 use next_rs_react::{
     AuthPolicy, LoaderRegistry, REFRESH_ENDPOINT, RenderContext, WithRenderContext,
@@ -108,7 +112,11 @@ impl fmt::Debug for MethodRoute {
 }
 
 impl RouteHandler for MethodRoute {
-    fn handle(&self, request: Request, _matched: MatchedRoute) -> BoxFuture<'_, Result<Response>> {
+    fn handle(
+        &self,
+        mut request: Request,
+        matched: MatchedRoute,
+    ) -> BoxFuture<'_, Result<Response>> {
         Box::pin(async move {
             let Some(handler) = self.resolve(request.method()) else {
                 let allowed = self.methods().join(", ");
@@ -116,6 +124,13 @@ impl RouteHandler for MethodRoute {
                     Response::new(StatusCode::METHOD_NOT_ALLOWED).with_header("allow", allowed)
                 );
             };
+            // A `route.rs` is written as `GET(req)`, so the matched segments have
+            // to travel on the request itself — otherwise `/posts/[slug]` has no
+            // way to learn its slug (spec §18).
+            request.extensions_mut().insert(matched.params);
+            if let Some(remainder) = matched.remainder {
+                request.extensions_mut().insert(MountRemainder(remainder));
+            }
             let forbids_body = request.method().forbids_response_body();
             let mut response = handler.call(request).await?;
             if forbids_body {
@@ -123,6 +138,46 @@ impl RouteHandler for MethodRoute {
             }
             Ok(response)
         })
+    }
+}
+
+/// The path beneath a mount point, for a mounted framework router (spec §20).
+///
+/// A newtype rather than a bare `String` so it cannot collide with an
+/// application's own string extension.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MountRemainder(pub String);
+
+/// Reading a route's matched segments from inside a handler (spec §18).
+///
+/// ```ignore
+/// pub async fn GET(req: Request) -> Result<Response> {
+///     let slug = req.params().get_str("slug").unwrap_or_default();
+///     // ...
+/// }
+/// ```
+pub trait RouteParamsExt {
+    /// The matched dynamic segments, empty for a static route.
+    fn params(&self) -> &RouteParams;
+    /// The path beneath a mount point, for a mounted router (spec §20).
+    fn mount_remainder(&self) -> Option<&str>;
+}
+
+impl RouteParamsExt for Request {
+    fn params(&self) -> &RouteParams {
+        static EMPTY: OnceLock<RouteParams> = OnceLock::new();
+        self.extensions()
+            .get::<RouteParams>()
+            // A static route has no parameters, and asking for one should read
+            // as "absent", not panic and not require an `Option` at every call
+            // site.
+            .unwrap_or_else(|| EMPTY.get_or_init(RouteParams::default))
+    }
+
+    fn mount_remainder(&self) -> Option<&str> {
+        self.extensions()
+            .get::<MountRemainder>()
+            .map(|remainder| remainder.0.as_str())
     }
 }
 
@@ -236,9 +291,12 @@ pub struct NextRsApp {
     next_fallback: Option<Arc<dyn Handler>>,
     context_factory: Arc<dyn RenderContextFactory>,
     loaders: Arc<LoaderRegistry>,
+    react_renderer: Option<Arc<dyn ReactRenderer>>,
     token_codec: Option<Arc<SlotTokenCodec>>,
     refresh_endpoint: String,
     max_refresh_body_bytes: usize,
+    /// Built on first use from the fields above, then reused for every request.
+    html_runtime: OnceLock<Arc<HtmlRuntime>>,
 }
 
 impl NextRsApp {
@@ -251,9 +309,11 @@ impl NextRsApp {
             next_fallback: None,
             context_factory: Arc::new(DefaultRenderContextFactory::new()),
             loaders: Arc::new(LoaderRegistry::new()),
+            react_renderer: None,
             token_codec: None,
             refresh_endpoint: REFRESH_ENDPOINT.to_owned(),
             max_refresh_body_bytes: 16 * 1024,
+            html_runtime: OnceLock::new(),
         }
     }
 
@@ -307,15 +367,37 @@ impl NextRsApp {
         &self.loaders
     }
 
+    /// Installs a React SSR renderer, for `.ssr()` call sites (spec §79).
+    ///
+    /// Without one, an `.ssr()` slot reports `NO_REACT_RENDERER` rather than
+    /// silently degrading to a client-only mount, so the missing dependency is
+    /// visible. A build with no `.ssr()` call site needs no renderer at all
+    /// (spec §80).
+    pub fn with_react_renderer(mut self, renderer: Arc<dyn ReactRenderer>) -> Self {
+        self.react_renderer = Some(renderer);
+        self
+    }
+
     /// Builds the [`HtmlRuntime`] this app implies, so `HTML::render` picks up the
-    /// same registry, codec and endpoint.
+    /// same registry, codec, renderer and endpoint.
     pub fn html_runtime(&self) -> HtmlRuntime {
         let mut runtime = HtmlRuntime::new(Arc::clone(&self.loaders))
             .with_refresh_endpoint(self.refresh_endpoint.clone());
         if let Some(codec) = &self.token_codec {
             runtime = runtime.with_token_codec(Arc::clone(codec));
         }
+        if let Some(renderer) = &self.react_renderer {
+            runtime = runtime.with_renderer(Arc::clone(renderer));
+        }
         runtime
+    }
+
+    /// The runtime scoped around every route handler, built once.
+    fn shared_html_runtime(&self) -> Arc<HtmlRuntime> {
+        Arc::clone(
+            self.html_runtime
+                .get_or_init(|| Arc::new(self.html_runtime())),
+        )
     }
 
     /// Runs one request through the whole pipeline.
@@ -379,12 +461,14 @@ impl NextRsApp {
             remainder: matched.remainder.clone(),
         };
 
-        // The render context is ambient for the whole handler, so
-        // `HTML::render(...)` and slot scheduling can find it (spec §28).
+        // The render context and the HTML runtime are both ambient for the whole
+        // handler, so `HTML::render(...)` can find the request's session *and*
+        // this app's loader registry without either being passed down (spec §28).
         let context = self.context_factory.build(&request);
         let response = handler
             .handle(request, matched_route)
             .with_render_context(context)
+            .with_html_runtime(self.shared_html_runtime())
             .await?;
         Ok(response.with_header("x-next-rs-mode", ExecutionMode::RustNative.as_str()))
     }

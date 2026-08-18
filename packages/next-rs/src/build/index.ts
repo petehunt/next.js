@@ -2,6 +2,11 @@ import { promises as fs } from 'node:fs'
 import path from 'node:path'
 
 import {
+  generateBridgeGlue,
+  needsWasm,
+  type GeneratedGlue,
+} from './bridge-glue'
+import {
   ClientBoundaryError,
   DEFAULT_RUST_ALIAS,
   analyzeModule,
@@ -25,6 +30,7 @@ import {
   type LoaderManifest,
   type RustLoader,
 } from './react-loaders'
+import { generateRendererEntry } from './renderer-entry'
 import {
   discoverRouteFiles,
   planRoutes,
@@ -40,9 +46,11 @@ import {
   type RustExport,
 } from './rust-exports'
 
+export * from './bridge-glue'
 export * from './client-boundary'
 export * from './component-registry'
 export * from './react-loaders'
+export * from './renderer-entry'
 export * from './route-discovery'
 export * from './rust-exports'
 
@@ -65,6 +73,17 @@ export interface BuildOptions {
   rustAlias?: string
   /** Directories scanned for Client Components, relative to the project root. */
   clientDirs?: string[]
+  /**
+   * The Cargo crate holding the application's `#[export]` functions, as the
+   * generated bridge glue must name it. Defaults to `app`.
+   */
+  appCrate?: string
+  /** Path to the application crate, relative to `.next-rs/generated/`. */
+  appCratePath?: string
+  /** Path to `crates/next-rs`, relative to `.next-rs/generated/`. */
+  nextRsPath?: string
+  /** Module specifier the generated renderer entry imports its runtime from. */
+  rendererRuntimeSpecifier?: string
   /** When true, nothing is written to disk. */
   dryRun?: boolean
 }
@@ -80,6 +99,10 @@ export interface BuildOutput {
   written: string[]
   /** Whether any `.ssr()`-capable slot exists, i.e. whether §79 is needed. */
   needsReactRenderer: boolean
+  /** Whether any `#[export(client)]` exists, i.e. whether §10 is needed. */
+  needsWasm: boolean
+  /** Whether Next still owns any route, i.e. whether §78 is needed. */
+  needsNext: boolean
 }
 
 /** `.next-rs/manifests/token-protocol.json` (spec §82 step 17). */
@@ -142,6 +165,27 @@ export async function runBuild(options: BuildOptions): Promise<BuildOutput> {
     throw new ClientBoundaryError(violations)
   }
 
+  // Steps 10 and 11: the `#[napi]` and `wasm-bindgen` attribute glue.
+  //
+  // Both are emitted as their own crates so the library workspace stays
+  // buildable on any target: `#[napi]` needs a Node addon toolchain and
+  // `#[wasm_bindgen]` only makes sense on `wasm32`.
+  const needsBrowserWasm = needsWasm(exports)
+  const needsNext = routes.routes.some((route) =>
+    route.kind.startsWith('NEXT_')
+  )
+  const glue: GeneratedGlue[] = generateBridgeGlue(exports, {
+    appCrate: (options.appCrate ?? 'app').replace(/-/g, '_'),
+    appCratePath: options.appCratePath ?? '../../rust',
+    nextRsPath: options.nextRsPath ?? '../../../next-rs/crates/next-rs',
+    buildId: options.buildId,
+    wasm: needsBrowserWasm,
+    // The addon exists to serve Node; a deployment with no Next-owned route and
+    // no TypeScript caller does not need one, but exports are the point of §7,
+    // so emit it whenever there is anything to export.
+    napi: exports.length > 0,
+  })
+
   const generated: Record<string, string> = {
     'manifests/routes.json': `${JSON.stringify(routes, null, 2)}\n`,
     'manifests/react-components.json': `${JSON.stringify(
@@ -163,6 +207,23 @@ export async function runBuild(options: BuildOptions): Promise<BuildOutput> {
     'generated/rust.d.ts': generateTypeScriptDeclarations(exports),
     'generated/react-bindings.rs': generateRustBindings(components),
     'generated/components.js': generateComponentMap(components),
+  }
+
+  for (const file of glue) {
+    generated[file.path] = file.contents
+  }
+
+  // Step 13: the renderer entry point, only when a slot could opt into `.ssr()`.
+  // Emitting it unconditionally would leave a Node entry point in the output of a
+  // build that is meant to ship no server JavaScript at all (spec §40).
+  if (loaders.length > 0) {
+    generated['generated/react-renderer.mjs'] = generateRendererEntry(
+      components,
+      {
+        buildId: options.buildId,
+        runtimeSpecifier: options.rendererRuntimeSpecifier,
+      }
+    )
   }
 
   const written: string[] = []
@@ -187,6 +248,8 @@ export async function runBuild(options: BuildOptions): Promise<BuildOutput> {
     // signatures: `.ssr()` is a call-site choice (spec §36). Any loader at all
     // means a call site *could* opt in.
     needsReactRenderer: loaders.length > 0,
+    needsWasm: needsBrowserWasm,
+    needsNext,
   }
 }
 

@@ -14,6 +14,9 @@ next-rs-core = { workspace = true }
 next-rs-crypto = { workspace = true }
 next-rs-react = { workspace = true }
 serde_json = { workspace = true }
+# `task_local!` only: the per-request HTML runtime rides the same mechanism the
+# render context already uses.
+tokio = { workspace = true, features = ["rt"] }
 
 [dev-dependencies]
 serde = { workspace = true }

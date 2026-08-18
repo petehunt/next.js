@@ -26,7 +26,7 @@ mod sealed;
 pub use codec::{PROTOCOL_VERSION, SlotTokenCodec, SystemClock, TokenClock};
 pub use keyring::{KEY_LEN, Key, KeyId, Keyring};
 pub use payload::SlotInvocation;
-pub use sealed::{SealedBox, random_id};
+pub use sealed::{SealedBox, random_id, random_key};
 
 /// Default lifetime of a slot token, in seconds.
 ///

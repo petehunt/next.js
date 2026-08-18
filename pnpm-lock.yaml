@@ -1946,7 +1946,14 @@ importers:
         specifier: ^29.1.0
         version: 29.4.5(@babel/core@7.26.10)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.10))(jest-util@29.7.0)(jest@29.7.0(@types/node@20.17.7(patch_hash=fe6957869a9b616ec526ededb72bbe846b863bd2349204218772df5c1e62d6ab))(babel-plugin-macros@3.1.0))(typescript@6.0.2)
 
-  packages/next-rs: {}
+  packages/next-rs:
+    dependencies:
+      react:
+        specifier: npm:react@19.3.0-canary-eb8feb71-20260814
+        version: 19.3.0-canary-eb8feb71-20260814
+      react-dom:
+        specifier: npm:react-dom@19.3.0-canary-eb8feb71-20260814
+        version: 19.3.0-canary-eb8feb71-20260814(react@19.3.0-canary-eb8feb71-20260814)
 
   packages/next-rspack:
     dependencies:
